@@ -1,0 +1,29 @@
+# Dependency update configuration for pub.dev
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "Africa/Cairo"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "automatic"
+    reviewers:
+      - "@George"  # Replace with your GitHub username
+    ignore:
+      # Ignore major updates for packages that need careful migration
+      - dependency-name: "flutter_bloc"
+        update-types: ["major-version"]
+      - dependency-name: "go_router"
+        update-types: ["major-version"]
+      - dependency-name: "supabase_flutter"
+        update-types: ["major-version"]

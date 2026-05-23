@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ترويقه (Troo2a) - لوحة الألوان والهوية البصرية</title>
+    
+    <!-- Google Fonts: Outfit & Readex Pro for Arabic/English mix -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Readex+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            /* Light Mode Tokens (Primary Theme) */
+            --primary: #E02B2B;
+            --on-primary: #FFFFFF;
+            --primary-container: #FFE3E3;
+            --on-primary-container: #8B1E1E;
+            
+            --secondary: #5C4E4D;
+            --on-secondary: #FFFFFF;
+            --secondary-container: #F0E3E2;
+            --on-secondary-container: #2C2120;
+            
+            --tertiary: #62825D;
+            --on-tertiary: #FFFFFF;
+            --tertiary-container: #E2EFE0;
+            --on-tertiary-container: #1E351B;
+            
+            --background: #FDF8F7;
+            --on-background: #2C2120;
+            --surface: #FFFFFF;
+            --on-surface: #2C2120;
+            --on-surface-variant: #7A6B69;
+            --outline: #8C7B79;
+            --outline-variant: #E0D2D0;
+            
+            /* Surface Containers */
+            --surface-container-lowest: #FFFFFF;
+            --surface-container-low: #FCF5F4;
+            --surface-container: #F6ECEB;
+            --surface-container-high: #EFE2E0;
+            --surface-container-highest: #E7D8D6;
+
+            /* Status Colors */
+            --status-pending: #E89820;
+            --status-confirmed: #3B82C4;
+            --status-preparing: #8B5CF6;
+            --status-ready: #2D8C5E;
+            --status-delivered: #22C55E;
+            --status-cancelled: #D14334;
+
+            /* Transitions */
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-subtle: 0 4px 20px rgba(92, 78, 77, 0.05);
+            --shadow-medium: 0 8px 30px rgba(92, 78, 77, 0.08);
+            --shadow-premium: 0 20px 40px rgba(224, 43, 43, 0.08);
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        /* Dark Mode Override class */
+        body.dark-mode {
+            --background: #1F1615;
+            --on-background: #F5E0DF;
+            --surface: #2C2120;
+            --on-surface: #F5E0DF;
+            --on-surface-variant: #C7B4B2;
+            
+            --surface-container-lowest: #1A1110;
+            --surface-container-low: #251B1A;
+            --surface-container: #2C2120;
+            --surface-container-high: #382B2A;
+            --surface-container-highest: #443635;
+            
+            --outline: #9C8A88;
+            --outline-variant: #504140;
+
+            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.4);
+            --shadow-premium: 0 20px 40px rgba(224, 43, 43, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Readex Pro', 'Outfit', sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            transition: var(--transition-smooth);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* Decorative Background Ornaments */
+        .ambient-glow {
+            position: fixed;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(220, 43, 43, 0.05) 0%, rgba(253, 248, 247, 0) 70%);
+            top: -100px;
+            right: -100px;
+            z-index: -1;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        body.dark-mode .ambient-glow {
+            background: radial-gradient(circle, rgba(220, 43, 43, 0.08) 0%, rgba(31, 22, 21, 0) 70%);
+        }
+
+        .ambient-glow-2 {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(198, 139, 89, 0.04) 0%, rgba(253, 248, 247, 0) 70%);
+            bottom: -150px;
+            left: -150px;
+            z-index: -1;
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        body.dark-mode .ambient-glow-2 {
+            background: radial-gradient(circle, rgba(198, 139, 89, 0.06) 0%, rgba(31, 22, 21, 0) 70%);
+        }
+
+        /* Premium Header Styling */
+        header {
+            max-width: 1200px;
+            margin: 0 auto 40px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--outline-variant);
+            padding-bottom: 24px;
+        }
+
+        .brand-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            background: var(--primary);
+            color: var(--on-primary);
+            width: 60px;
+            height: 60px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 10px 25px rgba(224, 43, 43, 0.3);
+            animation: pulse-glow 3s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 10px 25px rgba(224, 43, 43, 0.3); }
+            50% { box-shadow: 0 10px 35px rgba(224, 43, 43, 0.5); }
+            100% { box-shadow: 0 10px 25px rgba(224, 43, 43, 0.3); }
+        }
+
+        .brand-title h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .brand-title p {
+            font-size: 14px;
+            color: var(--on-surface-variant);
+        }
+
+        /* Modern Mode Switcher Card */
+        .theme-switch-container {
+            background: var(--surface-container);
+            padding: 6px;
+            border-radius: 30px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid var(--outline-variant);
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .switch-btn {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+            background: transparent;
+            color: var(--on-surface-variant);
+        }
+
+        .switch-btn.active {
+            background: var(--primary);
+            color: var(--on-primary);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Container & Grid Details */
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Section Layout styling */
+        .section-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            border: 1px solid var(--outline-variant);
+            box-shadow: var(--shadow-medium);
+            transition: var(--transition-smooth);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--primary-container);
+            padding-bottom: 12px;
+        }
+
+        .section-header i {
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .section-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--on-surface);
+        }
+
+        /* Palette Grid Layout */
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        /* Palette Card details */
+        .color-card {
+            background: var(--surface-container-lowest);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--outline-variant);
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .color-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--primary);
+        }
+
+        .color-preview {
+            height: 120px;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 12px;
+            transition: var(--transition-smooth);
+        }
+
+        .hex-label {
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+        }
+
+        .color-info {
+            padding: 16px;
+        }
+
+        .color-name {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: var(--on-surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .color-name span.en {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            color: var(--on-surface-variant);
+        }
+
+        .color-desc {
+            font-size: 13px;
+            color: var(--on-surface-variant);
+            line-height: 1.5;
+        }
+
+        /* Live Component Demo Section */
+        .demo-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .demo-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .demo-canvas {
+            background: var(--surface-container-lowest);
+            border: 1px dashed var(--outline);
+            border-radius: var(--radius-md);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            position: relative;
+        }
+
+        /* Premium App Header UI Mockup */
+        .mock-app-bar {
+            background: var(--surface);
+            border: 1px solid var(--outline-variant);
+            border-radius: var(--radius-md);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .mock-logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mock-profile {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--secondary-container);
+            border: 2px solid var(--tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--on-secondary-container);
+        }
+
+        /* Premium Food Card UI Mockup */
+        .mock-product-card {
+            background: var(--surface);
+            border: 1px solid var(--outline-variant);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            box-shadow: var(--shadow-subtle);
+            transition: var(--transition-smooth);
+        }
+
+        .mock-product-img {
+            width: 120px;
+            background: var(--primary-container);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 32px;
+        }
+
+        .mock-product-body {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .mock-product-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--on-surface);
+            margin-bottom: 4px;
+        }
+
+        .mock-product-desc {
+            font-size: 12px;
+            color: var(--on-surface-variant);
+            margin-bottom: 8px;
+        }
+
+        .mock-price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mock-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .mock-add-btn {
+            background: var(--primary);
+            color: var(--on-primary);
+            border: none;
+            padding: 6px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 10px rgba(224, 43, 43, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .mock-add-btn:hover {
+            transform: scale(1.05);
+            background: #b81e1e;
+        }
+
+        /* Interaction feedback & buttons */
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-demo {
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-demo.btn-primary {
+            background: var(--primary);
+            color: var(--on-primary);
+            box-shadow: 0 4px 15px rgba(224, 43, 43, 0.25);
+        }
+
+        .btn-demo.btn-secondary {
+            background: var(--secondary);
+            color: var(--on-secondary);
+        }
+
+        .btn-demo.btn-tertiary {
+            background: var(--tertiary-container);
+            color: var(--on-tertiary-container);
+        }
+
+        /* Status Badge Container */
+        .badges-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge-pending { background: rgba(232, 152, 32, 0.15); color: var(--status-pending); }
+        .badge-confirmed { background: rgba(59, 130, 196, 0.15); color: var(--status-confirmed); }
+        .badge-preparing { background: rgba(139, 92, 246, 0.15); color: var(--status-preparing); }
+        .badge-ready { background: rgba(45, 140, 94, 0.15); color: var(--status-ready); }
+        .badge-delivered { background: rgba(34, 197, 94, 0.15); color: var(--status-delivered); }
+        .badge-cancelled { background: rgba(209, 67, 52, 0.15); color: var(--status-cancelled); }
+
+        /* Toast Copy Notification Styling */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--on-background);
+            color: var(--background);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 600;
+            box-shadow: var(--shadow-medium);
+            z-index: 1000;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <header>
+        <div class="brand-info">
+            <div class="brand-logo">
+                <i class="fa-solid fa-utensils"></i>
+            </div>
+            <div class="brand-title">
+                <h1>ترويقه (Troo2a)</h1>
+                <p>الدليل التفاعلي لتنسيق ألوان العلامة التجارية ومكوناتها</p>
+            </div>
+        </div>
+
+        <div class="theme-switch-container">
+            <button class="switch-btn active" id="btn-light" onclick="setTheme('light')">
+                <i class="fa-solid fa-sun"></i> الوضع المضيء
+            </button>
+            <button class="switch-btn" id="btn-dark" onclick="setTheme('dark')">
+                <i class="fa-solid fa-moon"></i> الوضع الداكن
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- Core App Brand Colors -->
+        <section class="section-card">
+            <div class="section-header">
+                <i class="fa-solid fa-palette"></i>
+                <h2>الألوان الأساسية للعلامة التجارية</h2>
+            </div>
+            
+            <div class="palette-grid">
+                <!-- Primary Color -->
+                <div class="color-card" onclick="copyHex('#E02B2B', 'الأحمر الكرزي الأساسي')">
+                    <div class="color-preview" style="background-color: var(--primary);">
+                        <span class="hex-label">#E02B2B</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>الأحمر الكرزي</span>
+                            <span class="en">Primary</span>
+                        </div>
+                        <p class="color-desc">اللون الأساسي الذي يمثل الهوية، يُستخدم للأزرار الفعالة، والعمليات الأساسية، والـ FABs، ويحفز الشهية وحس الضيافة.</p>
+                    </div>
+                </div>
+
+                <!-- Primary Container -->
+                <div class="color-card" onclick="copyHex('#FFE3E3', 'حاوية الكرز الوردي')">
+                    <div class="color-preview" style="background-color: var(--primary-container);">
+                        <span class="hex-label" style="color: var(--on-primary-container);">#FFE3E3</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>حاوية الكرز الوردي</span>
+                            <span class="en">Primary Container</span>
+                        </div>
+                        <p class="color-desc">تُستخدم كخلفيات للبطاقات الهامة، أو العروض الترويجية، أو النوافذ المنبثقة التي تحتاج لإبراز خفيف مريح للعين.</p>
+                    </div>
+                </div>
+
+                <!-- Secondary Color -->
+                <div class="color-card" onclick="copyHex('#5C4E4D', 'الكاكاو الدافئ الهيكلي')">
+                    <div class="color-preview" style="background-color: var(--secondary);">
+                        <span class="hex-label">#5C4E4D</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>الكاكاو الدافئ</span>
+                            <span class="en">Secondary</span>
+                        </div>
+                        <p class="color-desc">لون التوازن البني الدافئ. يُستخدم للعناصر الهيكلية، الحواف الجانبية، الأيقونات الثانوية، ويمنح إحساساً بالأصالة الفاخرة.</p>
+                    </div>
+                </div>
+
+                <!-- Tertiary Color -->
+                <div class="color-card" onclick="copyHex('#62825D', 'أخضر الفستق البري الدافئ')">
+                    <div class="color-preview" style="background-color: var(--tertiary);">
+                        <span class="hex-label">#62825D</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>أخضر الفستق البري</span>
+                            <span class="en">Tertiary</span>
+                        </div>
+                        <p class="color-desc">أخضر الفستق والزيتون البري الدافئ. يمثل طزاجة ونضارة المكونات، ويستخدم لخصومات الكوبونات وشارات التمييز ولمسات الضيافة الطبيعية.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Surfaces & Neutral Colors -->
+        <section class="section-card">
+            <div class="section-header">
+                <i class="fa-solid fa-layer-group"></i>
+                <h2>ألوان الخلفيات والأسطح والنصوص</h2>
+            </div>
+            
+            <div class="palette-grid">
+                <!-- App Background -->
+                <div class="color-card" onclick="copyHex('#FDF8F7', 'خلفية التطبيق الوردية')">
+                    <div class="color-preview" style="background-color: var(--background); border-bottom: 1px solid var(--outline-variant);">
+                        <span class="hex-label" style="color: var(--on-background);">#FDF8F7</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>خلفية التطبيق</span>
+                            <span class="en">Background</span>
+                        </div>
+                        <p class="color-desc">خلفية دافئة جداً مستوحاة من بتلات الورد الطبيعي بدلاً من الأبيض البارد، تعطي هدوءاً فخماً ومحفزاً للقراءة.</p>
+                    </div>
+                </div>
+
+                <!-- Surface Card -->
+                <div class="color-card" onclick="copyHex('#FFFFFF', 'السطح الأبيض المرتفع')">
+                    <div class="color-preview" style="background-color: var(--surface); border-bottom: 1px solid var(--outline-variant);">
+                        <span class="hex-label" style="color: var(--on-surface);">#FFFFFF</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>الأسطح والبطاقات</span>
+                            <span class="en">Surface</span>
+                        </div>
+                        <p class="color-desc">تُستخدم للبطاقات العائمة، الحاويات، وعناصر القوائم. تتميز بظلال ناعمة وجذابة تبرز المحتوى فوق الخلفية الوردية.</p>
+                    </div>
+                </div>
+
+                <!-- On Surface Text -->
+                <div class="color-card" onclick="copyHex('#2C2120', 'الإسبريسو الداكن للنصوص')">
+                    <div class="color-preview" style="background-color: var(--on-surface);">
+                        <span class="hex-label">#2C2120</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>لون نصوص العناوين</span>
+                            <span class="en">On Surface</span>
+                        </div>
+                        <p class="color-desc">لون القهوة الداكنة (الأسود البديل). يُستخدم لعناوين الواجهة الرئيسية ليوفر قراءة مريحة بأعلى مستويات التباين.</p>
+                    </div>
+                </div>
+
+                <!-- On Surface Variant Text -->
+                <div class="color-card" onclick="copyHex('#7A6B69', 'الرمادي الوردي للنصوص الثانوية')">
+                    <div class="color-preview" style="background-color: var(--on-surface-variant);">
+                        <span class="hex-label">#7A6B69</span>
+                    </div>
+                    <div class="color-info">
+                        <div class="color-name">
+                            <span>نصوص التفاصيل</span>
+                            <span class="en">On Surface Variant</span>
+                        </div>
+                        <p class="color-desc">رمادي دافئ مائل للوردي. يُستخدم للنصوص الثانوية، والتفاصيل غير الأساسية لتقليل التزاحم البصري.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Demo with Interactive Component Mocks -->
+        <section class="section-card">
+            <div class="section-header">
+                <i class="fa-solid fa-eye"></i>
+                <h2>محاكاة حية لمكونات واجهة المستخدم (UI Components Mock)</h2>
+            </div>
+            
+            <div class="demo-layout">
+                <!-- Sandbox mockup area -->
+                <div class="demo-canvas">
+                    <!-- Premium App bar mockup -->
+                    <div class="mock-app-bar">
+                        <div class="mock-logo">
+                            <i class="fa-solid fa-utensils"></i>
+                            مطعم ترويقه
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-size: 13px; font-weight: 600;">مرحباً، جورج</span>
+                            <div class="mock-profile">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Premium Product list mockup -->
+                    <div class="mock-product-card">
+                        <div class="mock-product-img">
+                            <i class="fa-solid fa-pizza-slice"></i>
+                        </div>
+                        <div class="mock-product-body">
+                            <div>
+                                <div class="mock-product-title">مناقيش زعتر وزيت فلسطيني</div>
+                                <div class="mock-product-desc">مخبوزة على حجر الطابون التقليدي بالزعتر البري الفاخر وزيت الزيتون الأصلي.</div>
+                            </div>
+                            <div class="mock-price-row">
+                                <span class="mock-price">٧٥٫٠٠ ج.م</span>
+                                <button class="mock-add-btn"><i class="fa-solid fa-plus"></i> أضف للسلة</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modern Interactive Buttons row mockup -->
+                    <div class="btn-row">
+                        <button class="btn-demo btn-primary"><i class="fa-solid fa-check"></i> تأكيد الطلب</button>
+                        <button class="btn-demo btn-secondary"><i class="fa-solid fa-receipt"></i> الفواتير السابقة</button>
+                        <button class="btn-demo btn-tertiary"><i class="fa-solid fa-gift"></i> كوبونات الخصم</button>
+                    </div>
+                </div>
+
+                <!-- Sidebar showing exact color applications & status badges -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div>
+                        <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--on-surface);">شارات حالات الطلبات (Order Status Badges)</h3>
+                        <div class="badges-grid">
+                            <span class="status-badge badge-pending"><i class="fa-solid fa-clock"></i> قيد الانتظار</span>
+                            <span class="status-badge badge-confirmed"><i class="fa-solid fa-circle-check"></i> مؤكد</span>
+                            <span class="status-badge badge-preparing"><i class="fa-solid fa-fire-burner"></i> جاري التحضير</span>
+                            <span class="status-badge badge-ready"><i class="fa-solid fa-utensils"></i> جاهز للاستلام</span>
+                            <span class="status-badge badge-delivered"><i class="fa-solid fa-truck"></i> تم التوصيل</span>
+                            <span class="status-badge badge-cancelled"><i class="fa-solid fa-circle-xmark"></i> ملغي</span>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--surface-container); padding: 16px; border-radius: var(--radius-md); border: 1px solid var(--outline-variant);">
+                        <h4 style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--primary);">تنسيق ألوان المظهر الداكن (Dark Mode Adaptation)</h4>
+                        <p style="font-size: 12px; line-height: 1.5; color: var(--on-surface-variant);">
+                            في المظهر الداكن، يتم تبديل الخلفيات الوردية الدافئة إلى بني كاكاو داكن فخم وجذاب (#1F1615)، والأسطح إلى بني متناسق (#2C2120). 
+                            بينما تظل ألوان التشغيل مثل الأحمر الكرزي الأساسي (#E02B2B) والذهب الكهرماني (#C68B59) ساطعة ومقروءة بوضوح ومحفزة للشهية.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Toast elements -->
+    <div class="toast" id="toast">
+        <i class="fa-solid fa-copy"></i>
+        <span id="toast-text">تم نسخ الكود بنجاح!</span>
+    </div>
+
+    <script>
+        function setTheme(theme) {
+            const body = document.body;
+            const btnLight = document.getElementById('btn-light');
+            const btnDark = document.getElementById('btn-dark');
+
+            if (theme === 'dark') {
+                body.classList.add('dark-mode');
+                btnDark.classList.add('active');
+                btnLight.classList.remove('active');
+            } else {
+                body.classList.remove('dark-mode');
+                btnLight.classList.add('active');
+                btnDark.classList.remove('active');
+            }
+        }
+
+        function copyHex(hex, name) {
+            navigator.clipboard.writeText(hex).then(() => {
+                const toast = document.getElementById('toast');
+                const toastText = document.getElementById('toast-text');
+                toastText.innerText = `تم نسخ كود لون ${name} (${hex}) إلى الحافظة!`;
+                
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            });
+        }
+    </script>
+</body>
+</html>
