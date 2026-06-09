@@ -47,6 +47,26 @@ void main() {
     when(() => mockCubit.state).thenReturn(const AuthState.initial());
     when(() => mockCubit.stream)
         .thenAnswer((_) => const Stream<AuthState>.empty());
+
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.physicalSize = const Size(800, 1200);
+        view.devicePixelRatio = 1.0;
+      }
+    }
+  });
+
+  tearDown(() {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.resetPhysicalSize();
+        view.resetDevicePixelRatio();
+      }
+    }
   });
 
   group('LoginScreen', () {
@@ -55,13 +75,14 @@ void main() {
           'shows email field, password field, login button, and register link',
           (tester) async {
         await tester.pumpWidget(_buildTestWidget(mockCubit));
+        // Use pump() instead of pumpAndSettle() because LoginScreen has
+        // endless ambient background animations.
         await tester.pump();
 
         expect(find.text('تسجيل الدخول'), findsOneWidget);
-        expect(find.byType(TextButton), findsOneWidget);
         expect(find.byIcon(Icons.email_outlined), findsOneWidget);
-        expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-        expect(find.text('ترويقه'), findsOneWidget);
+        expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+        expect(find.text('سجّل دلوقتي'), findsOneWidget);
       });
     });
 
@@ -146,7 +167,8 @@ void main() {
         await tester.pump();
 
         await tester.tap(find.text('تسجيل الدخول'));
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
 
         expect(find.byType(ErrorBanner), findsOneWidget);
         expect(

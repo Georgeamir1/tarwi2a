@@ -3,12 +3,35 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_delivery_zones_cubit.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/delivery_zone.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/empty_state.dart';
 
-class AdminDeliveryZonesScreen extends StatelessWidget {
+class AdminDeliveryZonesScreen extends StatefulWidget {
   const AdminDeliveryZonesScreen({super.key});
+
+  @override
+  State<AdminDeliveryZonesScreen> createState() =>
+      _AdminDeliveryZonesScreenState();
+}
+
+class _AdminDeliveryZonesScreenState extends State<AdminDeliveryZonesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    appLogger.i('📄 ZonesScreen initState');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<AdminDeliveryZonesCubit>();
+      appLogger.i(
+          '📄 ZonesScreen postFrame — status: ${cubit.state.status.name}, count: ${cubit.state.zones.length}');
+      if (cubit.state.status == AdminDeliveryZonesStatus.initial) {
+        appLogger.i('📄 ZonesScreen — calling loadZones()');
+        cubit.loadZones();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +58,17 @@ class AdminDeliveryZonesScreen extends StatelessWidget {
   Widget _buildBody(BuildContext context, AdminDeliveryZonesState state) {
     if (state.status == AdminDeliveryZonesStatus.loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (state.status == AdminDeliveryZonesStatus.error) {
+      return Center(
+        child: EmptyState(
+          icon: Icons.error_outline,
+          title: 'خطأ في تحميل مناطق التوصيل',
+          subtitle: state.failure?.message ?? 'حاول مرة أخرى',
+          actionLabel: 'إعادة المحاولة',
+          onAction: () => context.read<AdminDeliveryZonesCubit>().loadZones(),
+        ),
+      );
     }
     if (state.zones.isEmpty) {
       return const Center(
@@ -87,7 +121,6 @@ class AdminDeliveryZonesScreen extends StatelessWidget {
                           .read<AdminDeliveryZonesCubit>()
                           .toggleActive(zone.id, v);
                     },
-                    activeTrackColor: AppColors.primary,
                   ),
                 ],
               ),

@@ -8,15 +8,27 @@ import '../../widgets/app_text_field.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/opening_hours_editor.dart';
 
-class AdminBusinessProfileScreen extends StatelessWidget {
+class AdminBusinessProfileScreen extends StatefulWidget {
   const AdminBusinessProfileScreen({super.key});
 
   @override
+  State<AdminBusinessProfileScreen> createState() => _AdminBusinessProfileScreenState();
+}
+
+class _AdminBusinessProfileScreenState extends State<AdminBusinessProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AdminBusinessProfileCubit>().loadProfile();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider<AdminBusinessProfileCubit>.value(
-      value: context.read<AdminBusinessProfileCubit>()..loadProfile(),
-      child: const _ProfileBody(),
-    );
+    return const _ProfileBody();
   }
 }
 
@@ -326,7 +338,6 @@ class _ToggleTile extends StatelessWidget {
         subtitle: Text(subtitle),
         value: value,
         onChanged: onChanged,
-        activeTrackColor: AppColors.primary.withValues(alpha: 0.4),
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       ),
     );

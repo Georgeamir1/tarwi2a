@@ -21,6 +21,13 @@ class ProductDTO {
   final bool isAvailable;
   @JsonKey(name: 'sort_order')
   final int sortOrder;
+  @JsonKey(name: 'preparation_time')
+  final int? preparationTime;
+  final int? calories;
+  @JsonKey(name: 'tags', fromJson: _tagsFromJson)
+  final List<String> tags;
+  @JsonKey(name: 'show_in_banner')
+  final bool showInBanner;
 
   const ProductDTO({
     required this.id,
@@ -33,6 +40,10 @@ class ProductDTO {
     this.imageUrl,
     required this.isAvailable,
     required this.sortOrder,
+    this.preparationTime,
+    this.calories,
+    this.tags = const [],
+    this.showInBanner = false,
   });
 
   factory ProductDTO.fromJson(Map<String, dynamic> json) =>
@@ -51,5 +62,15 @@ class ProductDTO {
         imageUrl: imageUrl,
         isAvailable: isAvailable,
         sortOrder: sortOrder,
+        preparationTime: preparationTime,
+        calories: calories,
+        tags: tags,
+        showInBanner: showInBanner,
       );
+
+  static List<String> _tagsFromJson(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return value.cast<String>();
+    return [];
+  }
 }

@@ -37,6 +37,7 @@ class ProductImage extends StatelessWidget {
           fit: fit,
           width: width,
           height: height,
+          gaplessPlayback: true, // Prevents decoding blink on state rebuilds
           errorBuilder: (_, __, ___) => errorWidget,
         );
       } catch (_) {
@@ -49,6 +50,8 @@ class ProductImage extends StatelessWidget {
       fit: fit,
       width: width,
       height: height,
+      fadeInDuration: Duration.zero,   // Instantly display when cached, no fade-in flash
+      fadeOutDuration: Duration.zero,  // Instantly swap, no fade-out flash
       placeholder: (_, __) => placeholder,
       errorWidget: (_, __, ___) => errorWidget,
     );

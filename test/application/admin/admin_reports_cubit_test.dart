@@ -5,6 +5,7 @@ import 'package:matbakhy/application/admin/admin_reports_cubit.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late MockReportRepository mockRepo;
   late AdminReportsCubit cubit;
 

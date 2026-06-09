@@ -49,11 +49,39 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
   }
 
   Future<void> upsert(Map<String, dynamic> data, {String? id}) async {
-    await _repository.upsertProduct(data, id: id);
+    emit(state.copyWith(status: AdminProductsStatus.loading));
+    final result = await _repository.upsertProduct(data, id: id);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminProductsStatus.error,
+        failure: failure,
+      )),
+      (_) => loadProducts(),
+    );
   }
 
   Future<void> toggleAvailable(String id, bool isAvailable) async {
-    await _repository.toggleAvailable(id, isAvailable);
+    emit(state.copyWith(status: AdminProductsStatus.loading));
+    final result = await _repository.toggleAvailable(id, isAvailable);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminProductsStatus.error,
+        failure: failure,
+      )),
+      (_) => loadProducts(),
+    );
+  }
+
+  Future<void> deleteProduct(String id) async {
+    emit(state.copyWith(status: AdminProductsStatus.loading));
+    final result = await _repository.deleteProduct(id);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminProductsStatus.error,
+        failure: failure,
+      )),
+      (_) => loadProducts(),
+    );
   }
 
   @override

@@ -40,7 +40,23 @@ Widget _buildTestWidget({
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/admin/menu',
+                path: '/admin/coupons',
+                builder: (_, __) => const Placeholder(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/admin/customers',
+                builder: (_, __) => const Placeholder(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/admin/delivery-zones',
                 builder: (_, __) => const Placeholder(),
               ),
             ],
@@ -70,7 +86,7 @@ void main() {
   });
 
   group('AdminShell', () {
-    testWidgets('3 bottom navigation items render', (tester) async {
+    testWidgets('5 bottom navigation items render', (tester) async {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
       ));
@@ -78,7 +94,9 @@ void main() {
 
       expect(find.text('الرئيسية'), findsOneWidget);
       expect(find.text('الطلبات'), findsOneWidget);
-      expect(find.text('المنيو'), findsOneWidget);
+      expect(find.text('كوبونات'), findsOneWidget);
+      expect(find.text('عملاء'), findsOneWidget);
+      expect(find.text('توصيل'), findsOneWidget);
     });
 
     testWidgets('pending badge shows on Orders tab when pending orders exist',

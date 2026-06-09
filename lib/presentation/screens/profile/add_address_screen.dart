@@ -147,7 +147,6 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 title: const Text('تعيين كعنوان افتراضي'),
                 value: _isDefault,
                 onChanged: (v) => setState(() => _isDefault = v),
-                activeTrackColor: AppColors.primary,
               ),
               AppSpacing.gapH24,
               AppButton(

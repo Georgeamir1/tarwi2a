@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 
 import 'package:matbakhy/presentation/screens/orders/order_detail_screen.dart';
 import 'package:matbakhy/domain/entities/order.dart';
 import 'package:matbakhy/domain/entities/order_item.dart';
 import 'package:matbakhy/domain/enums/payment_method.dart';
 import 'package:matbakhy/domain/enums/order_status.dart';
+import 'package:matbakhy/domain/entities/user_profile.dart';
+import 'package:matbakhy/domain/enums/user_role.dart';
 import 'package:matbakhy/app/theme/app_theme.dart';
+import 'package:matbakhy/application/auth/auth_cubit.dart';
+import 'package:matbakhy/application/orders/customer_orders_cubit.dart';
+import '../../../helpers/test_helpers.dart';
 
 final _testOrder = Order(
   id: 'order-001',
@@ -60,9 +67,41 @@ final _testOrderWithDiscount = Order(
 );
 
 Widget _buildTestWidget(Order order) {
+  final mockAuthCubit = MockAuthCubit();
+  final mockCustomerOrdersCubit = MockCustomerOrdersCubit();
+
+  when(() => mockAuthCubit.state).thenReturn(Authenticated(
+    UserProfile(
+      id: order.customerId ?? 'user-123',
+      name: order.customerName,
+      phone: order.customerPhone,
+      role: UserRole.customer,
+      createdAt: DateTime.now(),
+    ),
+  ));
+  when(() => mockAuthCubit.stream).thenAnswer((_) => const Stream<AuthState>.empty());
+  when(() => mockAuthCubit.close()).thenAnswer((_) async {});
+
+  when(() => mockCustomerOrdersCubit.state).thenReturn(CustomerOrdersState(
+    orders: [order],
+    status: CustomerOrdersStatus.loaded,
+  ));
+  when(() => mockCustomerOrdersCubit.stream).thenAnswer((_) => const Stream<CustomerOrdersState>.empty());
+  when(() => mockCustomerOrdersCubit.close()).thenAnswer((_) async {});
+  when(() => mockCustomerOrdersCubit.loadOrders(any())).thenAnswer((_) async {});
+
   return MaterialApp(
     theme: AppTheme.light,
-    home: OrderDetailScreen(order: order),
+    home: MultiBlocProvider(
+      providers: [
+        BlocProvider<AuthCubit>.value(value: mockAuthCubit),
+        BlocProvider<CustomerOrdersCubit>.value(value: mockCustomerOrdersCubit),
+      ],
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: OrderDetailScreen(orderId: order.id, initialOrder: order),
+      ),
+    ),
   );
 }
 

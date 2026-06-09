@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/delivery_zone.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/delivery_zone_repository.dart';
@@ -13,18 +14,26 @@ class AdminDeliveryZonesCubit extends Cubit<AdminDeliveryZonesState> {
       : super(AdminDeliveryZonesState.initial());
 
   Future<void> loadZones() async {
+    appLogger.i('📥 loadZones() called');
     emit(state.copyWith(status: AdminDeliveryZonesStatus.loading));
     final result = await _repository.getAll();
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminDeliveryZonesStatus.error,
-        failure: failure,
-      )),
-      (zones) => emit(state.copyWith(
-        status: AdminDeliveryZonesStatus.loaded,
-        zones: zones,
-      )),
+      (failure) {
+        appLogger.e('📥 loadZones() FAILED: ${failure.runtimeType}');
+        emit(state.copyWith(
+          status: AdminDeliveryZonesStatus.error,
+          failure: failure,
+        ));
+      },
+      (zones) {
+        appLogger.i('📥 loadZones() SUCCESS — ${zones.length} zones loaded');
+        emit(state.copyWith(
+          status: AdminDeliveryZonesStatus.loaded,
+          zones: zones,
+        ));
+      },
     );
+    appLogger.i('📡 subscribing to zones realtime stream');
     _listenToStream();
   }
 
@@ -33,6 +42,9 @@ class AdminDeliveryZonesCubit extends Cubit<AdminDeliveryZonesState> {
     _subscription = _repository.watchDeliveryZones().listen(
       (zones) {
         if (!isClosed) {
+          if (zones.isEmpty && state.zones.isNotEmpty) {
+            return;
+          }
           emit(state.copyWith(
             zones: zones,
             status: AdminDeliveryZonesStatus.loaded,
@@ -41,24 +53,65 @@ class AdminDeliveryZonesCubit extends Cubit<AdminDeliveryZonesState> {
       },
       onError: (e) {
         if (!isClosed) {
-          emit(state.copyWith(
-            failure: Failure.unexpected(message: e.toString()),
-          ));
+          appLogger.w('Delivery zones realtime stream error (kept cached data)',
+              error: e);
         }
       },
     );
   }
 
   Future<void> upsert(Map<String, dynamic> data, {String? id}) async {
-    await _repository.upsert(data, id: id);
+    emit(state.copyWith(status: AdminDeliveryZonesStatus.loading));
+    final result = await _repository.upsert(data, id: id);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadZones();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminDeliveryZonesStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   Future<void> toggleActive(String id, bool isActive) async {
-    await _repository.toggleActive(id, isActive);
+    emit(state.copyWith(status: AdminDeliveryZonesStatus.loading));
+    final result = await _repository.toggleActive(id, isActive);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadZones();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminDeliveryZonesStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   Future<void> delete(String id) async {
-    await _repository.delete(id);
+    emit(state.copyWith(status: AdminDeliveryZonesStatus.loading));
+    final result = await _repository.delete(id);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadZones();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminDeliveryZonesStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   @override

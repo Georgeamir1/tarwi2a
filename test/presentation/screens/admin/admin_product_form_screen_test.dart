@@ -7,8 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:matbakhy/presentation/screens/admin/admin_product_form_screen.dart';
 import 'package:matbakhy/application/admin/admin_products_cubit.dart';
 import 'package:matbakhy/application/admin/admin_categories_cubit.dart';
+import 'package:matbakhy/application/admin/admin_product_options_cubit.dart';
 import 'package:matbakhy/domain/entities/product.dart';
 import '../../../helpers/test_helpers.dart';
+
+class MockAdminProductOptionsCubit extends Mock implements AdminProductOptionsCubit {}
 
 const _editTestProduct = Product(
   id: 'prod-edit',
@@ -25,7 +28,15 @@ const _editTestProduct = Product(
 Widget _buildCreateForm({
   required AdminProductsCubit productsCubit,
   required AdminCategoriesCubit categoriesCubit,
+  AdminProductOptionsCubit? optionsCubit,
 }) {
+  final fallbackOptionsCubit = optionsCubit ?? MockAdminProductOptionsCubit();
+  if (optionsCubit == null) {
+    when(() => fallbackOptionsCubit.stream)
+        .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
+    when(() => fallbackOptionsCubit.state)
+        .thenReturn(const AdminProductOptionsState());
+  }
   return MaterialApp.router(
     routerConfig: GoRouter(
       initialLocation: '/new',
@@ -40,6 +51,7 @@ Widget _buildCreateForm({
       providers: [
         BlocProvider<AdminProductsCubit>.value(value: productsCubit),
         BlocProvider<AdminCategoriesCubit>.value(value: categoriesCubit),
+        BlocProvider<AdminProductOptionsCubit>.value(value: fallbackOptionsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -49,7 +61,18 @@ Widget _buildCreateForm({
 Widget _buildEditForm({
   required AdminProductsCubit productsCubit,
   required AdminCategoriesCubit categoriesCubit,
+  AdminProductOptionsCubit? optionsCubit,
 }) {
+  final fallbackOptionsCubit = optionsCubit ?? MockAdminProductOptionsCubit();
+  if (optionsCubit == null) {
+    when(() => fallbackOptionsCubit.stream)
+        .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
+    when(() => fallbackOptionsCubit.state)
+        .thenReturn(const AdminProductOptionsState(
+          status: AdminProductOptionsStatus.loaded,
+          options: [],
+        ));
+  }
   return MaterialApp.router(
     routerConfig: GoRouter(
       initialLocation: '/edit',
@@ -64,6 +87,7 @@ Widget _buildEditForm({
       providers: [
         BlocProvider<AdminProductsCubit>.value(value: productsCubit),
         BlocProvider<AdminCategoriesCubit>.value(value: categoriesCubit),
+        BlocProvider<AdminProductOptionsCubit>.value(value: fallbackOptionsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -73,26 +97,37 @@ Widget _buildEditForm({
 void main() {
   late MockAdminProductsCubit mockProductsCubit;
   late MockAdminCategoriesCubit mockCategoriesCubit;
+  late MockAdminProductOptionsCubit mockOptionsCubit;
 
   setUpAll(() {
     registerFallbackValue(const AdminProductsState());
     registerFallbackValue(const AdminCategoriesState());
+    registerFallbackValue(const AdminProductOptionsState());
   });
 
   setUp(() {
     mockProductsCubit = MockAdminProductsCubit();
     mockCategoriesCubit = MockAdminCategoriesCubit();
+    mockOptionsCubit = MockAdminProductOptionsCubit();
 
     when(() => mockProductsCubit.stream)
         .thenAnswer((_) => const Stream<AdminProductsState>.empty());
     when(() => mockCategoriesCubit.stream)
         .thenAnswer((_) => const Stream<AdminCategoriesState>.empty());
+    when(() => mockOptionsCubit.stream)
+        .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
 
     when(() => mockProductsCubit.state).thenReturn(const AdminProductsState());
     when(() => mockCategoriesCubit.state).thenReturn(
       const AdminCategoriesState(
         status: AdminCategoriesStatus.loaded,
         categories: [testCategory],
+      ),
+    );
+    when(() => mockOptionsCubit.state).thenReturn(
+      const AdminProductOptionsState(
+        status: AdminProductOptionsStatus.loaded,
+        options: [],
       ),
     );
   });

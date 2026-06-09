@@ -5,12 +5,14 @@ class SkeletonCard extends StatelessWidget {
   final double? width;
   final double? height;
   final double borderRadius;
+  final Color? color;
 
   const SkeletonCard({
     super.key,
     this.width,
     this.height,
     this.borderRadius = AppRadius.lg,
+    this.color,
   });
 
   @override
@@ -19,7 +21,7 @@ class SkeletonCard extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.grey200,
+        color: color ?? AppColors.grey200,
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
@@ -85,22 +87,18 @@ class SkeletonListTile extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SkeletonCard(
-                  width: 100, height: 16, borderRadius: AppRadius.sm),
+              SkeletonCard(width: 100, height: 16, borderRadius: AppRadius.sm),
               SkeletonCard(width: 60, height: 20, borderRadius: AppRadius.full),
             ],
           ),
           AppSpacing.gapH8,
-          SkeletonCard(
-              width: 150, height: 12, borderRadius: AppRadius.sm),
+          SkeletonCard(width: 150, height: 12, borderRadius: AppRadius.sm),
           AppSpacing.gapH8,
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              SkeletonCard(
-                  width: 80, height: 12, borderRadius: AppRadius.sm),
-              SkeletonCard(
-                  width: 60, height: 14, borderRadius: AppRadius.sm),
+              SkeletonCard(width: 80, height: 12, borderRadius: AppRadius.sm),
+              SkeletonCard(width: 60, height: 14, borderRadius: AppRadius.sm),
             ],
           ),
         ],

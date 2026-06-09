@@ -3,6 +3,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../domain/entities/product.dart';
 import 'cart_add_button.dart';
 import 'product_image.dart';
+import 'tag_selector.dart';
 
 class HorizontalProductCard extends StatelessWidget {
   final Product product;
@@ -72,13 +73,62 @@ class HorizontalProductCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          '${product.price.toStringAsFixed(0)} ج',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            fontSize: compact ? 13 : 14,
-                            color: AppColors.primary,
-                          ),
+                        Row(
+                          children: [
+                            Text(
+                              '${product.price.toStringAsFixed(0)} ج',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: compact ? 13 : 14,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            if (!compact &&
+                                (product.preparationTime != null ||
+                                    product.calories != null)) ...[
+                              const SizedBox(width: 8),
+                              if (product.preparationTime != null) ...[
+                                Row(
+                                  children: [
+                                    const Icon(Icons.timer_outlined,
+                                        size: 11,
+                                        color: AppColors.textSecondary),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${product.preparationTime} د',
+                                      style: const TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 9,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 6),
+                              ],
+                              if (product.calories != null) ...[
+                                Row(
+                                  children: [
+                                    const Icon(
+                                        Icons.local_fire_department_outlined,
+                                        size: 11,
+                                        color: AppColors.textSecondary),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      '${product.calories} سعرة',
+                                      style: const TextStyle(
+                                        fontFamily: 'Cairo',
+                                        fontSize: 9,
+                                        color: AppColors.textSecondary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ],
                         ),
                         CartAddButton(
                           product: product,
@@ -102,17 +152,70 @@ class HorizontalProductCard extends StatelessWidget {
 
     return SizedBox(
       width: width,
-      child: ProductImage(
-        imageUrl: product.imageUrl,
-        fit: BoxFit.cover,
-        width: width,
-        height: double.infinity,
-        placeholder: Container(color: AppColors.grey200),
-        errorWidget: Container(
-          color: AppColors.grey200,
-          child: Icon(Icons.fastfood,
-              color: AppColors.grey400, size: compact ? 28 : 36),
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ProductImage(
+            imageUrl: product.imageUrl,
+            fit: BoxFit.cover,
+            width: width,
+            height: double.infinity,
+            placeholder: Container(color: AppColors.grey200),
+            errorWidget: Container(
+              color: AppColors.grey200,
+              child: Icon(Icons.fastfood,
+                  color: AppColors.grey400, size: compact ? 28 : 36),
+            ),
+          ),
+          if (product.tags.isNotEmpty)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: _buildTagBadge(product.tags.first),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagBadge(String tagId) {
+    final tag = ProductTags.all.firstWhere(
+      (t) => t.id == tagId,
+      orElse: () => ProductTag(
+        id: tagId,
+        label: tagId,
+        icon: Icons.label_rounded,
+        color: AppColors.primary,
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: tag.color,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tag.icon, size: 9, color: Colors.white),
+          const SizedBox(width: 3),
+          Text(
+            tag.label,
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 8,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

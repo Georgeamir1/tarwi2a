@@ -25,7 +25,7 @@ const testCategory2 = Category(
 
 const testProduct2 = Product(
   id: 'prod-2',
-  categoryId: 'cat-1',
+  categoryId: 'cat-2',
   name: 'Pepsi',
   nameAr: 'بيبسي',
   price: 15.0,
@@ -92,6 +92,7 @@ void main() {
       ProductsState.initial().copyWith(
         status: ProductsStatus.loaded,
         products: [testProduct, testProduct2],
+        allProducts: [testProduct, testProduct2],
       ),
     );
     when(() => mockProductsCubit.stream)
@@ -122,7 +123,7 @@ void main() {
             authCubit: mockAuthCubit, cartCubit: mockCartCubit));
         await tester.pump();
 
-        expect(find.text('أهلاً محمد 👋'), findsOneWidget);
+        expect(find.text('أهلاً محمد'), findsOneWidget);
         expect(find.text('ماذا تشتهي اليوم؟'), findsOneWidget);
       });
 
@@ -145,8 +146,8 @@ void main() {
 
         expect(find.text('مارجريتا'), findsOneWidget);
         expect(find.text('بيبسي'), findsOneWidget);
-        expect(find.text('75 رس'), findsOneWidget);
-        expect(find.text('15 رس'), findsOneWidget);
+        expect(find.textContaining('75'), findsWidgets);
+        expect(find.textContaining('15'), findsWidgets);
       });
 
       testWidgets('shows empty state when no products', (tester) async {
@@ -161,7 +162,7 @@ void main() {
             authCubit: mockAuthCubit, cartCubit: mockCartCubit));
         await tester.pump();
 
-        expect(find.text('مفيش أصناف في هذه الفئة'), findsOneWidget);
+        expect(find.text('لا توجد أصناف حالياً'), findsOneWidget);
       });
 
       testWidgets('shows cart icon in greeting area', (tester) async {

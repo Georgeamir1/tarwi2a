@@ -4,11 +4,12 @@ class AppConstants {
   // In CI/CD: Set these as GitHub Secrets and pass as --dart-define in workflow
   static const supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://placeholder.supabase.co',
+    defaultValue: 'https://tfchunxrymewqfbafhnb.supabase.co',
   );
   static const supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'placeholder-key',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmY2h1bnhyeW1ld3FmYmFmaG5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTkzMTIsImV4cCI6MjA4OTQ5NTMxMn0.J0VYzLmnA4htPbOnO7bxgctVpuCwDAwms_gMQdB-gLg',
   );
 
   // App

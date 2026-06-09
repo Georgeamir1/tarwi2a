@@ -3,14 +3,36 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_coupons_cubit.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/coupon.dart';
 import '../../../domain/enums/coupon_type.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/empty_state.dart';
 import '../../extensions/coupon_type_x.dart';
 
-class AdminCouponsScreen extends StatelessWidget {
+class AdminCouponsScreen extends StatefulWidget {
   const AdminCouponsScreen({super.key});
+
+  @override
+  State<AdminCouponsScreen> createState() => _AdminCouponsScreenState();
+}
+
+class _AdminCouponsScreenState extends State<AdminCouponsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    appLogger.i('📄 CouponsScreen initState');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<AdminCouponsCubit>();
+      appLogger.i(
+          '📄 CouponsScreen postFrame — status: ${cubit.state.status.name}, count: ${cubit.state.coupons.length}');
+      if (cubit.state.status == AdminCouponsStatus.initial) {
+        appLogger.i('📄 CouponsScreen — calling loadCoupons()');
+        cubit.loadCoupons();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +59,17 @@ class AdminCouponsScreen extends StatelessWidget {
   Widget _buildBody(BuildContext context, AdminCouponsState state) {
     if (state.status == AdminCouponsStatus.loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (state.status == AdminCouponsStatus.error) {
+      return Center(
+        child: EmptyState(
+          icon: Icons.error_outline,
+          title: 'خطأ في تحميل الكوبونات',
+          subtitle: state.failure?.message ?? 'حاول مرة أخرى',
+          actionLabel: 'إعادة المحاولة',
+          onAction: () => context.read<AdminCouponsCubit>().loadCoupons(),
+        ),
+      );
     }
     if (state.coupons.isEmpty) {
       return const Center(
@@ -114,7 +147,6 @@ class AdminCouponsScreen extends StatelessWidget {
                           .read<AdminCouponsCubit>()
                           .toggleActive(coupon.id, v);
                     },
-                    activeTrackColor: AppColors.secondary,
                   ),
                 ],
               ),

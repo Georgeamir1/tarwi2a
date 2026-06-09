@@ -12,6 +12,7 @@ import '../../../domain/entities/address.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
+import '../../extensions/payment_method_x.dart';
 import '../../widgets/loading_button.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -145,48 +146,138 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   void _showSuccessDialog() {
     appLogger.i('[CheckoutScreen] showing success dialog');
+    HapticFeedback.mediumImpact();
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                color: AppColors.success,
-                shape: BoxShape.circle,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        final isDark = theme.brightness == Brightness.dark;
+        
+        return TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 550),
+          tween: Tween<double>(begin: 0.85, end: 1.0),
+          curve: Curves.easeOutBack,
+          builder: (context, cardScale, child) {
+            return Opacity(
+              opacity: ((cardScale - 0.85) / 0.15).clamp(0.0, 1.0),
+              child: Transform.scale(
+                scale: cardScale,
+                child: Dialog(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.xxl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          duration: const Duration(milliseconds: 700),
+                          tween: Tween<double>(begin: 0.0, end: 1.0),
+                          curve: const Interval(0.2, 1.0, curve: Curves.elasticOut),
+                          builder: (context, iconScale, child) {
+                            return Transform.scale(
+                              scale: iconScale,
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: isDark 
+                                      ? const Color(0xFF1B3D2F) 
+                                      : AppColors.successContainer,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (isDark ? const Color(0xFF2D8C5E) : AppColors.success)
+                                          .withValues(alpha: 0.2),
+                                      blurRadius: 16,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.check_circle_rounded,
+                                  color: isDark 
+                                      ? const Color(0xFF81C784) 
+                                      : AppColors.successOnContainer,
+                                  size: 46,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        AppSpacing.gapH24,
+                        Text(
+                          'تم الطلب بنجاح!',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        AppSpacing.gapH8,
+                        Text(
+                          'هنتواصل معاك في أقرب وقت لتأكيد وتوصيل طلبك',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 28),
+                        ElevatedButton(
+                          onPressed: () {
+                            appLogger.i('[CheckoutScreen] navigate to /orders after success');
+                            Navigator.of(dialogContext).pop();
+                            context.go('/orders');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
+                            elevation: 2,
+                            shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+                            minimumSize: const Size(double.infinity, 54),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'شوف طلباتي',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, 
+                                   color: theme.colorScheme.onPrimary, 
+                                   size: 20),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              child:
-                  const Icon(Icons.check, color: AppColors.surface, size: 40),
-            ),
-            AppSpacing.gapH16,
-            const Text(
-              'تم الطلب بنجاح!',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              textAlign: TextAlign.center,
-            ),
-            AppSpacing.gapH8,
-            const Text(
-              'هنتواصل معاك في أقرب وقت',
-              style: TextStyle(color: AppColors.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              appLogger.i('[CheckoutScreen] navigate to /orders after success');
-              context.go('/orders');
-            },
-            child: const Text('شوف طلباتي'),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -207,9 +298,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 30)),
       builder: (context, child) {
+        final theme = Theme.of(context);
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: theme.colorScheme.primary,
+            ),
           ),
           child: child!,
         );
@@ -221,9 +315,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       context: context,
       initialTime: const TimeOfDay(hour: 12, minute: 0),
       builder: (context, child) {
+        final theme = Theme.of(context);
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.primary),
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
+              primary: theme.colorScheme.primary,
+            ),
           ),
           child: child!,
         );
@@ -245,6 +342,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, cartState) {
         return Scaffold(
@@ -330,13 +429,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _selectedAddress != null
-                              ? AppColors.success
-                              : AppColors.primary,
+                              ? (isDark ? const Color(0xFF81C784) : AppColors.successOnContainer)
+                              : theme.colorScheme.primary,
+                          backgroundColor: _selectedAddress != null
+                              ? (isDark ? const Color(0xFF1B3D2F) : AppColors.successContainer)
+                              : Colors.transparent,
                           side: BorderSide(
                             color: _selectedAddress != null
-                                ? AppColors.success
-                                : AppColors.outline,
+                                ? (isDark ? const Color(0xFF2D8C5E) : AppColors.success)
+                                : theme.colorScheme.outlineVariant,
+                            width: 1.5,
                           ),
+                          minimumSize: const Size(double.infinity, 48),
                         ),
                       ),
                     ),
@@ -351,9 +455,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.mdAll,
-                      border: Border.all(color: AppColors.divider),
+                      color: isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface,
+                      borderRadius: AppRadius.lgAll,
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      boxShadow: const [AppShadows.card],
                     ),
                     child: Column(
                       children: [
@@ -385,16 +490,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryLight,
+                                color: theme.colorScheme.primary.withValues(alpha: 0.08),
                                 borderRadius: AppRadius.mdAll,
                                 border: Border.all(
-                                    color: AppColors.primary
-                                        .withValues(alpha: 0.3)),
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_rounded,
-                                      color: AppColors.primary, size: 18),
+                                  Icon(Icons.calendar_today_rounded,
+                                      color: theme.colorScheme.primary, size: 18),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
@@ -405,8 +509,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       style:
                                           theme.textTheme.bodyMedium?.copyWith(
                                         color: _scheduledDateTime != null
-                                            ? AppColors.textPrimary
-                                            : AppColors.textSecondary,
+                                            ? theme.colorScheme.onSurface
+                                            : theme.colorScheme.onSurfaceVariant,
                                         fontWeight: _scheduledDateTime != null
                                             ? FontWeight.w600
                                             : FontWeight.w400,
@@ -455,21 +559,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.tertiaryFixed,
-                        borderRadius: AppRadius.mdAll,
+                        color: isDark 
+                            ? theme.colorScheme.tertiaryContainer.withValues(alpha: 0.15)
+                            : theme.colorScheme.tertiaryContainer,
+                        borderRadius: AppRadius.lgAll,
                         border: Border.all(
-                            color: AppColors.tertiary.withValues(alpha: 0.3)),
+                            color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline_rounded,
-                              color: AppColors.tertiary, size: 18),
+                          Icon(Icons.info_outline_rounded,
+                              color: theme.colorScheme.tertiary, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
                               style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.tertiary),
+                                  ?.copyWith(color: theme.colorScheme.onTertiaryContainer),
                             ),
                           ),
                         ],
@@ -482,9 +588,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.mdAll,
-                      border: Border.all(color: AppColors.divider),
+                      color: isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface,
+                      borderRadius: AppRadius.lgAll,
+                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      boxShadow: const [AppShadows.card],
                     ),
                     child: Column(
                       children: [
@@ -511,7 +618,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                 .join(', '),
                                             style: theme.textTheme.labelSmall
                                                 ?.copyWith(
-                                              color: AppColors.textSecondary,
+                                              color: theme.colorScheme.onSurfaceVariant,
                                             ),
                                           ),
                                       ],
@@ -528,7 +635,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ],
                               ),
                             )),
-                        const Divider(height: 24),
+                        Divider(height: 24, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -541,7 +648,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               '${cartState.total.toStringAsFixed(0)} جنيه',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
+                                color: theme.colorScheme.primary,
                               ),
                             ),
                           ],
@@ -573,16 +680,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     int maxLines = 1,
     String? Function(String?)? validator,
   }) {
-    return TextFormField(
+    return _CheckoutTextField(
       controller: controller,
+      hint: hint,
+      icon: icon,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: Icon(icon),
-        filled: true,
-        fillColor: AppColors.surface,
-      ),
       validator: validator,
     );
   }
@@ -599,13 +702,13 @@ class _SectionTitle extends StatelessWidget {
       title,
       style: theme.textTheme.titleMedium?.copyWith(
         fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
+        color: theme.colorScheme.onSurface,
       ),
     );
   }
 }
 
-class _OrderTypeChip extends StatelessWidget {
+class _OrderTypeChip extends StatefulWidget {
   final OrderType type;
   final OrderType selected;
   final ValueChanged<OrderType> onSelect;
@@ -617,46 +720,101 @@ class _OrderTypeChip extends StatelessWidget {
   });
 
   @override
+  State<_OrderTypeChip> createState() => _OrderTypeChipState();
+}
+
+class _OrderTypeChipState extends State<_OrderTypeChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSelected = type == selected;
-    return GestureDetector(
-      onTap: () => onSelect(type),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : AppColors.surface,
-          borderRadius: AppRadius.mdAll,
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
-            width: isSelected ? 2 : 1,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              type.icon,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              size: 22,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              type.arabicLabel,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+    final isDark = theme.brightness == Brightness.dark;
+    final isSelected = widget.type == widget.selected;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) => _controller.reverse(),
+        onTapCancel: () => _controller.reverse(),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onSelect(widget.type);
+        },
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            constraints: const BoxConstraints(minHeight: 76),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                  : (isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface),
+              borderRadius: AppRadius.lgAll,
+              border: Border.all(
+                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                width: isSelected ? 2 : 1,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : null,
             ),
-          ],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.type.icon,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  size: 24,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.type.arabicLabel,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _ScheduleChip extends StatelessWidget {
+class _ScheduleChip extends StatefulWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -668,26 +826,71 @@ class _ScheduleChip extends StatelessWidget {
   });
 
   @override
+  State<_ScheduleChip> createState() => _ScheduleChipState();
+}
+
+class _ScheduleChipState extends State<_ScheduleChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primaryLight : AppColors.background,
-          borderRadius: AppRadius.mdAll,
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.divider,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? AppColors.primary : AppColors.textSecondary,
+    final isDark = theme.brightness == Brightness.dark;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) => _controller.reverse(),
+        onTapCancel: () => _controller.reverse(),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onTap();
+        },
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: widget.selected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                  : (isDark ? theme.colorScheme.surfaceContainerLowest : theme.colorScheme.surfaceContainerLow),
+              borderRadius: AppRadius.lgAll,
+              border: Border.all(
+                color: widget.selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                width: widget.selected ? 1.5 : 1.0,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              widget.label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
+                color: widget.selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ),
       ),
@@ -695,7 +898,7 @@ class _ScheduleChip extends StatelessWidget {
   }
 }
 
-class _PaymentOption extends StatelessWidget {
+class _PaymentOption extends StatefulWidget {
   final String label;
   final IconData icon;
   final PaymentMethod method;
@@ -711,41 +914,233 @@ class _PaymentOption extends StatelessWidget {
   });
 
   @override
+  State<_PaymentOption> createState() => _PaymentOptionState();
+}
+
+class _PaymentOptionState extends State<_PaymentOption>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isSelected = method == selected;
-    return GestureDetector(
-      onTap: () => onSelect(method),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryLight : AppColors.surface,
-          borderRadius: AppRadius.mdAll,
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.divider,
-            width: isSelected ? 2 : 1,
+    final isDark = theme.brightness == Brightness.dark;
+    final isSelected = widget.method == widget.selected;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) => _controller.reverse(),
+        onTapCancel: () => _controller.reverse(),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          widget.onSelect(widget.method);
+        },
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                  : (isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface),
+              borderRadius: AppRadius.lgAll,
+              border: Border.all(
+                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                width: isSelected ? 2 : 1,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      )
+                    ]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  size: 24,
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
+              ],
+            ),
           ),
         ),
-        child: Row(
-          children: [
-            Icon(icon,
-                color:
-                    isSelected ? AppColors.primary : AppColors.textSecondary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                ),
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: AppColors.primary),
-          ],
+      ),
+    );
+  }
+}
+
+class _CheckoutTextField extends StatefulWidget {
+  final TextEditingController controller;
+  final String hint;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final String? Function(String?)? validator;
+
+  const _CheckoutTextField({
+    required this.controller,
+    required this.hint,
+    required this.icon,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.validator,
+  });
+
+  @override
+  State<_CheckoutTextField> createState() => _CheckoutTextFieldState();
+}
+
+class _CheckoutTextFieldState extends State<_CheckoutTextField> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+  String? _errorText;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final primary = theme.colorScheme.primary;
+    final outlineVariant = theme.colorScheme.outlineVariant;
+    final textPrimary = theme.colorScheme.onSurface;
+    final textSecondary = theme.colorScheme.onSurfaceVariant;
+    final fill = isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface;
+    
+    final hasError = _errorText != null;
+    final borderColor = hasError
+        ? theme.colorScheme.error
+        : (_isFocused 
+            ? primary 
+            : outlineVariant.withValues(alpha: 0.5));
+            
+    final shadowColor = hasError ? theme.colorScheme.error : primary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: AppRadius.lgAll,
+        border: Border.all(
+          color: borderColor,
+          width: _isFocused ? 2.0 : 1.0,
         ),
+        boxShadow: _isFocused
+            ? [
+                BoxShadow(
+                  color: shadowColor.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : null,
+      ),
+      child: TextFormField(
+        controller: widget.controller,
+        focusNode: _focusNode,
+        keyboardType: widget.keyboardType,
+        maxLines: widget.maxLines,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: textPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: theme.textTheme.bodyMedium?.copyWith(
+            color: textSecondary.withValues(alpha: 0.6),
+          ),
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          prefixIcon: AnimatedScale(
+            scale: _isFocused ? 1.1 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              widget.icon,
+              color: _isFocused ? primary : textSecondary,
+              size: 20,
+            ),
+          ),
+        ),
+        validator: (v) {
+          final error = widget.validator?.call(v);
+          if (error != _errorText) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _errorText = error;
+                });
+              }
+            });
+          }
+          return error;
+        },
       ),
     );
   }

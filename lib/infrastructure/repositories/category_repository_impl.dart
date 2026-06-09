@@ -53,6 +53,16 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deleteCategory(String id) async {
+    try {
+      await _remoteDataSource.deleteCategory(id);
+      return right<Failure, void>(null);
+    } catch (e) {
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
   Stream<List<Category>> watchCategories() {
     return _remoteDataSource.watchCategories().map(
           (dtos) => dtos.map((dto) => dto.toDomain()).toList(),

@@ -47,6 +47,26 @@ void main() {
     when(() => mockCubit.state).thenReturn(const AuthState.initial());
     when(() => mockCubit.stream)
         .thenAnswer((_) => const Stream<AuthState>.empty());
+
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.physicalSize = const Size(800, 1200);
+        view.devicePixelRatio = 1.0;
+      }
+    }
+  });
+
+  tearDown(() {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.resetPhysicalSize();
+        view.resetDevicePixelRatio();
+      }
+    }
   });
 
   group('RegisterScreen', () {
@@ -55,14 +75,13 @@ void main() {
           'shows name, email, password fields, register button, and back button',
           (tester) async {
         await tester.pumpWidget(_buildTestWidget(mockCubit));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
         expect(find.text('إنشاء الحساب'), findsOneWidget);
-        expect(find.text('حساب جديد'), findsOneWidget);
-        expect(find.byIcon(Icons.person_outline), findsOneWidget);
+        expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget);
         expect(find.byIcon(Icons.phone_outlined), findsOneWidget);
         expect(find.byIcon(Icons.email_outlined), findsOneWidget);
-        expect(find.byIcon(Icons.lock_outline), findsOneWidget);
+        expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
         expect(find.byType(TextFormField), findsNWidgets(4));
       });
     });
@@ -164,7 +183,8 @@ void main() {
         await tester.pump();
 
         await tester.tap(find.text('إنشاء الحساب'));
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 500));
 
         expect(find.byType(ErrorBanner), findsOneWidget);
         expect(

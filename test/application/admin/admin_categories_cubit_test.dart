@@ -18,6 +18,8 @@ void main() {
 
   setUp(() {
     mockRepo = MockCategoryRepository();
+    when(() => mockRepo.watchCategories())
+        .thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminCategoriesCubit', () {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_orders_cubit.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/enums/order_status.dart';
 
 class AdminShell extends StatelessWidget {
@@ -25,6 +26,7 @@ class AdminShell extends StatelessWidget {
       bottomNavigationBar: NavigationBar(
         selectedIndex: currentIndex,
         onDestinationSelected: (index) {
+          appLogger.i('👆 Nav tap — tab index: $index');
           navigationShell.goBranch(
             index,
             initialLocation: index == currentIndex,

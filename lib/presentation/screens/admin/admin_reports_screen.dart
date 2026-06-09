@@ -11,19 +11,30 @@ import '../../widgets/kpi_card.dart';
 import '../../widgets/date_range_filter.dart';
 import '../../widgets/dashboard_chart.dart';
 
-class AdminReportsScreen extends StatelessWidget {
+class AdminReportsScreen extends StatefulWidget {
   const AdminReportsScreen({super.key});
 
   @override
+  State<AdminReportsScreen> createState() => _AdminReportsScreenState();
+}
+
+class _AdminReportsScreenState extends State<AdminReportsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AdminReportsCubit>().loadReports(
+              startDate: DateTime.now().subtract(const Duration(days: 7)),
+              endDate: DateTime.now(),
+            );
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocProvider<AdminReportsCubit>.value(
-      value: context.read<AdminReportsCubit>()
-        ..loadReports(
-          startDate: DateTime.now().subtract(const Duration(days: 7)),
-          endDate: DateTime.now(),
-        ),
-      child: const _ReportsBody(),
-    );
+    return const _ReportsBody();
   }
 }
 

@@ -42,6 +42,8 @@ import 'package:matbakhy/domain/repositories/business_profile_repository.dart';
 import 'package:matbakhy/domain/repositories/report_repository.dart';
 import 'package:matbakhy/domain/repositories/product_option_repository.dart';
 import 'package:matbakhy/domain/repositories/print_repository.dart';
+import 'package:matbakhy/domain/repositories/address_repository.dart';
+import 'package:matbakhy/domain/entities/address.dart';
 
 // --- Mock Supabase types ---
 
@@ -111,6 +113,8 @@ class MockProductOptionRepository extends Mock
     implements ProductOptionRepository {}
 
 class MockPrintRepository extends Mock implements PrintRepository {}
+
+class MockAddressRepository extends Mock implements AddressRepository {}
 
 // --- Test Fixtures ---
 
@@ -289,4 +293,19 @@ const testProductOption = ProductOption(
   isRequired: false,
   maxSelections: 1,
   sortOrder: 0,
+);
+
+final testAddress = Address(
+  id: 'addr-1',
+  userId: 'user-123',
+  label: 'المنزل',
+  address: 'شارع التحرير، القاهرة',
+  latitude: 30.0444,
+  longitude: 31.2357,
+  building: '12',
+  floor: '3',
+  apartment: '5',
+  notes: 'عند البوابة',
+  isDefault: true,
+  createdAt: DateTime(2026, 1, 1),
 );

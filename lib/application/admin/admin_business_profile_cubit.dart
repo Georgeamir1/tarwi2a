@@ -56,7 +56,7 @@ class AdminBusinessProfileCubit extends Cubit<AdminBusinessProfileState> {
         status: AdminBusinessProfileStatus.error,
         failure: failure,
       )),
-      (_) {},
+      (_) => loadProfile(),
     );
   }
 
@@ -67,7 +67,7 @@ class AdminBusinessProfileCubit extends Cubit<AdminBusinessProfileState> {
         status: AdminBusinessProfileStatus.error,
         failure: failure,
       )),
-      (_) {},
+      (_) => loadProfile(),
     );
   }
 
@@ -82,7 +82,7 @@ class AdminBusinessProfileCubit extends Cubit<AdminBusinessProfileState> {
         status: AdminBusinessProfileStatus.error,
         failure: failure,
       )),
-      (_) {},
+      (_) => loadProfile(),
     );
   }
 

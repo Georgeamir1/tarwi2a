@@ -117,14 +117,14 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PrintRepository>(() => PrintRepositoryImpl(sl()));
 
   // Cubits (factory - new instance per scope)
-  sl.registerFactory<AuthCubit>(
+  sl.registerLazySingleton<AuthCubit>(
       () => AuthCubit(authRepository: sl(), profileRepository: sl()));
   sl.registerFactory<CategoriesCubit>(() => CategoriesCubit(sl()));
   sl.registerFactory<ProductsCubit>(() => ProductsCubit(sl()));
   sl.registerFactory<CartCubit>(() => CartCubit(sl()));
   sl.registerLazySingleton<CustomerOrdersCubit>(
       () => CustomerOrdersCubit(sl()));
-  sl.registerFactory<AdminOrdersCubit>(() => AdminOrdersCubit(sl()));
+  sl.registerLazySingleton<AdminOrdersCubit>(() => AdminOrdersCubit(sl()));
   sl.registerLazySingleton<AdminCategoriesCubit>(
       () => AdminCategoriesCubit(sl()));
   sl.registerLazySingleton<AdminProductsCubit>(() => AdminProductsCubit(sl()));

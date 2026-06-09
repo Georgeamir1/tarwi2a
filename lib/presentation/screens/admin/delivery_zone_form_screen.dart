@@ -49,14 +49,13 @@ class _DeliveryZoneFormScreenState extends State<DeliveryZoneFormScreen> {
     super.dispose();
   }
 
-  void _save() {
+  void _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final data = <String, dynamic>{
       'name': _nameController.text.trim(),
       'fee': double.tryParse(_feeController.text.trim()) ?? 0,
-      'min_order':
-          double.tryParse(_minOrderController.text.trim()) ?? 0,
+      'min_order': double.tryParse(_minOrderController.text.trim()) ?? 0,
       if (_estimatedTimeController.text.trim().isNotEmpty)
         'estimated_time': _estimatedTimeController.text.trim(),
     };
@@ -64,21 +63,32 @@ class _DeliveryZoneFormScreenState extends State<DeliveryZoneFormScreen> {
     setState(() => _saving = true);
 
     final cubit = context.read<AdminDeliveryZonesCubit>();
-    final future = _isEditing
-        ? cubit.upsert(data, id: widget.zone!.id)
-        : cubit.upsert(data);
 
-    future.then((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                _isEditing ? 'تم تعديل منطقة التوصيل' : 'تم إضافة منطقة التوصيل'),
-          ),
-        );
-        context.pop();
-      }
-    });
+    await cubit.upsert(data, id: _isEditing ? widget.zone!.id : null);
+
+    if (!mounted) return;
+
+    final currentState = cubit.state;
+    if (currentState.status == AdminDeliveryZonesStatus.error) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(currentState.failure?.message ?? 'حدث خطأ في الحفظ'),
+          backgroundColor: AppColors.statusCancelled,
+        ),
+      );
+      return;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              _isEditing ? 'تم تعديل منطقة التوصيل' : 'تم إضافة منطقة التوصيل'),
+        ),
+      );
+      context.pop();
+    }
   }
 
   @override
@@ -100,8 +110,7 @@ class _DeliveryZoneFormScreenState extends State<DeliveryZoneFormScreen> {
                 hint: 'مثال: وسط البلد',
                 controller: _nameController,
                 prefixIcon: Icons.map,
-                validator: (v) =>
-                    v?.trim().isEmpty == true ? 'مطلوب' : null,
+                validator: (v) => v?.trim().isEmpty == true ? 'مطلوب' : null,
               ),
               AppSpacing.gapH16,
               AppTextField(
@@ -109,8 +118,7 @@ class _DeliveryZoneFormScreenState extends State<DeliveryZoneFormScreen> {
                 controller: _feeController,
                 prefixIcon: Icons.attach_money,
                 keyboardType: TextInputType.number,
-                validator: (v) =>
-                    v?.trim().isEmpty == true ? 'مطلوب' : null,
+                validator: (v) => v?.trim().isEmpty == true ? 'مطلوب' : null,
               ),
               AppSpacing.gapH16,
               AppTextField(
@@ -128,8 +136,7 @@ class _DeliveryZoneFormScreenState extends State<DeliveryZoneFormScreen> {
               ),
               const SizedBox(height: 32),
               AppButton(
-                label:
-                    _isEditing ? 'تعديل المنطقة' : 'إضافة المنطقة',
+                label: _isEditing ? 'تعديل المنطقة' : 'إضافة المنطقة',
                 isLoading: _saving,
                 onPressed: _save,
               ),

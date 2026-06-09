@@ -50,11 +50,39 @@ class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
   }
 
   Future<void> upsert(Map<String, dynamic> data, {String? id}) async {
-    await _repository.upsertCategory(data, id: id);
+    emit(state.copyWith(status: AdminCategoriesStatus.loading));
+    final result = await _repository.upsertCategory(data, id: id);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminCategoriesStatus.error,
+        failure: failure,
+      )),
+      (_) => loadCategories(),
+    );
   }
 
   Future<void> toggleActive(String id, bool isActive) async {
-    await _repository.toggleActive(id, isActive);
+    emit(state.copyWith(status: AdminCategoriesStatus.loading));
+    final result = await _repository.toggleActive(id, isActive);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminCategoriesStatus.error,
+        failure: failure,
+      )),
+      (_) => loadCategories(),
+    );
+  }
+
+  Future<void> deleteCategory(String id) async {
+    emit(state.copyWith(status: AdminCategoriesStatus.loading));
+    final result = await _repository.deleteCategory(id);
+    result.fold(
+      (failure) => emit(state.copyWith(
+        status: AdminCategoriesStatus.error,
+        failure: failure,
+      )),
+      (_) => loadCategories(),
+    );
   }
 
   @override

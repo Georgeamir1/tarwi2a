@@ -3,11 +3,33 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_customers_cubit.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/empty_state.dart';
 
-class AdminCustomersScreen extends StatelessWidget {
+class AdminCustomersScreen extends StatefulWidget {
   const AdminCustomersScreen({super.key});
+
+  @override
+  State<AdminCustomersScreen> createState() => _AdminCustomersScreenState();
+}
+
+class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
+  @override
+  void initState() {
+    super.initState();
+    appLogger.i('📄 CustomersScreen initState');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<AdminCustomersCubit>();
+      appLogger.i(
+          '📄 CustomersScreen postFrame — status: ${cubit.state.status.name}, count: ${cubit.state.customers.length}');
+      if (cubit.state.status == AdminCustomersStatus.initial) {
+        appLogger.i('📄 CustomersScreen — calling loadCustomers()');
+        cubit.loadCustomers();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +82,7 @@ class AdminCustomersScreen extends StatelessWidget {
           title: 'خطأ في تحميل العملاء',
           subtitle: state.failure?.message ?? 'حاول مرة أخرى',
           actionLabel: 'إعادة المحاولة',
-          onAction: () =>
-              context.read<AdminCustomersCubit>().loadCustomers(),
+          onAction: () => context.read<AdminCustomersCubit>().loadCustomers(),
         ),
       );
     }

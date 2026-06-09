@@ -1,11 +1,16 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../dtos/delivery_zone_dto.dart';
 
 class DeliveryZoneRemoteDataSource {
   final SupabaseClient _client = Supabase.instance.client;
 
   Future<List<DeliveryZoneDTO>> getAll() async {
-    final data = await _client.from('delivery_zones').select().order('name');
+    final data = await _client
+        .from('delivery_zones')
+        .select()
+        .order('created_at', ascending: false);
+    appLogger.i('📊 delivery_zones getAll() raw result: $data');
     return (data as List).map((e) => DeliveryZoneDTO.fromJson(e)).toList();
   }
 

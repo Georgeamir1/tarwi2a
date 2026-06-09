@@ -37,7 +37,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     .read<ThemeCubit>()
                     .setThemeMode(v ? ThemeMode.dark : ThemeMode.light);
               },
-              activeTrackColor: AppColors.primary,
             ),
           ),
           const _SectionLabel(title: 'الإشعارات'),
@@ -47,7 +46,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _notifications,
               onChanged: (v) => setState(() => _notifications = v),
-              activeTrackColor: AppColors.primary,
             ),
           ),
           _SettingsTile(
@@ -56,7 +54,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             trailing: Switch(
               value: _orderUpdates,
               onChanged: (v) => setState(() => _orderUpdates = v),
-              activeTrackColor: AppColors.primary,
             ),
           ),
           const _SectionLabel(title: 'معلومات'),

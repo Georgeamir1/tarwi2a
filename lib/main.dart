@@ -10,7 +10,40 @@ import 'application/auth/auth_cubit.dart';
 import 'application/cart/cart_cubit.dart';
 import 'application/theme/theme_cubit.dart';
 import 'application/orders/customer_orders_cubit.dart';
-import 'application/admin/admin_reports_cubit.dart';
+import 'core/logger/app_logger.dart';
+
+class DebugBlocObserver extends BlocObserver {
+  static const _watched = [
+    'AdminCouponsCubit',
+    'AdminCustomersCubit',
+    'AdminDeliveryZonesCubit',
+  ];
+
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    if (_watched.any((n) => bloc.runtimeType.toString().contains(n))) {
+      appLogger
+          .i('🟡 [${bloc.runtimeType}] ${change.currentState.runtimeType}');
+    }
+    super.onChange(bloc, change);
+  }
+
+  @override
+  void onCreate(BlocBase bloc) {
+    if (_watched.any((n) => bloc.runtimeType.toString().contains(n))) {
+      appLogger.i('🟢 CREATED [${bloc.runtimeType}]');
+    }
+    super.onCreate(bloc);
+  }
+
+  @override
+  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
+    if (_watched.any((n) => bloc.runtimeType.toString().contains(n))) {
+      appLogger.e('🔴 ERROR [${bloc.runtimeType}] $error');
+    }
+    super.onError(bloc, error, stackTrace);
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +69,9 @@ void main() async {
     anonKey: AppConstants.supabaseAnonKey,
   );
   await initDependencies();
+
+  Bloc.observer = DebugBlocObserver();
+
   runApp(const TarwikaApp());
 }
 
@@ -62,7 +98,6 @@ class _TarwikaAppState extends State<TarwikaApp> {
         BlocProvider(create: (_) => sl<AuthCubit>()..checkAuthStatus()),
         BlocProvider(create: (_) => sl<CartCubit>()..loadCart()),
         BlocProvider.value(value: sl<CustomerOrdersCubit>()),
-        BlocProvider.value(value: sl<AdminReportsCubit>()),
         BlocProvider.value(value: _themeCubit),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(

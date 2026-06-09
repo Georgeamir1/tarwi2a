@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_orders_cubit.dart';
 import '../../../application/admin/admin_reports_cubit.dart';
+import '../../../application/admin/admin_business_profile_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/enums/order_status.dart';
@@ -12,6 +13,7 @@ import '../../widgets/dashboard_revenue_chart.dart';
 import '../../widgets/dashboard_top_products_chart.dart';
 import '../../widgets/dashboard_orders_chart.dart';
 import '../../widgets/time_filter_chips.dart';
+import '../../widgets/app_button.dart';
 import '../../../domain/repositories/report_repository.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -28,68 +30,58 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final now = DateTime.now();
     return switch (_timeFilter) {
       TimeFilter.today =>
-          DateTimeRange(start: DateTime(now.year, now.month, now.day), end: now),
+        DateTimeRange(start: DateTime(now.year, now.month, now.day), end: now),
       TimeFilter.week =>
-          DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
+        DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
       TimeFilter.month =>
-          DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now),
+        DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now),
       TimeFilter.quarter =>
-          DateTimeRange(start: now.subtract(const Duration(days: 90)), end: now),
+        DateTimeRange(start: now.subtract(const Duration(days: 90)), end: now),
       TimeFilter.custom =>
-          DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
+        DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
     };
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    final range = _getDateRange();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminReportsCubit>().loadReports(
-        startDate: range.start,
-        endDate: range.end,
-      );
-    });
   }
 
   void _onFilterChanged(TimeFilter filter) {
     setState(() => _timeFilter = filter);
     final range = _getDateRange();
     context.read<AdminReportsCubit>().updateDateRange(
-      range.start,
-      range.end,
-    );
+          range.start,
+          range.end,
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
       builder: (context, ordersState) {
         return BlocBuilder<AuthCubit, AuthState>(
           builder: (context, authState) {
-            final ordersLoaded =
-                ordersState.status == AdminOrdersStatus.loaded;
+            final ordersLoaded = ordersState.status == AdminOrdersStatus.loaded;
             final orders = ordersState.orders;
             final pendingCount = ordersLoaded
                 ? orders.where((o) => o.status == OrderStatus.pending).length
                 : 0;
             final profileName =
-            authState is Authenticated ? authState.profile.name : null;
+                authState is Authenticated ? authState.profile.name : null;
 
             return Scaffold(
-              backgroundColor: AppColors.background,
+              backgroundColor:
+                  isDark ? AppColors.darkBackground : AppColors.background,
               body: RefreshIndicator(
                 color: AppColors.primary,
                 onRefresh: () async {
                   context.read<AdminOrdersCubit>().loadOrders();
                   context.read<AuthCubit>().checkAuthStatus();
+                  context.read<AdminBusinessProfileCubit>().loadProfile();
                   final range = _getDateRange();
                   context.read<AdminReportsCubit>().loadReports(
-                    startDate: range.start,
-                    endDate: range.end,
-                  );
+                        startDate: range.start,
+                        endDate: range.end,
+                      );
                   await Future.delayed(const Duration(milliseconds: 500));
                 },
                 child: CustomScrollView(
@@ -103,7 +95,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                     ),
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
                           // ── KPI Cards ──────────────────────────────────
@@ -136,22 +128,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 children: [
                                   _ChartCard(
                                     title: 'المبيعات',
-                                    unit: 'رس',
+                                    unit: 'ج',
                                     totalValue: state.data!.totalRevenue,
                                     child: DashboardRevenueChart(
                                       data: state.data!.revenueByDay,
                                       color: AppColors.primary,
                                     ),
                                   ),
-                                  AppSpacing.gapH12,
+                                  AppSpacing.gapH16,
                                   _ChartCard(
                                     title: 'حجم الطلبات',
                                     totalValue:
-                                    state.data!.totalOrders.toDouble(),
+                                        state.data!.totalOrders.toDouble(),
                                     isCount: true,
                                     child: DashboardOrdersChart(
                                       data: state.data!.revenueByDay,
-                                      color: AppColors.primary,
+                                      color: AppColors.statusConfirmed,
                                     ),
                                   ),
                                 ],
@@ -182,26 +174,70 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           // ── Quick Actions ──────────────────────────────
                           _SectionHeader(title: 'الإجراءات السريعة'),
                           AppSpacing.gapH12,
-                          Row(
+                          GridView.count(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 1.5,
                             children: [
-                              Expanded(
-                                child: _QuickActionCard(
-                                  title: 'إدارة المنيو',
-                                  subtitle: 'أضف وعدّل الأصناف',
-                                  icon: Icons.restaurant_menu_rounded,
-                                  color: AppColors.secondary,
-                                  onTap: () => context.go('/admin/menu'),
+                              _QuickActionCard(
+                                title: 'إدارة المنيو',
+                                subtitle: 'الأصناف والأسعار',
+                                icon: Icons.restaurant_menu_rounded,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF5C4E4D),
+                                    Color(0xFF7D6B69)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
+                                onTap: () => context.go('/admin/menu'),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _QuickActionCard(
-                                  title: 'إدارة الطلبات',
-                                  subtitle: 'عرض ومتابعة الطلبات',
-                                  icon: Icons.receipt_long_rounded,
-                                  color: AppColors.primary,
-                                  onTap: () => context.go('/admin/orders'),
+                              _QuickActionCard(
+                                title: 'إدارة الطلبات',
+                                subtitle: 'تتبع الطلبات الحية',
+                                icon: Icons.receipt_long_rounded,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFE02B2B),
+                                    Color(0xFFFF5252)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
+                                onTap: () => context.go('/admin/orders'),
+                              ),
+                              _QuickActionCard(
+                                title: 'الملف التجاري',
+                                subtitle: 'مواعيد العمل والفرع',
+                                icon: Icons.storefront_rounded,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFC68B59),
+                                    Color(0xFFE0A97E)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                onTap: () =>
+                                    context.push('/admin/business-profile'),
+                              ),
+                              _QuickActionCard(
+                                title: 'التقارير المالية',
+                                subtitle: 'الأرباح بالتفصيل',
+                                icon: Icons.analytics_rounded,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF00658B),
+                                    Color(0xFF0091C7)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                onTap: () => context.push('/admin/reports'),
                               ),
                             ],
                           ),
@@ -215,23 +251,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               onPressed: () => context.go('/admin/orders'),
                               child: const Text(
                                 'عرض الكل',
-                                style: TextStyle(fontSize: 12),
+                                style: TextStyle(
+                                    fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
                           AppSpacing.gapH12,
                           if (ordersState.status == AdminOrdersStatus.error)
                             _ErrorState(
-                                message:
-                                ordersState.failure?.message ?? 'خطأ')
+                                message: ordersState.failure?.message ??
+                                    'خطأ في تحميل البيانات')
                           else if (!ordersLoaded)
                             const _OrdersSkeleton()
                           else if (orders.isEmpty)
-                              _buildEmptyOrders(theme)
-                            else
-                              ...orders.take(5).map(
-                                    (order) => _OrderListItem(order: order),
-                              ),
+                            _buildEmptyOrders(theme, isDark)
+                          else
+                            ...orders.take(5).map(
+                                  (order) => _OrderListItem(order: order),
+                                ),
                         ]),
                       ),
                     ),
@@ -245,23 +282,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildEmptyOrders(ThemeData theme) {
+  Widget _buildEmptyOrders(ThemeData theme, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 36),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkDivider
+              : AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         children: [
-          Icon(Icons.receipt_long_outlined,
-              size: 36, color: AppColors.onSurfaceVariant),
-          const SizedBox(height: 8),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 40,
+            color: isDark
+                ? AppColors.darkTextSecondary
+                : AppColors.secondary.withValues(alpha: 0.5),
+          ),
+          const SizedBox(height: 10),
           Text(
-            'مفيش طلبات لسه',
+            'لا توجد طلبات مسجلة حالياً',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: isDark
+                  ? AppColors.darkTextSecondary
+                  : AppColors.secondary.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -276,7 +326,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -285,31 +335,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: AppColors.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               AppSpacing.gapH16,
               ListTile(
-                leading: const Icon(Icons.store, color: AppColors.primary),
-                title: const Text('الملف التجاري'),
+                leading: const Icon(Icons.storefront_rounded,
+                    color: AppColors.primary),
+                title: const Text('الملف التجاري',
+                    style: TextStyle(fontFamily: 'Cairo')),
                 onTap: () {
                   Navigator.pop(ctx);
                   context.push('/admin/business-profile');
                 },
               ),
               ListTile(
-                leading:
-                const Icon(Icons.analytics, color: AppColors.primary),
-                title: const Text('التقارير المالية'),
+                leading: const Icon(Icons.analytics_rounded,
+                    color: AppColors.primary),
+                title: const Text('التقارير المالية',
+                    style: TextStyle(fontFamily: 'Cairo')),
                 onTap: () {
                   Navigator.pop(ctx);
                   context.push('/admin/reports');
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.print, color: AppColors.primary),
-                title: const Text('إعدادات الطابعة'),
+                leading:
+                    const Icon(Icons.print_rounded, color: AppColors.primary),
+                title: const Text('إعدادات الطابعة',
+                    style: TextStyle(fontFamily: 'Cairo')),
                 onTap: () {
                   Navigator.pop(ctx);
                   context.push('/admin/printer-settings');
@@ -317,10 +372,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.logout, color: AppColors.error),
+                leading:
+                    const Icon(Icons.logout_rounded, color: AppColors.error),
                 title: const Text(
                   'تسجيل الخروج',
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(
+                      color: AppColors.error,
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.bold),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
@@ -340,12 +399,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg)),
-        title: const Text('تسجيل الخروج'),
-        content: const Text('هل أنت متأكد من تسجيل الخروج؟'),
+        title: const Text('تسجيل الخروج',
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
+        content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+            style: TextStyle(fontFamily: 'Cairo')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء'),
+            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
           ),
           TextButton(
             onPressed: () async {
@@ -355,7 +416,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             },
             child: const Text(
               'خروج',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(
+                  color: AppColors.error,
+                  fontFamily: 'Cairo',
+                  fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -383,51 +447,80 @@ class _DashboardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      color: AppColors.primary,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: isDark
+              ? [
+                  const Color(0xFF3B2423),
+                  const Color(0xFF2C1918),
+                ]
+              : [
+                  AppColors.primary,
+                  const Color(0xFFC02222),
+                  const Color(0xFF8B1E1E),
+                ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top row
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row
+              Row(
                 children: [
                   _HeaderIconBtn(
-                      icon: Icons.arrow_back_ios_new_rounded,
-                      size: 18,
-                      onTap: onBackTap),
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    size: 16,
+                    onTap: onBackTap,
+                  ),
                   const SizedBox(width: 8),
                   _HeaderIconBtn(
-                      icon: Icons.settings_outlined,
-                      size: 20,
-                      onTap: onSettingsTap),
+                    icon: Icons.settings_rounded,
+                    size: 18,
+                    onTap: onSettingsTap,
+                  ),
                   const Spacer(),
                   // Notification bell with badge
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
                       _HeaderIconBtn(
-                          icon: Icons.notifications_outlined,
-                          size: 22,
-                          onTap: () {}),
+                        icon: Icons.notifications_none_rounded,
+                        size: 20,
+                        onTap: () => context.push('/admin/notifications'),
+                      ),
                       if (pendingCount > 0)
                         Positioned(
                           top: -2,
                           right: -2,
                           child: Container(
-                            padding: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.all(4),
                             decoration: const BoxDecoration(
-                              color: AppColors.warning,
+                              color: AppColors.statusPending,
                               shape: BoxShape.circle,
                             ),
                             child: Text(
                               '$pendingCount',
                               style: const TextStyle(
                                 fontSize: 9,
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
                             ),
@@ -437,50 +530,354 @@ class _DashboardHeader extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
 
-            // Greeting
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Row(
+              const SizedBox(height: 20),
+
+              // Greeting
+              Row(
                 children: [
-                  const Text('👋', style: TextStyle(fontSize: 26)),
-                  const SizedBox(width: 10),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white30, width: 2),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        profileName != null ? 'أهلاً $profileName' : 'أهلاً بك',
+                        profileName != null
+                            ? 'أهلاً، $profileName 👋'
+                            : 'أهلاً بك 👋',
                         style: const TextStyle(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
+                          fontFamily: 'Cairo',
                         ),
                       ),
-                      const Text(
-                        'لوحة التحكم',
+                      Text(
+                        'لوحة التحكم والإدارة الفورية',
                         style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white60,
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ],
                   ),
                 ],
               ),
-            ),
 
-            // Wave bottom clip
-            const SizedBox(height: 12),
-            ClipPath(
-              clipper: _WaveClipper(),
-              child: Container(
-                height: 32,
-                color: AppColors.background,
+              const SizedBox(height: 24),
+
+              // Operational Status Card (Frosted Glassmorphic look)
+              BlocBuilder<AdminBusinessProfileCubit, AdminBusinessProfileState>(
+                builder: (context, state) {
+                  final profile = state.profile;
+                  if (profile == null) {
+                    return Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final String statusText;
+                  final Color indicatorColor;
+                  final IconData statusIcon;
+
+                  if (!profile.acceptOrders) {
+                    statusText = 'المطعم مغلق حالياً ولا يستقبل طلبات';
+                    indicatorColor = const Color(0xFFEF9A9A); // Soft red
+                    statusIcon = Icons.remove_circle_outline_rounded;
+                  } else if (profile.isBusy) {
+                    statusText = 'المطعم مشغول ومزدحم (الطلبات قد تتأخر)';
+                    indicatorColor = const Color(0xFFFFCC80); // Soft orange
+                    statusIcon = Icons.warning_amber_rounded;
+                  } else {
+                    statusText = 'المطعم مفتوح ويستقبل طلبات حية';
+                    indicatorColor = const Color(0xFFA5D6A7); // Soft green
+                    statusIcon = Icons.check_circle_outline_rounded;
+                  }
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.09),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(statusIcon, color: indicatorColor, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'حالة تشغيل المطعم',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white70,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                statusText,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: indicatorColor,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Quick Action button to modify
+                        Material(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(8),
+                            onTap: () => _showStatusBottomSheet(context),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              child: Text(
+                                'تغيير',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  void _showStatusBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return BlocBuilder<AdminBusinessProfileCubit,
+            AdminBusinessProfileState>(
+          builder: (context, state) {
+            final profile = state.profile;
+            if (profile == null) {
+              return const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.outlineVariant,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'تعديل حالة تشغيل المطعم',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'تحكم بظهور المطعم وقبول الطلبات للعملاء مباشرة',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.outline,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Accept Orders Switch
+                    _BottomSheetToggleTile(
+                      title: 'استقبال الطلبات',
+                      subtitle: profile.acceptOrders
+                          ? 'المطعم يظهر للعملاء ومتاح للطلب'
+                          : 'الطلب متوقف والمطعم يظهر كمغلق',
+                      value: profile.acceptOrders,
+                      icon: Icons.shopping_bag_outlined,
+                      onChanged: (val) {
+                        context
+                            .read<AdminBusinessProfileCubit>()
+                            .toggleAcceptOrders(val);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Busy Mode Switch
+                    _BottomSheetToggleTile(
+                      title: 'وضع الانشغال (مزدحم)',
+                      subtitle: profile.isBusy
+                          ? 'تنبيه العملاء بزيادة وقت التحضير'
+                          : 'العمل يسير بالمعدل الطبيعي',
+                      value: profile.isBusy,
+                      icon: Icons.timer_outlined,
+                      onChanged: (val) {
+                        context
+                            .read<AdminBusinessProfileCubit>()
+                            .toggleBusyMode(
+                              isBusy: val,
+                              message: val
+                                  ? 'المطعم مزدحم حالياً، قد يستغرق الطلب وقتاً أطول للتحضير'
+                                  : null,
+                            );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    AppButton(
+                      label: 'إغلاق',
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+class _BottomSheetToggleTile extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final bool value;
+  final IconData icon;
+  final ValueChanged<bool> onChanged;
+
+  const _BottomSheetToggleTile({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.icon,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: value
+            ? AppColors.primary.withValues(alpha: 0.04)
+            : AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: value
+              ? AppColors.primary.withValues(alpha: 0.2)
+              : AppColors.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: SwitchListTile(
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: value
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : AppColors.outlineVariant.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: value ? AppColors.primary : AppColors.outline,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Cairo',
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 11,
+            fontFamily: 'Cairo',
+          ),
+        ),
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: AppColors.primary,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       ),
     );
   }
@@ -491,8 +888,11 @@ class _HeaderIconBtn extends StatelessWidget {
   final double size;
   final VoidCallback onTap;
 
-  const _HeaderIconBtn(
-      {required this.icon, required this.size, required this.onTap});
+  const _HeaderIconBtn({
+    required this.icon,
+    required this.size,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -511,29 +911,6 @@ class _HeaderIconBtn extends StatelessWidget {
   }
 }
 
-class _WaveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-    path.moveTo(0, size.height);
-    path.lineTo(0, size.height * 0.5);
-    path.quadraticBezierTo(
-      size.width * 0.25, 0,
-      size.width * 0.5, size.height * 0.4,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.75, size.height * 0.8,
-      size.width, size.height * 0.2,
-    );
-    path.lineTo(size.width, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
 // ──────────────────────────────────────────────────────────────
 // Section header
 // ──────────────────────────────────────────────────────────────
@@ -546,15 +923,17 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w800,
-            letterSpacing: 0.1,
+            color: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+            fontFamily: 'Cairo',
           ),
         ),
         if (action != null) action!,
@@ -564,7 +943,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
-// KPI Grid  (4 cards, 2×2)
+// KPI Grid  (8 cards, 2×4)
 // ──────────────────────────────────────────────────────────────
 
 class _KpiGrid extends StatelessWidget {
@@ -577,51 +956,85 @@ class _KpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = reportsState.data;
 
+    final total = data?.totalOrders ?? 0;
+    final cancelled = data?.cancelledOrders ?? 0;
+    final completionRate = total > 0
+        ? ((total - cancelled) / total * 100).toStringAsFixed(0)
+        : '100';
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.3,
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 10,
+      childAspectRatio: 1.45,
       children: [
         _KpiCard(
           title: 'إجمالي المبيعات',
           value: data != null
               ? '${(data.totalRevenue / 1000).toStringAsFixed(1)}K'
               : null,
-          unit: 'رس',
-          change: '+12%',
-          changePositive: true,
-          icon: Icons.attach_money_rounded,
+          unit: 'ج',
+          icon: Icons.monetization_on_rounded,
+          iconColor: const Color(0xFF2E7D32),
           iconBgColor: const Color(0xFFE8F5E9),
-          iconColor: AppColors.secondary,
-          sparklineData: data?.revenueByDay.map((d) => d.revenue).toList(),
         ),
         _KpiCard(
-          title: 'طلبات انتظار',
+          title: 'طلبات قيد الانتظار',
           value: '$pendingCount',
           unit: 'طلب',
-          icon: Icons.pending_actions_rounded,
+          icon: Icons.hourglass_empty_rounded,
+          iconColor: const Color(0xFFEF6C00),
           iconBgColor: const Color(0xFFFFF3E0),
-          iconColor: AppColors.warning,
         ),
         _KpiCard(
-          title: 'متوسط الطلب',
+          title: 'متوسط قيمة الطلب',
           value: data != null ? '${data.averageOrder.toInt()}' : null,
-          unit: 'رس',
-          icon: Icons.trending_up_rounded,
-          iconBgColor: const Color(0xFFE3F2FD),
+          unit: 'ج',
+          icon: Icons.calculate_rounded,
           iconColor: const Color(0xFF1565C0),
-          sparklineData: data?.revenueByDay.map((d) => d.revenue).toList(),
+          iconBgColor: const Color(0xFFE3F2FD),
         ),
         _KpiCard(
-          title: 'عدد الطلبات',
+          title: 'إجمالي الطلبات',
           value: data != null ? '${data.totalOrders}' : null,
           unit: 'طلب',
-          icon: Icons.receipt_long_rounded,
-          iconBgColor: const Color(0xFFF3E5F5),
+          icon: Icons.shopping_cart_rounded,
           iconColor: const Color(0xFF7B1FA2),
+          iconBgColor: const Color(0xFFF3E5F5),
+        ),
+        _KpiCard(
+          title: 'عدد العملاء',
+          value: data != null ? '${data.totalCustomers}' : null,
+          unit: 'عميل',
+          icon: Icons.people_alt_rounded,
+          iconColor: const Color(0xFF00838F),
+          iconBgColor: const Color(0xFFE0F7FA),
+        ),
+        _KpiCard(
+          title: 'قيمة الخصومات',
+          value: data != null ? '${data.discountTotal.toInt()}' : null,
+          unit: 'ج',
+          icon: Icons.local_offer_rounded,
+          iconColor: const Color(0xFFC62828),
+          iconBgColor: const Color(0xFFFFEBEE),
+        ),
+        _KpiCard(
+          title: 'الطلبات الملغاة',
+          value: data != null ? '${data.cancelledOrders}' : null,
+          unit: 'طلب',
+          icon: Icons.cancel_rounded,
+          iconColor: const Color(0xFFD84315),
+          iconBgColor: const Color(0xFFFBE9E7),
+        ),
+        _KpiCard(
+          title: 'نسبة نجاح الطلبات',
+          value: data != null ? completionRate : null,
+          unit: '%',
+          icon: Icons.check_circle_rounded,
+          iconColor: const Color(0xFF558B2F),
+          iconBgColor: const Color(0xFFF1F8E9),
         ),
       ],
     );
@@ -636,205 +1049,114 @@ class _KpiCard extends StatelessWidget {
   final String title;
   final String? value; // null = loading
   final String unit;
-  final String? change;
-  final bool changePositive;
   final IconData icon;
   final Color iconBgColor;
   final Color iconColor;
-  final List<double>? sparklineData;
 
   const _KpiCard({
     required this.title,
     required this.value,
     required this.unit,
-    this.change,
-    this.changePositive = true,
     required this.icon,
     required this.iconBgColor,
     required this.iconColor,
-    this.sparklineData,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkDivider
+              : AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon + change badge row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconBgColor,
-                  borderRadius: BorderRadius.circular(10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.secondary.withValues(alpha: 0.75),
+                    fontFamily: 'Cairo',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                child: Icon(icon, color: iconColor, size: 18),
               ),
-              if (change != null)
-                _ChangeBadge(label: change!, positive: changePositive),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color:
+                      isDark ? iconColor.withValues(alpha: 0.15) : iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 16),
+              ),
             ],
           ),
-
           const Spacer(),
-
-          // Value
           if (value == null)
             Container(
-              height: 24,
-              width: 60,
+              height: 20,
+              width: 50,
               decoration: BoxDecoration(
-                color: AppColors.outlineVariant,
-                borderRadius: BorderRadius.circular(6),
+                color: isDark
+                    ? AppColors.darkDivider
+                    : AppColors.outlineVariant.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(4),
               ),
             )
           else
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: value,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: iconColor,
-                      height: 1,
-                    ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  value!,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? AppColors.darkTextPrimary
+                        : AppColors.onSurface,
+                    fontFamily: 'Cairo',
                   ),
-                  TextSpan(
-                    text: '  $unit',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-          // Sparkline
-          if (sparklineData != null && sparklineData!.length > 1) ...[
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 24,
-              child: CustomPaint(
-                size: const Size(double.infinity, 24),
-                painter: _SparklinePainter(
-                  data: sparklineData!,
-                  color: iconColor,
                 ),
-              ),
+                const SizedBox(width: 4),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.secondary.withValues(alpha: 0.6),
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+              ],
             ),
-          ] else
-            const SizedBox(height: 4),
-
-          // Title
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
         ],
       ),
     );
   }
-}
-
-class _ChangeBadge extends StatelessWidget {
-  final String label;
-  final bool positive;
-
-  const _ChangeBadge({required this.label, required this.positive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: positive
-            ? const Color(0xFFE8F5E9)
-            : const Color(0xFFFFEBEE),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            positive
-                ? Icons.arrow_upward_rounded
-                : Icons.arrow_downward_rounded,
-            size: 10,
-            color: positive ? AppColors.secondary : AppColors.error,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: positive ? AppColors.secondary : AppColors.error,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Sparkline painter
-// ──────────────────────────────────────────────────────────────
-
-class _SparklinePainter extends CustomPainter {
-  final List<double> data;
-  final Color color;
-
-  const _SparklinePainter({required this.data, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.length < 2) return;
-    final maxVal = data.reduce((a, b) => a > b ? a : b);
-    final minVal = data.reduce((a, b) => a < b ? a : b);
-    final range = maxVal - minVal;
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.7)
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    final path = Path();
-    final stepX = size.width / (data.length - 1);
-    for (var i = 0; i < data.length; i++) {
-      final x = i * stepX;
-      final y = range == 0
-          ? size.height / 2
-          : size.height -
-          ((data[i] - minVal) / range) * size.height * 0.8 -
-          size.height * 0.1;
-      i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklinePainter old) =>
-      old.data != data || old.color != color;
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -866,12 +1188,20 @@ class _ChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkDivider
+              : AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -887,9 +1217,12 @@ class _ChartCard extends StatelessWidget {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.onSurfaceVariant,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.secondary.withValues(alpha: 0.8),
+                      fontFamily: 'Cairo',
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -900,9 +1233,10 @@ class _ChartCard extends StatelessWidget {
                       Text(
                         _formattedTotal,
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: AppColors.primary,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                       if (unit != null) ...[
@@ -910,8 +1244,11 @@ class _ChartCard extends StatelessWidget {
                         Text(
                           unit!,
                           style: TextStyle(
-                            fontSize: 13,
-                            color: AppColors.onSurfaceVariant,
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.onSurfaceVariant,
+                            fontFamily: 'Cairo',
                           ),
                         ),
                       ],
@@ -921,24 +1258,26 @@ class _ChartCard extends StatelessWidget {
               ),
               Container(
                 padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  color: isDark
+                      ? AppColors.primary.withValues(alpha: 0.15)
+                      : AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
+                child: const Text(
                   'هذه الفترة',
                   style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.primary,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          // Chart — taller than before (160px vs 120px)
           SizedBox(height: 160, child: child),
         ],
       ),
@@ -957,22 +1296,29 @@ class _TopProductsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final total = data.fold(0.0, (sum, p) => sum + p.revenue);
 
     const dotColors = [
       AppColors.primary,
-      AppColors.secondary,
-      Color(0xFF1565C0),
-      Color(0xFF7B1FA2),
-      Color(0xFFE65100),
+      AppColors.statusConfirmed,
+      AppColors.statusPreparing,
+      Color(0xFFC68B59),
+      Color(0xFF00658B),
     ];
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkDivider
+              : AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
+        boxShadow: const [AppShadows.card],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -981,13 +1327,19 @@ class _TopProductsSection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'المنتجات الأكثر مبيعاً',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color:
+                      isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+                  fontFamily: 'Cairo',
+                ),
               ),
               GestureDetector(
-                onTap: () {},
-                child: Row(
+                onTap: () => context.push('/admin/reports'),
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
@@ -995,11 +1347,13 @@ class _TopProductsSection extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Cairo',
                       ),
                     ),
-                    const SizedBox(width: 2),
-                    Icon(Icons.chevron_left, size: 16, color: AppColors.primary),
+                    SizedBox(width: 2),
+                    Icon(Icons.chevron_left,
+                        size: 16, color: AppColors.primary),
                   ],
                 ),
               ),
@@ -1007,18 +1361,15 @@ class _TopProductsSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Donut + legend side by side
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Donut — no floating percentage labels
               SizedBox(
-                width: 110,
-                height: 110,
+                width: 100,
+                height: 100,
                 child: DashboardTopProductsChart(data: data),
               ),
               const SizedBox(width: 16),
-              // Rich legend
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1032,7 +1383,7 @@ class _TopProductsSection extends StatelessWidget {
                         : p.revenue.toStringAsFixed(0);
 
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1050,9 +1401,13 @@ class _TopProductsSection extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   p.name,
-                                  style: const TextStyle(
-                                    fontSize: 12,
+                                  style: TextStyle(
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.darkTextPrimary
+                                        : AppColors.onSurface,
+                                    fontFamily: 'Cairo',
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -1060,35 +1415,38 @@ class _TopProductsSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '$revenueStr رس',
+                                '$revenueStr ج',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.onSurfaceVariant,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: isDark
+                                      ? AppColors.darkTextSecondary
+                                      : AppColors.secondary
+                                          .withValues(alpha: 0.8),
+                                  fontFamily: 'Cairo',
                                 ),
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 '${(percent * 100).toStringAsFixed(0)}%',
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10,
                                   fontWeight: FontWeight.w800,
                                   color: color,
+                                  fontFamily: 'Cairo',
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 4),
                           // Progress bar
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
                               value: percent.clamp(0.0, 1.0),
                               minHeight: 4,
-                              backgroundColor:
-                              color.withValues(alpha: 0.12),
-                              valueColor:
-                              AlwaysStoppedAnimation<Color>(color),
+                              backgroundColor: color.withValues(alpha: 0.1),
+                              valueColor: AlwaysStoppedAnimation<Color>(color),
                             ),
                           ),
                         ],
@@ -1113,66 +1471,88 @@ class _QuickActionCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final IconData icon;
-  final Color color;
+  final Gradient gradient;
   final VoidCallback onTap;
 
   const _QuickActionCard({
     required this.title,
     required this.subtitle,
     required this.icon,
-    required this.color,
+    required this.gradient,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: color,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: gradient.colors.first.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(icon, color: Colors.white, size: 18),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 20),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    color: Colors.white.withValues(alpha: 0.6),
-                    size: 14,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: Colors.white70,
+                      size: 12,
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white.withValues(alpha: 0.75),
+                const SizedBox(height: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white70,
+                        fontFamily: 'Cairo',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1191,96 +1571,149 @@ class _OrderListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          onTap: () => context.push('/admin/orders/${order.id}', extra: order),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.outlineVariant),
-            ),
-            child: Row(
-              children: [
-                // Status indicator — left accent bar
-                Container(
-                  width: 3,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: order.status.color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-                // Order info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isDark
+                ? AppColors.darkDivider
+                : AppColors.outlineVariant.withValues(alpha: 0.6),
+          ),
+          boxShadow: const [AppShadows.card],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () =>
+                context.push('/admin/orders/${order.id}', extra: order),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  // Status colored badge icon
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: order.status.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getStatusIcon(order.status),
+                      color: order.status.color,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Order Details
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          order.customerName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: isDark
+                                ? AppColors.darkTextPrimary
+                                : AppColors.onSurface,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              '#${order.id.substring(0, 6).toUpperCase()}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? AppColors.darkTextSecondary
+                                    : AppColors.secondary
+                                        .withValues(alpha: 0.8),
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '·  ${order.totalAmount.toStringAsFixed(0)} ج',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Right column: Time elapsed + Arabic Status Badge
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        order.customerName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                        _formatDate(order.createdAt),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.secondary.withValues(alpha: 0.6),
+                          fontFamily: 'Cairo',
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        '#${order.id.substring(0, 6).toUpperCase()} · ${order.totalAmount.toStringAsFixed(0)} ج',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.onSurfaceVariant,
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: order.status.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: order.status.color.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Text(
+                          order.status.arabicLabel,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: order.status.color,
+                            fontFamily: 'Cairo',
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                // Right side: time + status
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      _formatDate(order.createdAt),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 9, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: order.status.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: order.status.color.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        order.status.arabicLabel,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: order.status.color,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  IconData _getStatusIcon(OrderStatus status) {
+    return switch (status) {
+      OrderStatus.pending => Icons.hourglass_top_rounded,
+      OrderStatus.confirmed => Icons.check_circle_outline_rounded,
+      OrderStatus.preparing => Icons.restaurant_menu_rounded,
+      OrderStatus.ready => Icons.shopping_bag_outlined,
+      OrderStatus.delivered => Icons.local_shipping_rounded,
+      OrderStatus.cancelled => Icons.cancel_outlined,
+    };
   }
 
   String _formatDate(DateTime date) {
@@ -1307,16 +1740,21 @@ class _ChartSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 180,
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: isDark ? AppColors.darkCard : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? AppColors.darkDivider
+              : AppColors.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: const Center(
         child: CircularProgressIndicator(
-          strokeWidth: 2,
+          strokeWidth: 2.5,
           color: AppColors.primary,
         ),
       ),
@@ -1331,9 +1769,9 @@ class _OrdersSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(vertical: 32),
         child: CircularProgressIndicator(
-          strokeWidth: 2,
+          strokeWidth: 2.5,
           color: AppColors.primary,
         ),
       ),
@@ -1352,18 +1790,20 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
-          const SizedBox(width: 8),
+          const Icon(Icons.error_outline_rounded,
+              color: AppColors.error, size: 20),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'خطأ: $message',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.error,
+                fontFamily: 'Cairo',
               ),
             ),
           ),

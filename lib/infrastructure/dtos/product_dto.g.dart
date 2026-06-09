@@ -17,6 +17,10 @@ ProductDTO _$ProductDTOFromJson(Map<String, dynamic> json) => ProductDTO(
       imageUrl: json['image_url'] as String?,
       isAvailable: json['is_available'] as bool,
       sortOrder: (json['sort_order'] as num).toInt(),
+      preparationTime: (json['preparation_time'] as num?)?.toInt(),
+      calories: (json['calories'] as num?)?.toInt(),
+      tags: ProductDTO._tagsFromJson(json['tags']),
+      showInBanner: json['show_in_banner'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$ProductDTOToJson(ProductDTO instance) =>
@@ -31,4 +35,8 @@ Map<String, dynamic> _$ProductDTOToJson(ProductDTO instance) =>
       'image_url': instance.imageUrl,
       'is_available': instance.isAvailable,
       'sort_order': instance.sortOrder,
+      'preparation_time': instance.preparationTime,
+      'calories': instance.calories,
+      'tags': instance.tags,
+      'show_in_banner': instance.showInBanner,
     };

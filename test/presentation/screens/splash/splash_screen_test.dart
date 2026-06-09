@@ -67,45 +67,31 @@ void main() {
 
   group('SplashScreen', () {
     group('render', () {
-      testWidgets('shows app logo and name', (tester) async {
+      testWidgets('shows logo asset and no texts', (tester) async {
         when(() => mockCubit.state)
             .thenReturn(const AuthState.unauthenticated());
 
         await tester.pumpWidget(_buildTestWidget(mockCubit));
         await tester.pump();
 
-        expect(find.byIcon(Icons.restaurant_menu_rounded), findsOneWidget);
-        expect(find.text(AppConstants.appName), findsOneWidget);
-        expect(
-          find.text('أطيب الأكلات على بابك'),
-          findsOneWidget,
-        );
+        // Should find the asset logo image
+        final imageFinder = find.byType(Image);
+        expect(imageFinder, findsOneWidget);
+        final image = tester.widget<Image>(imageFinder);
+        expect((image.image as AssetImage).assetName, 'assets/images/splash_logo-removebg-preview.png');
 
-        await tester.pump(const Duration(seconds: 3));
-        await tester.pumpAndSettle();
-      });
+        // Should NOT find app name, tagline, or loader texts
+        expect(find.text(AppConstants.appName), findsNothing);
+        expect(find.text('أطيب الأكلات على بابك'), findsNothing);
+        expect(find.text('جاري التحميل للتذوق...'), findsNothing);
+        expect(find.byIcon(Icons.restaurant_menu_rounded), findsNothing);
 
-      testWidgets('shows CircularProgressIndicator', (tester) async {
-        when(() => mockCubit.state)
-            .thenReturn(const AuthState.unauthenticated());
-
-        await tester.pumpWidget(_buildTestWidget(mockCubit));
-        await tester.pump();
-
-        expect(
-          find.byWidgetPredicate(
-            (w) => w is LinearProgressIndicator,
-          ),
-          findsOneWidget,
-        );
-
-        await tester.pump(const Duration(seconds: 3));
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(seconds: 4));
       });
     });
 
     group('authenticated state', () {
-      testWidgets('renders correctly when user is authenticated as customer',
+      testWidgets('renders logo correctly when user is authenticated as customer',
           (tester) async {
         when(() => mockCubit.state)
             .thenReturn(AuthState.authenticated(testUserProfile));
@@ -113,11 +99,16 @@ void main() {
         await tester.pumpWidget(_buildTestWidget(mockCubit));
         await tester.pump();
 
-        expect(find.byIcon(Icons.restaurant_menu_rounded), findsOneWidget);
-        expect(find.text(AppConstants.appName), findsOneWidget);
+        // Should show the logo
+        final imageFinder = find.byType(Image);
+        expect(imageFinder, findsOneWidget);
+        final image = tester.widget<Image>(imageFinder);
+        expect((image.image as AssetImage).assetName, 'assets/images/splash_logo-removebg-preview.png');
 
-        await tester.pump(const Duration(seconds: 3));
-        await tester.pumpAndSettle();
+        // Should NOT show old widgets
+        expect(find.text(AppConstants.appName), findsNothing);
+
+        await tester.pump(const Duration(seconds: 4));
       });
     });
   });

@@ -9,6 +9,8 @@ import '../application/admin/admin_product_options_cubit.dart';
 import '../application/admin/admin_coupons_cubit.dart';
 import '../application/admin/admin_customers_cubit.dart';
 import '../application/admin/admin_delivery_zones_cubit.dart';
+import '../application/admin/admin_business_profile_cubit.dart';
+import '../application/admin/admin_reports_cubit.dart';
 import '../core/di/injection_container.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/order.dart';
@@ -100,6 +102,13 @@ Widget _adminWrap(Widget child) {
       BlocProvider.value(value: sl<AdminCouponsCubit>()..loadCoupons()),
       BlocProvider.value(value: sl<AdminCustomersCubit>()..loadCustomers()),
       BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()..loadZones()),
+      BlocProvider.value(value: sl<AdminBusinessProfileCubit>()..loadProfile()),
+      BlocProvider.value(
+          value: sl<AdminReportsCubit>()
+            ..loadReports(
+              startDate: DateTime.now().subtract(const Duration(days: 7)),
+              endDate: DateTime.now(),
+            )),
     ],
     child: child,
   );
@@ -270,27 +279,37 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/orders/:id',
       pageBuilder: (c, s) {
-        final order = s.extra as Order;
-        return _fadeTransition(c, s, OrderDetailScreen(order: order));
+        final orderId = s.pathParameters['id'] ?? '';
+        final order = s.extra is Order ? s.extra as Order : null;
+        return _fadeTransition(
+          c,
+          s,
+          OrderDetailScreen(orderId: orderId, initialOrder: order),
+        );
       },
     ),
     GoRoute(
       path: '/orders/:id/track',
       pageBuilder: (c, s) {
-        final order = s.extra as Order;
+        final orderId = s.pathParameters['id'] ?? '';
+        final order = s.extra is Order ? s.extra as Order : null;
         return _fadeTransition(
           c,
           s,
-          OrderTrackingScreen(
-            orderId: order.id,
-            status: order.status.value,
-          ),
+          OrderTrackingScreen(orderId: orderId, initialOrder: order),
         );
       },
     ),
     GoRoute(
       path: '/orders/:id/rate',
-      pageBuilder: (c, s) => _fadeTransition(c, s, const RateOrderScreen()),
+      pageBuilder: (c, s) {
+        final orderId = s.pathParameters['id'] ?? '';
+        return _fadeTransition(
+          c,
+          s,
+          RateOrderScreen(orderId: orderId),
+        );
+      },
     ),
     GoRoute(
       path: '/profile/addresses',
@@ -340,6 +359,14 @@ final appRouter = GoRouter(
                 value: sl<AdminCustomersCubit>()..loadCustomers()),
             BlocProvider.value(
                 value: sl<AdminDeliveryZonesCubit>()..loadZones()),
+            BlocProvider.value(
+                value: sl<AdminBusinessProfileCubit>()..loadProfile()),
+            BlocProvider.value(
+                value: sl<AdminReportsCubit>()
+                  ..loadReports(
+                    startDate: DateTime.now().subtract(const Duration(days: 7)),
+                    endDate: DateTime.now(),
+                  )),
           ],
           child: AdminShell(navigationShell: navigationShell),
         );

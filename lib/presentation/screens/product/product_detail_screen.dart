@@ -10,6 +10,7 @@ import '../../../application/cart/cart_cubit.dart';
 import '../../../application/admin/admin_product_options_cubit.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../widgets/product_image.dart';
+import '../../widgets/tag_selector.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -46,23 +47,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final product = widget.product;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 320,
+            expandedHeight: 300,
             pinned: true,
             elevation: 0,
+            backgroundColor: AppColors.surface,
+            surfaceTintColor: Colors.transparent,
             leading: Padding(
               padding: const EdgeInsets.all(8),
               child: CircleAvatar(
+                backgroundColor: AppColors.surface.withValues(alpha: 0.9),
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 18, color: AppColors.textPrimary),
                   onPressed: () {
-                    appLogger.i('[ProductDetailScreen] back pressed');
                     if (Navigator.of(context).canPop()) {
                       context.pop();
                     } else {
@@ -76,19 +80,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: CircleAvatar(
+                  backgroundColor: AppColors.surface.withValues(alpha: 0.9),
                   child: IconButton(
                     icon: Icon(
                       _isFavorite
                           ? Icons.favorite_rounded
                           : Icons.favorite_outline_rounded,
                       size: 20,
-                      color:
-                          _isFavorite ? AppColors.error : AppColors.textPrimary,
+                      color: _isFavorite
+                          ? AppColors.tertiary
+                          : AppColors.textSecondary,
                     ),
                     onPressed: () {
                       setState(() => _isFavorite = !_isFavorite);
-                      appLogger.i(
-                          '[ProductDetailScreen] favorite toggled: $_isFavorite');
+                      HapticFeedback.lightImpact();
                     },
                   ),
                 ),
@@ -101,11 +106,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ProductImage(
                     imageUrl: product.imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: Container(color: AppColors.grey100),
+                    placeholder:
+                        Container(color: AppColors.surfaceContainerLow),
                     errorWidget: Container(
-                      color: AppColors.grey100,
+                      color: AppColors.surfaceContainerLow,
                       child: const Icon(Icons.fastfood,
-                          size: 80, color: Colors.grey),
+                          size: 80, color: AppColors.textSecondary),
                     ),
                   ),
                   Positioned(
@@ -113,14 +119,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     left: 0,
                     right: 0,
                     child: Container(
-                      height: 80,
+                      height: 60,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            AppColors.surface.withValues(alpha: 0.9),
+                            AppColors.background,
                           ],
                         ),
                       ),
@@ -132,7 +138,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -141,22 +147,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       Expanded(
                         child: Text(
                           product.nameAr,
-                          style: theme.textTheme.headlineSmall?.copyWith(
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 24,
                             fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
                             height: 1.2,
                           ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
+                            horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
+                          color: AppColors.primaryContainer,
                           borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
                         child: Text(
-                          '${product.price.toStringAsFixed(0)} ج',
-                          style: theme.textTheme.titleMedium?.copyWith(
+                          '${product.price.toStringAsFixed(0)} \u062c.\u0645',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primary,
                           ),
@@ -164,26 +175,149 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ],
                   ),
+                  if (product.tags.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: product.tags.map((tagId) {
+                        final tag = ProductTags.all.firstWhere(
+                          (t) => t.id == tagId,
+                          orElse: () => ProductTag(
+                            id: tagId,
+                            label: tagId,
+                            icon: Icons.label_rounded,
+                            color: AppColors.primary,
+                          ),
+                        );
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: tag.color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
+                            border: Border.all(
+                              color: tag.color.withValues(alpha: 0.25),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(tag.icon, size: 14, color: tag.color),
+                              const SizedBox(width: 4),
+                              Text(
+                                tag.label,
+                                style: TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: tag.color,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  if (product.preparationTime != null ||
+                      product.calories != null) ...[
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        if (product.preparationTime != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.outlineVariant
+                                    .withValues(alpha: 0.4),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.timer_outlined,
+                                    size: 16, color: AppColors.textSecondary),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${product.preparationTime} دقيقة',
+                                  style: const TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        if (product.calories != null) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: AppColors.outlineVariant
+                                    .withValues(alpha: 0.4),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.local_fire_department_outlined,
+                                    size: 16, color: AppColors.textSecondary),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${product.calories} سعرة حرارية',
+                                  style: const TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
                   if (product.descriptionAr != null &&
                       product.descriptionAr!.isNotEmpty) ...[
-                    AppSpacing.gapH12,
+                    const SizedBox(height: 16),
                     Text(
                       product.descriptionAr!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
+                      style: const TextStyle(
+                        fontFamily: 'Cairo',
+                        fontSize: 14,
                         color: AppColors.textSecondary,
-                        height: 1.6,
+                        height: 1.7,
                       ),
                     ),
                   ],
-                  AppSpacing.gapH32,
-                  const _SectionTitle(title: 'الكمية'),
-                  AppSpacing.gapH12,
+                  const SizedBox(height: 28),
+                  const _SectionTitle(
+                      title: '\u0627\u0644\u0643\u0645\u064a\u0629'),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.all(4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.mdAll,
-                      border: Border.all(color: AppColors.divider),
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppRadius.full),
+                      border: Border.all(
+                          color:
+                              AppColors.outlineVariant.withValues(alpha: 0.6)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -193,17 +327,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           onTap: () {
                             if (_quantity > 1) {
                               setState(() => _quantity--);
-                              appLogger.i(
-                                  '[ProductDetailScreen] quantity decreased to $_quantity');
+                              HapticFeedback.lightImpact();
                             }
                           },
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Text(
-                            '$_quantity',
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                  scale: animation, child: child);
+                            },
+                            child: Text(
+                              '$_quantity',
+                              key: ValueKey<int>(_quantity),
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
                           ),
                         ),
@@ -211,14 +355,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           icon: Icons.add_rounded,
                           onTap: () {
                             setState(() => _quantity++);
-                            appLogger.i(
-                                '[ProductDetailScreen] quantity increased to $_quantity');
+                            HapticFeedback.lightImpact();
                           },
                         ),
                       ],
                     ),
                   ),
-                  AppSpacing.gapH32,
+                  const SizedBox(height: 28),
                   BlocBuilder<AdminProductOptionsCubit,
                       AdminProductOptionsState>(
                     builder: (context, state) {
@@ -243,12 +386,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       );
                     },
                   ),
-                  AppSpacing.gapH24,
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
       bottomNavigationBar: BlocBuilder<CartCubit, CartState>(
@@ -257,45 +399,72 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               .where((item) => item.productId == product.id)
               .fold(0, (sum, item) => sum + item.quantity);
           return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            decoration: BoxDecoration(
               color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadowSubtle,
-                  blurRadius: 20,
-                  offset: Offset(0, -8),
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 24,
+                  offset: const Offset(0, -4),
                 ),
               ],
+              border: Border(
+                top: BorderSide(
+                  color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                  width: 0.5,
+                ),
+              ),
             ),
             child: SafeArea(
+              top: false,
               child: Row(
                 children: [
                   Expanded(
-                    flex: 2,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'الإجمالي',
-                          style: theme.textTheme.bodySmall?.copyWith(
+                        const Text(
+                          '\u0627\u0644\u0625\u062c\u0645\u0627\u0644\u064a',
+                          style: TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        Text(
-                          '${_totalPrice.toStringAsFixed(0)} جنيه',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primary,
-                          ),
+                        Row(
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            Text(
+                              _totalPrice.toStringAsFixed(0),
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Text(
+                              '\u062c.\u0645',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
                         if (inCartQty > 0) ...[
                           const SizedBox(height: 2),
                           Text(
-                            'في السلة: $inCartQty',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: AppColors.success,
+                            '\u0641\u064a \u0627\u0644\u0633\u0644\u0629: $inCartQty',
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 11,
+                              color: AppColors.statusReady,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -303,36 +472,63 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
                   Expanded(
-                    flex: 3,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        appLogger.i(
-                            '[ProductDetailScreen] add to cart — ${product.nameAr} x $_quantity');
-                        for (int i = 0; i < _quantity; i++) {
-                          context.read<CartCubit>().addItem(product,
-                              selectedOptions: _selectedOptions);
-                        }
-                        HapticFeedback.mediumImpact();
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'تمت إضافة $_quantity x ${product.nameAr}'),
-                            backgroundColor: AppColors.success,
-                            duration: const Duration(seconds: 1),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: AppRadius.smAll),
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                    flex: 2,
+                    child: Semantics(
+                      label:
+                          '\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0633\u0644\u0629\u060c \u0632\u0631',
+                      button: true,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          for (int i = 0; i < _quantity; i++) {
+                            context.read<CartCubit>().addItem(product,
+                                selectedOptions: _selectedOptions);
+                          }
+                          ScaffoldMessenger.of(context).clearSnackBars();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u0629 $_quantity \u00d7 ${product.nameAr}',
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  color: AppColors.onPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              backgroundColor: AppColors.primary,
+                              duration: const Duration(seconds: 1),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.md)),
+                              margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                            ),
+                          );
+                          setState(() => _quantity = 1);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.onPrimary,
+                          elevation: 4,
+                          shadowColor: AppColors.primaryShadow,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
                           ),
-                        );
-                        setState(() => _quantity = 1);
-                      },
-                      icon: const Icon(Icons.shopping_cart_outlined, size: 20),
-                      label: Text(inCartQty > 0
-                          ? 'أضف المزيد ($_quantity)'
-                          : 'أضف للسلة'),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          textStyle: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        icon: const Icon(Icons.add_shopping_cart_rounded,
+                            size: 20),
+                        label: Text(inCartQty > 0
+                            ? '\u0623\u0636\u0641 \u0627\u0644\u0645\u0632\u064a\u062f ($_quantity)'
+                            : '\u0623\u0636\u0641 \u0644\u0644\u0633\u0644\u0629'),
+                      ),
                     ),
                   ),
                 ],
@@ -356,12 +552,17 @@ class _QuantityButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: AppColors.primaryLight,
-          borderRadius: AppRadius.smAll,
+          color: AppColors.primary.withValues(alpha: 0.1),
+          shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 18, color: AppColors.primary),
+        child: Icon(
+          icon,
+          size: 20,
+          color: AppColors.primary,
+        ),
       ),
     );
   }
@@ -373,10 +574,11 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Text(
       title,
-      style: theme.textTheme.titleMedium?.copyWith(
+      style: const TextStyle(
+        fontFamily: 'Cairo',
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
@@ -400,8 +602,10 @@ class _OptionGroups extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _SectionTitle(title: 'خيارات إضافية'),
-        AppSpacing.gapH12,
+        const _SectionTitle(
+            title:
+                '\u062e\u064a\u0627\u0631\u0627\u062a \u0625\u0636\u0627\u0641\u064a\u0629'),
+        const SizedBox(height: 12),
         ...options.map((option) {
           final isSelected =
               selectedOptions.any((s) => s.optionId == option.id);
@@ -409,23 +613,24 @@ class _OptionGroups extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: AppSpacing.md),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withValues(alpha: 0.06)
+                  ? AppColors.statusReady.withValues(alpha: 0.08)
                   : AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
-                color:
-                    isSelected ? AppColors.primary : AppColors.outlineVariant,
+                color: isSelected
+                    ? AppColors.statusReady
+                    : AppColors.outlineVariant.withValues(alpha: 0.6),
+                width: isSelected ? 1.5 : 1,
               ),
             ),
             child: InkWell(
               borderRadius: BorderRadius.circular(AppRadius.md),
               onTap: () {
+                HapticFeedback.lightImpact();
                 if (isSelected) {
-                  onChanged(
-                    selectedOptions
-                        .where((s) => s.optionId != option.id)
-                        .toList(),
-                  );
+                  onChanged(selectedOptions
+                      .where((s) => s.optionId != option.id)
+                      .toList());
                 } else {
                   final newList = [...selectedOptions];
                   if (option.maxSelections > 1 &&
@@ -444,33 +649,52 @@ class _OptionGroups extends StatelessWidget {
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Row(
                   children: [
-                    Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      size: 22,
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: Icon(
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked,
+                        key: ValueKey(isSelected),
+                        size: 22,
+                        color: isSelected
+                            ? AppColors.statusReady
+                            : AppColors.textMuted,
+                      ),
                     ),
-                    AppSpacing.gapW8,
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         option.nameAr ?? option.name,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
-                            ),
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 14,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w400,
+                          color: isSelected
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
+                        ),
                       ),
                     ),
                     if (option.priceDelta > 0)
-                      Text(
-                        '+${option.priceDelta.toInt()} ج',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color:
+                              AppColors.primaryContainer.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Text(
+                          '+${option.priceDelta.toInt()} \u062c',
+                          style: const TextStyle(
+                            fontFamily: 'Cairo',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                   ],
                 ),

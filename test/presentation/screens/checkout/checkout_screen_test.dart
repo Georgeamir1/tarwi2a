@@ -7,6 +7,7 @@ import 'package:matbakhy/presentation/screens/checkout/checkout_screen.dart';
 import 'package:matbakhy/application/auth/auth_cubit.dart';
 import 'package:matbakhy/application/cart/cart_cubit.dart';
 import 'package:matbakhy/application/orders/customer_orders_cubit.dart';
+import 'package:matbakhy/core/di/injection_container.dart';
 import 'package:matbakhy/app/theme/app_theme.dart';
 import '../../../helpers/test_helpers.dart';
 
@@ -57,15 +58,44 @@ void main() {
           customerName: any(named: 'customerName'),
           customerPhone: any(named: 'customerPhone'),
           customerAddress: any(named: 'customerAddress'),
+          addressId: any(named: 'addressId'),
           notes: any(named: 'notes'),
           paymentMethod: any(named: 'paymentMethod'),
           totalAmount: any(named: 'totalAmount'),
           items: any(named: 'items'),
+          scheduledFor: any(named: 'scheduledFor'),
+          orderType: any(named: 'orderType'),
         )).thenAnswer((_) async {});
+    when(() => mockOrdersCubit.loadOrders(any())).thenAnswer((_) async {});
+
+    if (sl.isRegistered<CustomerOrdersCubit>()) {
+      sl.unregister<CustomerOrdersCubit>();
+    }
+    sl.registerSingleton<CustomerOrdersCubit>(mockOrdersCubit);
 
     when(() => mockCartCubit.close()).thenAnswer((_) async {});
     when(() => mockAuthCubit.close()).thenAnswer((_) async {});
     when(() => mockOrdersCubit.close()).thenAnswer((_) async {});
+
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.physicalSize = const Size(800, 2000);
+        view.devicePixelRatio = 1.0;
+      }
+    }
+  });
+
+  tearDown(() {
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    if (binding.platformDispatcher.views.isNotEmpty) {
+      final view = binding.platformDispatcher.views.first;
+      if (view is TestFlutterView) {
+        view.resetPhysicalSize();
+        view.resetDevicePixelRatio();
+      }
+    }
   });
 
   group('CheckoutScreen', () {
@@ -111,7 +141,7 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
-        expect(find.text('📍 بيانات الطلب'), findsOneWidget);
+        expect(find.text('بيانات التواصل'), findsOneWidget);
         expect(find.byType(TextFormField), findsWidgets);
       });
     });
@@ -169,6 +199,12 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'العنوان'),
+          'القاهرة، مصر',
+        );
+        await tester.pumpAndSettle();
+
         await tester.scrollUntilVisible(
           find.text('تأكيد الطلب'),
           200,
@@ -183,10 +219,13 @@ void main() {
               customerName: any(named: 'customerName'),
               customerPhone: any(named: 'customerPhone'),
               customerAddress: any(named: 'customerAddress'),
+              addressId: any(named: 'addressId'),
               notes: any(named: 'notes'),
               paymentMethod: any(named: 'paymentMethod'),
               totalAmount: any(named: 'totalAmount'),
               items: any(named: 'items'),
+              scheduledFor: any(named: 'scheduledFor'),
+              orderType: any(named: 'orderType'),
             )).called(1);
       });
 
@@ -198,6 +237,12 @@ void main() {
         ));
         await tester.pumpAndSettle();
 
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'العنوان'),
+          'القاهرة، مصر',
+        );
+        await tester.pumpAndSettle();
+
         await tester.scrollUntilVisible(
           find.text('تأكيد الطلب'),
           200,
@@ -207,8 +252,8 @@ void main() {
         await tester.tap(find.text('تأكيد الطلب'));
         await tester.pumpAndSettle();
 
-        expect(find.text('تم الطلب بنجاح! 🎉'), findsOneWidget);
-        expect(find.text('هنتواصل معاك في أقرب وقت'), findsOneWidget);
+        expect(find.text('تم الطلب بنجاح!'), findsOneWidget);
+        expect(find.textContaining('هنتواصل معاك في أقرب وقت'), findsOneWidget);
         expect(find.text('شوف طلباتي'), findsOneWidget);
       });
     });

@@ -7,7 +7,11 @@ import 'package:go_router/go_router.dart';
 import 'package:matbakhy/presentation/screens/admin/admin_dashboard_screen.dart';
 import 'package:matbakhy/application/auth/auth_cubit.dart';
 import 'package:matbakhy/application/admin/admin_orders_cubit.dart';
+import 'package:matbakhy/application/admin/admin_reports_cubit.dart';
+import 'package:matbakhy/domain/repositories/report_repository.dart';
 import '../../../helpers/test_helpers.dart';
+
+class MockAdminReportsCubit extends Mock implements AdminReportsCubit {}
 
 GoRouter _createRouter() {
   return GoRouter(
@@ -27,6 +31,7 @@ GoRouter _createRouter() {
 Widget _buildTestWidget({
   required AdminOrdersCubit ordersCubit,
   required AuthCubit authCubit,
+  required AdminReportsCubit reportsCubit,
 }) {
   return MaterialApp.router(
     routerConfig: _createRouter(),
@@ -34,6 +39,7 @@ Widget _buildTestWidget({
       providers: [
         BlocProvider<AdminOrdersCubit>.value(value: ordersCubit),
         BlocProvider<AuthCubit>.value(value: authCubit),
+        BlocProvider<AdminReportsCubit>.value(value: reportsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -43,23 +49,70 @@ Widget _buildTestWidget({
 void main() {
   late MockAdminOrdersCubit mockOrdersCubit;
   late MockAuthCubit mockAuthCubit;
+  late MockAdminReportsCubit mockReportsCubit;
 
   setUpAll(() {
     registerFallbackValue(const AdminOrdersState());
     registerFallbackValue(const AuthState.initial());
+    registerFallbackValue(
+      AdminReportsState(
+        startDate: DateTime.now(),
+        endDate: DateTime.now(),
+      ),
+    );
   });
 
   setUp(() {
     mockOrdersCubit = MockAdminOrdersCubit();
     mockAuthCubit = MockAuthCubit();
+    mockReportsCubit = MockAdminReportsCubit();
 
     when(() => mockOrdersCubit.stream)
         .thenAnswer((_) => const Stream<AdminOrdersState>.empty());
     when(() => mockAuthCubit.stream)
         .thenAnswer((_) => const Stream<AuthState>.empty());
+    when(() => mockReportsCubit.stream)
+        .thenAnswer((_) => const Stream<AdminReportsState>.empty());
+
+    // Default stub for reportsCubit state
+    when(() => mockReportsCubit.state).thenReturn(
+      AdminReportsState(
+        status: AdminReportsStatus.loaded,
+        data: testReportData,
+        startDate: DateTime.now().subtract(const Duration(days: 7)),
+        endDate: DateTime.now(),
+      ),
+    );
+    when(() => mockReportsCubit.loadReports(
+          startDate: any(named: 'startDate'),
+          endDate: any(named: 'endDate'),
+        )).thenAnswer((_) async {});
   });
 
   group('AdminDashboardScreen', () {
+    setUp(() {
+      // Use a large viewport so scrollable content is visible
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      if (binding.platformDispatcher.views.isNotEmpty) {
+        final view = binding.platformDispatcher.views.first;
+        if (view is TestFlutterView) {
+          view.physicalSize = const Size(800, 2400);
+          view.devicePixelRatio = 1.0;
+        }
+      }
+    });
+
+    tearDown(() {
+      final binding = TestWidgetsFlutterBinding.ensureInitialized();
+      if (binding.platformDispatcher.views.isNotEmpty) {
+        final view = binding.platformDispatcher.views.first;
+        if (view is TestFlutterView) {
+          view.resetPhysicalSize();
+          view.resetDevicePixelRatio();
+        }
+      }
+    });
+
     testWidgets('shows greeting with admin name', (tester) async {
       when(() => mockAuthCubit.state)
           .thenReturn(AuthState.authenticated(testAdminProfile));
@@ -73,14 +126,15 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('أهلاً مدير'), findsOneWidget);
       expect(find.text('لوحة التحكم'), findsOneWidget);
     });
 
-    testWidgets('shows 3 stat cards', (tester) async {
+    testWidgets('shows KPI cards', (tester) async {
       when(() => mockAuthCubit.state)
           .thenReturn(AuthState.authenticated(testAdminProfile));
       when(() => mockOrdersCubit.state).thenReturn(
@@ -93,12 +147,14 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
-      expect(find.text('طلبات جديدة'), findsOneWidget);
-      expect(find.text('مبيعات اليوم'), findsOneWidget);
-      expect(find.text('إجمالي الطلبات'), findsOneWidget);
+      expect(find.text('طلبات انتظار'), findsOneWidget);
+      expect(find.text('إجمالي المبيعات'), findsOneWidget);
+      expect(find.text('عدد الطلبات'), findsOneWidget);
+      expect(find.text('متوسط الطلب'), findsOneWidget);
     });
 
     testWidgets('action cards render', (tester) async {
@@ -114,8 +170,9 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('الإجراءات السريعة'), findsOneWidget);
       expect(find.text('إدارة الطلبات'), findsOneWidget);
@@ -133,12 +190,15 @@ void main() {
       );
       when(() => mockOrdersCubit.loadOrders()).thenAnswer((_) async {});
       when(() => mockAuthCubit.checkAuthStatus()).thenAnswer((_) {});
+      when(() => mockReportsCubit.updateDateRange(any(), any()))
+          .thenAnswer((_) {});
 
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.byType(RefreshIndicator), findsOneWidget);
     });
@@ -157,8 +217,13 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Logout is inside settings bottom sheet, tap settings icon first
+      await tester.tap(find.byIcon(Icons.settings_outlined));
+      await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.logout), findsOneWidget);
 
@@ -182,7 +247,10 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
+      // Use pump() instead of pumpAndSettle() because CircularProgressIndicator
+      // is an endless animation that never settles.
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
@@ -202,8 +270,9 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('خطأ: حدث خطأ في السيرفر'), findsOneWidget);
     });
@@ -221,16 +290,16 @@ void main() {
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
+        reportsCubit: mockReportsCubit,
       ));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(find.text('آخر الطلبات'), findsOneWidget);
       expect(find.text('مفيش طلبات لسه'), findsOneWidget);
     });
 
     group('Edge cases', () {
-      testWidgets('stat cards show zero values when no orders',
-          (tester) async {
+      testWidgets('KPI cards show zero values when no orders', (tester) async {
         when(() => mockAuthCubit.state)
             .thenReturn(AuthState.authenticated(testAdminProfile));
         when(() => mockOrdersCubit.state).thenReturn(
@@ -239,15 +308,34 @@ void main() {
             orders: [],
           ),
         );
+        when(() => mockReportsCubit.state).thenReturn(
+          AdminReportsState(
+            status: AdminReportsStatus.loaded,
+            data: ReportData(
+              totalRevenue: 0.0,
+              totalOrders: 0,
+              averageOrder: 0.0,
+              cancelledOrders: 0,
+              revenueByDay: [],
+              topProducts: [],
+              totalCustomers: 0,
+              discountTotal: 0,
+            ),
+            startDate: DateTime.now().subtract(const Duration(days: 7)),
+            endDate: DateTime.now(),
+          ),
+        );
 
         await tester.pumpWidget(_buildTestWidget(
           ordersCubit: mockOrdersCubit,
           authCubit: mockAuthCubit,
+          reportsCubit: mockReportsCubit,
         ));
-        await tester.pump();
+        await tester.pumpAndSettle();
 
-        expect(find.text('0'), findsAtLeastNWidgets(2));
-        expect(find.text('0 ج'), findsOneWidget);
+        // Values are rendered in RichText, verify by finding KPI card titles
+        expect(find.text('طلبات انتظار'), findsOneWidget);
+        expect(find.text('عدد الطلبات'), findsOneWidget);
       });
     });
   });

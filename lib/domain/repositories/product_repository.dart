@@ -10,5 +10,6 @@ abstract class ProductRepository {
     String? id,
   });
   Future<Either<Failure, void>> toggleAvailable(String id, bool isAvailable);
+  Future<Either<Failure, void>> deleteProduct(String id);
   Stream<List<Product>> watchProducts({String? categoryId});
 }

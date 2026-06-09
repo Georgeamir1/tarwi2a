@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../dtos/coupon_dto.dart';
 
 class CouponRemoteDataSource {
@@ -9,6 +10,7 @@ class CouponRemoteDataSource {
         .from('coupons')
         .select()
         .order('created_at', ascending: false);
+    appLogger.i('📊 coupons getAll() raw result: $data');
     return (data as List).map((e) => CouponDTO.fromJson(e)).toList();
   }
 

@@ -18,6 +18,8 @@ void main() {
 
   setUp(() {
     mockRepo = MockProductRepository();
+    when(() => mockRepo.watchProducts(categoryId: any(named: 'categoryId')))
+        .thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminProductsCubit', () {

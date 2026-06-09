@@ -6,9 +6,9 @@ product
 
 ## Users
 
-**Primary:** General Arabic restaurant customers — a broad demographic of Arabic-speaking users ordering food from their phones. Context is casual: at home, at work, or on the go.
+**Primary:** General Arabic restaurant customers — a broad demographic of Arabic-speaking users ordering food from their phones. Context is casual: at home, at work, or on the go. Many are first-time mobile app users who value familiarity over novelty.
 
-**Secondary:** Restaurant staff (admin) managing orders, menus, customers, and business operations.
+**Secondary:** Restaurant staff (admin) managing orders, menus, customers, and business operations. Working in fast-paced kitchen environments, often on tablets in less-than-ideal lighting.
 
 ## Product Purpose
 
@@ -25,11 +25,14 @@ Success is measured in:
 
 **Warm, inviting, dependable.** Like walking into your neighborhood restaurant where they know your name — familiar, generous, and trustworthy. The app should feel like a welcome, not a formality. Arabic hospitality translated into pixels: generous spacing, warm tones, clear communication.
 
+Three words: generous, grounded, appetizing.
+
 ## Anti-references
 
 - **Fine dining / white tablecloth**: Not formal, stiff, or pretentious. No serif elegance, no hushed luxury, no minimalist austerity.
 - **Corporate SaaS dashboard**: Not cold, not data-heavy for its own sake, not beige-and-blue generic tool.
 - **Gamified / cartoonish food apps**: Not childish, not gimmicky, not overanimated.
+- **AI-generated food delivery apps**: No purple gradients, no generic food icons, no cookie-cutter onboarding templates.
 
 ## Design Principles
 
@@ -38,6 +41,7 @@ Success is measured in:
 3. **Trust at every step** — Order status, pricing breakdowns, and restaurant information are always visible. No hidden costs, no ambiguous states.
 4. **Arabic-first** — Designed natively for RTL Arabic speakers. Layouts, type hierarchy, and interaction patterns are built from RTL, not translated from LTR.
 5. **No ceremony** — Getting food should be easy. Remove friction from every flow. Ordering is three taps from hungry to confirmed.
+6. **Cinematic consistency** — The entire app speaks one visual language: dark, rich, warm. From splash to checkout to admin dashboard, the same depth and atmosphere carries through. No jarring light-to-dark transitions mid-flow. The dark shell is the constant; light surfaces are reserved for content cards that need contrast for readability (food photos, menu items, order details).
 
 ## Admin Panel Product Scope
 
@@ -67,6 +71,28 @@ Success is measured in:
 - **Multi-branch** — Support multiple restaurant locations.
 - **A/B Testing** — Test banners, promotions.
 
+## First-Run Experience
+
+The app uses a three-stage first-run flow that establishes the cinematic dark theme immediately:
+
+1. **Splash screen** (3.2s): Cinematic dark theme. Animated radial gradient background, floating particle system, rotating decorative arcs, pulsating glow halo, circular progress ring. Logo enters with spring physics (elasticOut). Tagline "أكلات أصيلة، طعم لا ينسى" fades + slides in. Entire screen fades out at 88-100%. Purpose: emotional anchoring, brand impression, auth check in parallel.
+
+2. **Onboarding** (3 pages, swipe navigation): Full-bleed photography with parallax. Dark glassmorphism bottom card with BackdropFilter blur. Each page has a themed gradient (warm red, forest, deep blue), an icon tag badge, bold title with accent-highlighted word, and descriptive body text. First page shows animated swipe chevron (RTL direction). Last page pulses the CTA with a glow animation. Skip button uses frosted glass treatment. Content transitions with fade + slide (450ms).
+
+3. **Login/Register**: Continued dark cinematic theme with warm rose content cards. Hero image header (48% screen height) with gradient fade. Glassmorphism form card with BackdropFilter blur. Staggered field entrance animations (9 intervals over 1100ms). Animated focus states (border color, shadow, icon scale). Shake animation on validation errors. Shimmer loading on CTA button. Ambient breathing background blobs. Gradient CTA buttons with box shadow glow. Register uses a 4-step progress indicator with animated connecting lines.
+
+## Visual Theme: Unified Dark Cinematic
+
+The entire app uses a dark cinematic theme. No separate light mode. The dark shell is constant; light surfaces appear only as elevated content cards where contrast is needed for readability (food photos, menu items, text-heavy data).
+
+**Scene sentence:** An Arabic-speaking customer glances at their phone at 10pm after a long day, or an admin checks incoming orders on a tablet in a dim kitchen. The dark theme reduces eye strain, makes food photography pop against the background, and creates a premium dining atmosphere that matches the late-night ordering context.
+
+**Why unified dark, not dual light/dark:**
+- Food photography is more appetizing against dark surfaces (contrast makes colors vivid).
+- Kitchen admins work in variable lighting, often dim. Dark surfaces reduce glare.
+- The splash/onboarding already establishes the dark cinematic language. Switching to light mid-flow would break the emotional continuity.
+- A single theme halves the design system surface area and eliminates light/dark consistency bugs.
+
 ## Accessibility & Inclusion
 
-Standard WCAG AA target. RTL Arabic is the primary language. Touch targets follow Flutter Material guidelines (minimum 48px). Dark theme supported for low-light ordering. Reduced motion respected via system settings.
+WCAG AA target on dark backgrounds. All text meets 4.5:1 contrast ratio against the dark shell. RTL Arabic is the primary language. Touch targets follow Flutter Material guidelines (minimum 44px, enforced in all interactive elements). Reduced motion respected via system settings. Minimum contrast ratios maintained across all status badges and interactive states. Light content cards maintain their own contrast ratios against the dark shell.

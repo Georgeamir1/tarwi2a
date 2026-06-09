@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/coupon.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/coupon_repository.dart';
@@ -12,18 +13,27 @@ class AdminCouponsCubit extends Cubit<AdminCouponsState> {
   AdminCouponsCubit(this._repository) : super(AdminCouponsState.initial());
 
   Future<void> loadCoupons() async {
+    appLogger.i('📥 loadCoupons() called');
     emit(state.copyWith(status: AdminCouponsStatus.loading));
     final result = await _repository.getAll();
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminCouponsStatus.error,
-        failure: failure,
-      )),
-      (coupons) => emit(state.copyWith(
-        status: AdminCouponsStatus.loaded,
-        coupons: coupons,
-      )),
+      (failure) {
+        appLogger.e('📥 loadCoupons() FAILED: ${failure.runtimeType}');
+        emit(state.copyWith(
+          status: AdminCouponsStatus.error,
+          failure: failure,
+        ));
+      },
+      (coupons) {
+        appLogger
+            .i('📥 loadCoupons() SUCCESS — ${coupons.length} coupons loaded');
+        emit(state.copyWith(
+          status: AdminCouponsStatus.loaded,
+          coupons: coupons,
+        ));
+      },
     );
+    appLogger.i('📡 subscribing to coupons realtime stream');
     _listenToStream();
   }
 
@@ -32,6 +42,9 @@ class AdminCouponsCubit extends Cubit<AdminCouponsState> {
     _subscription = _repository.watchCoupons().listen(
       (coupons) {
         if (!isClosed) {
+          if (coupons.isEmpty && state.coupons.isNotEmpty) {
+            return;
+          }
           emit(state.copyWith(
             coupons: coupons,
             status: AdminCouponsStatus.loaded,
@@ -40,28 +53,83 @@ class AdminCouponsCubit extends Cubit<AdminCouponsState> {
       },
       onError: (e) {
         if (!isClosed) {
-          emit(state.copyWith(
-            failure: Failure.unexpected(message: e.toString()),
-          ));
+          appLogger.w('Coupons realtime stream error (kept cached data)',
+              error: e);
         }
       },
     );
   }
 
   Future<void> create(Map<String, dynamic> data) async {
-    await _repository.create(data);
+    emit(state.copyWith(status: AdminCouponsStatus.loading));
+    final result = await _repository.create(data);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadCoupons();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminCouponsStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   Future<void> update(String id, Map<String, dynamic> data) async {
-    await _repository.update(id, data);
+    emit(state.copyWith(status: AdminCouponsStatus.loading));
+    final result = await _repository.update(id, data);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadCoupons();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminCouponsStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   Future<void> toggleActive(String id, bool isActive) async {
-    await _repository.toggleActive(id, isActive);
+    emit(state.copyWith(status: AdminCouponsStatus.loading));
+    final result = await _repository.toggleActive(id, isActive);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadCoupons();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminCouponsStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   Future<void> delete(String id) async {
-    await _repository.delete(id);
+    emit(state.copyWith(status: AdminCouponsStatus.loading));
+    final result = await _repository.delete(id);
+    if (!isClosed) {
+      if (result.isRight()) {
+        await loadCoupons();
+      } else {
+        result.fold(
+          (failure) => emit(state.copyWith(
+            status: AdminCouponsStatus.error,
+            failure: failure,
+          )),
+          (_) {},
+        );
+      }
+    }
   }
 
   @override

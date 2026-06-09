@@ -55,6 +55,12 @@ class MyProfileScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 32),
+                if (profile?.role.isAdmin == true)
+                  ProfileListTile(
+                    icon: Icons.admin_panel_settings_outlined,
+                    title: 'لوحة التحكم',
+                    onTap: () => context.go('/admin'),
+                  ),
                 ProfileListTile(
                   icon: Icons.location_on_outlined,
                   title: 'عناويني',
@@ -105,7 +111,7 @@ class MyProfileScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 140),
               ],
             ),
           ),

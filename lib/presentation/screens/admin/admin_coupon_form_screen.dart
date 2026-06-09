@@ -58,7 +58,7 @@ class _AdminCouponFormScreenState extends State<AdminCouponFormScreen> {
     super.dispose();
   }
 
-  void _save() {
+  void _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final data = <String, dynamic>{
@@ -67,7 +67,7 @@ class _AdminCouponFormScreenState extends State<AdminCouponFormScreen> {
       'value': double.tryParse(_valueController.text.trim()) ?? 0,
       'min_order': double.tryParse(_minOrderController.text.trim()) ?? 0,
       'max_discount': _maxDiscountController.text.trim().isNotEmpty
-          ? int.tryParse(_maxDiscountController.text.trim())
+          ? double.tryParse(_maxDiscountController.text.trim())
           : null,
       'max_uses': _maxUsesController.text.trim().isNotEmpty
           ? int.tryParse(_maxUsesController.text.trim())
@@ -77,20 +77,35 @@ class _AdminCouponFormScreenState extends State<AdminCouponFormScreen> {
     setState(() => _saving = true);
 
     final cubit = context.read<AdminCouponsCubit>();
-    final future = _isEditing
-        ? cubit.update(widget.coupon!.id, data)
-        : cubit.create(data);
 
-    future.then((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditing ? 'تم تعديل الكوبون' : 'تم حفظ الكوبون'),
-          ),
-        );
-        context.pop();
-      }
-    });
+    if (_isEditing) {
+      await cubit.update(widget.coupon!.id, data);
+    } else {
+      await cubit.create(data);
+    }
+
+    if (!mounted) return;
+
+    final currentState = cubit.state;
+    if (currentState.status == AdminCouponsStatus.error) {
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(currentState.failure?.message ?? 'حدث خطأ في الحفظ'),
+          backgroundColor: AppColors.statusCancelled,
+        ),
+      );
+      return;
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isEditing ? 'تم تعديل الكوبون' : 'تم حفظ الكوبون'),
+        ),
+      );
+      context.pop();
+    }
   }
 
   @override
@@ -112,8 +127,7 @@ class _AdminCouponFormScreenState extends State<AdminCouponFormScreen> {
                 hint: 'مثال: WELCOME20',
                 controller: _codeController,
                 prefixIcon: Icons.discount_outlined,
-                validator: (v) =>
-                    v?.trim().isEmpty == true ? 'مطلوب' : null,
+                validator: (v) => v?.trim().isEmpty == true ? 'مطلوب' : null,
               ),
               AppSpacing.gapH16,
               Text(
@@ -136,8 +150,7 @@ class _AdminCouponFormScreenState extends State<AdminCouponFormScreen> {
                 controller: _valueController,
                 prefixIcon: Icons.attach_money,
                 keyboardType: TextInputType.number,
-                validator: (v) =>
-                    v?.trim().isEmpty == true ? 'مطلوب' : null,
+                validator: (v) => v?.trim().isEmpty == true ? 'مطلوب' : null,
               ),
               AppSpacing.gapH16,
               AppTextField(

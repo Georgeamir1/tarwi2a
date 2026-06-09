@@ -46,6 +46,10 @@ class CategoryRemoteDataSource {
         .update({'is_active': isActive}).eq('id', id);
   }
 
+  Future<void> deleteCategory(String id) async {
+    await _client.from('categories').delete().eq('id', id);
+  }
+
   Stream<List<CategoryDTO>> watchCategories() {
     return _client.from('categories').stream(primaryKey: ['id']).map(
         (data) => data.map((json) => CategoryDTO.fromJson(json)).toList());

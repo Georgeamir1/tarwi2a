@@ -16,6 +16,7 @@ class AppTextField extends StatelessWidget {
   final bool enabled;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onSubmitted;
+  final Iterable<String>? autofillHints;
 
   const AppTextField({
     super.key,
@@ -33,6 +34,7 @@ class AppTextField extends StatelessWidget {
     this.enabled = true,
     this.textInputAction,
     this.onSubmitted,
+    this.autofillHints,
   });
 
   @override
@@ -57,6 +59,7 @@ class AppTextField extends StatelessWidget {
           enabled: enabled,
           textInputAction: textInputAction,
           onFieldSubmitted: onSubmitted,
+          autofillHints: autofillHints,
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 20) : null,

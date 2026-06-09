@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-05-22 |
-| **Phase** | 27 (Complete - 16/17 tasks) |
-| **Task** | Phase 27: Production Readiness — 16/17 tasks complete. Only 27.17 (OWASP scan) remains. |
-| **Notes** | Added: env vars, complete schema.sql with RLS, GitHub Actions CI/CD, Dependabot, Sentry, HTML sanitize, docs for backup/staging. `flutter analyze` passes 0 errors. |
+| **Last session** | 2026-06-08 |
+| **Phase** | 28 (Light Theme & UX Redesign) |
+| **Task** | Resolved context/provider scope exception in AdminReportsCubit/AdminBusinessProfileCubit and fixed asynchronous context linter warnings. |
+| **Notes** | Verified code quality with `flutter analyze` passing successfully with 0 errors, 0 warnings, 0 infos. |
 
 ---
 
@@ -588,3 +588,54 @@ alter publication supabase_realtime add table business_profiles;
 | | Tasks | Done | Progress |
 |---|-------|------|----------|
 | **All Phases** | **267** | **266** | **99%** |
+
+---
+
+## 🟣 Phase 28: Light Theme Redesign (Customer-Facing)
+
+### Design Decision (2026-06-03)
+- Customer-facing screens: **Light warm-rose theme** (AppColors.background #FDF8F7, surface #FFFFFF)
+- Auth screens (splash, onboarding, login, register, OTP): **Dark cinematic theme** (unchanged)
+- Cart access: **2 points** (top bar icon + floating cart bar). Bottom nav cart tab **removed**.
+
+### Completed
+- [✓] 28.1 Redesign home_screen.dart — light warm-rose theme
+- [✓] 28.2 Redesign app_bottom_nav.dart — 4 tabs (Home, Menu, Orders, Profile), AppColors tokens
+- [✓] 28.3 Redesign floating_cart_bar.dart — gradient CTA bar
+- [✓] 28.4 Redesign cart_screen.dart — light theme, AppTopBar, direct color tokens
+- [✓] 28.5 Redesign empty_cart_screen.dart — light theme, AppTopBar
+- [✓] 28.6 Redesign customer_shell.dart — light background, floating cart bar positioning
+- [✓] 28.7 Redesign skeleton_card.dart — light theme colors
+- [✓] 28.8 Remove cart tab from bottom nav — 4 tabs instead of 5
+- [✓] 28.9 Move /cart from shell tab to standalone route (context.push)
+- [✓] 28.10 Remove AnimatedCartIcon from bottom nav (unused after cart tab removal)
+- [✓] 28.11 Update CustomerShell — floating cart bar visible on all tabs
+- [✓] 28.12 Redesign bottom nav bar — custom pill indicator, animated active state, proper safe area
+
+### Remaining (Light Theme Conversion)
+- [✓] 28.12 Redesign bottom nav bar — custom animated indicator, proper safe area
+- [ ] 28.13 product_detail_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.14 product_customization_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.15 product_reviews_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.16 checkout_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.17 payment_methods_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.18 payment_proof_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.19 order_success_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.20 orders_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.21 order_detail_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.22 order_tracking_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.23 rate_order_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.24 my_profile_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.25 my_addresses_screen.dart — convert to light theme + AppColors tokens
+- [ ] 28.26 settings_screen.dart — convert to light theme + AppColors tokens
+
+### Phase 28b: UX Redesign (Customer-Facing)
+- [✓] 28b.1 Redesign menu compact tile — larger image (92x92), price badge, row layout with cart button
+- [✓] 28b.2 Redesign popular card — wider (152px), tag pills, price badge, CartAddButton inline
+- [✓] 28b.3 Redesign cart screen — swipe-to-delete (Dismissible), refined empty state, premium checkout bar, quantity controls with primary accent, option pills in tertiary container
+- [✓] 28b.4 Redesign product detail — full AppColors tokens, improved bottom bar with shadow/elevation, option cards with status colors, better quantity stepper
+- [✓] 28b.5 Cart item card — product icon placeholder, option pills, inline quantity controls, swipe-to-delete
+- [✓] 28b.6 Display product details (preparation time, calories, tags) on customer-facing screens (detail view, horizontal/vertical cards)
+- [✓] 28b.7 Implement showInBanner flag to allow admin to toggle which products appear in the home sliding carousel
+- [ ] 28.26 Update DESIGN.md — document split strategy (auth=dark, customer=light)
+- [✓] 28.27 Run flutter analyze — must pass 0 errors

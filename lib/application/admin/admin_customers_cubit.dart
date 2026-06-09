@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/customer.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/customer_repository.dart';
@@ -13,19 +14,28 @@ class AdminCustomersCubit extends Cubit<AdminCustomersState> {
   AdminCustomersCubit(this._repository) : super(AdminCustomersState.initial());
 
   Future<void> loadCustomers() async {
+    appLogger.i('📥 loadCustomers() called');
     emit(state.copyWith(status: AdminCustomersStatus.loading));
     final result = await _repository.getAll();
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminCustomersStatus.error,
-        failure: failure,
-      )),
-      (customers) => emit(state.copyWith(
-        status: AdminCustomersStatus.loaded,
-        customers: customers,
-        filteredCustomers: customers,
-      )),
+      (failure) {
+        appLogger.e('📥 loadCustomers() FAILED: ${failure.runtimeType}');
+        emit(state.copyWith(
+          status: AdminCustomersStatus.error,
+          failure: failure,
+        ));
+      },
+      (customers) {
+        appLogger.i(
+            '📥 loadCustomers() SUCCESS — ${customers.length} customers loaded');
+        emit(state.copyWith(
+          status: AdminCustomersStatus.loaded,
+          customers: customers,
+          filteredCustomers: customers,
+        ));
+      },
     );
+    appLogger.i('📡 subscribing to customers realtime stream');
     _listenToStream();
   }
 
@@ -34,6 +44,9 @@ class AdminCustomersCubit extends Cubit<AdminCustomersState> {
     _subscription = _repository.watchCustomers().listen(
       (customers) {
         if (!isClosed) {
+          if (customers.isEmpty && state.customers.isNotEmpty) {
+            return;
+          }
           final filtered = _currentQuery.isEmpty
               ? customers
               : customers.where((c) {
@@ -49,9 +62,8 @@ class AdminCustomersCubit extends Cubit<AdminCustomersState> {
       },
       onError: (e) {
         if (!isClosed) {
-          emit(state.copyWith(
-            failure: Failure.unexpected(message: e.toString()),
-          ));
+          appLogger.w('Customers realtime stream error (kept cached data)',
+              error: e);
         }
       },
     );

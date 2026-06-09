@@ -70,7 +70,9 @@ class AppColors {
 
   // Legacy aliases for backward compatibility
   static const textPrimary = onSurface;
-  static const textSecondary = onSurfaceVariant;
+  static const textSecondary = Color(0xFF7A6B69);
+  static const textMuted = Color(0xFF8C7B79);
+  static const surface2 = surfaceContainerLow;
   static const divider = outlineVariant;
   static const borderLight = Color(0x1F000000);
   static const shadowSubtle = Color(0x0A000000);
@@ -96,6 +98,14 @@ class AppColors {
   static const primaryDark = Color(0xFFB81E1E);
   static const secondaryShadow = Color(0x335C4E4D);
   static const errorLight = Color(0x18D14334);
+
+  // Semantic Container Colors
+  static const successContainer = Color(0xFFE8F5E9);
+  static const successOnContainer = Color(0xFF1B5E20);
+  static const warningContainer = Color(0xFFFFF3E0);
+  static const warningOnContainer = Color(0xFFE65100);
+  static const infoContainer = Color(0xFFE3F2FD);
+  static const infoOnContainer = Color(0xFF1565C0);
 
   // Dark Theme
   static const darkBackground = Color(0xFF1F1615);
@@ -483,15 +493,27 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary;
+            return AppColors.onPrimary;
           }
-          return AppColors.onSurfaceVariant;
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.grey400.withValues(alpha: 0.38);
+          }
+          return AppColors.grey400;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.primary.withValues(alpha: 0.5);
+            return AppColors.primary;
           }
-          return AppColors.surfaceContainerHighest;
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.grey200.withValues(alpha: 0.12);
+          }
+          return AppColors.grey200;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.transparent;
+          }
+          return AppColors.outlineVariant;
         }),
       ),
       radioTheme: RadioThemeData(
@@ -533,7 +555,8 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
@@ -766,13 +789,25 @@ class AppTheme {
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.inversePrimary;
+            return Colors.white;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.darkTextSecondary.withValues(alpha: 0.38);
           }
           return AppColors.darkTextSecondary;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return AppColors.inversePrimary.withValues(alpha: 0.5);
+            return AppColors.inversePrimary;
+          }
+          if (states.contains(WidgetState.disabled)) {
+            return AppColors.darkDivider.withValues(alpha: 0.12);
+          }
+          return AppColors.darkDivider;
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.transparent;
           }
           return AppColors.darkDivider;
         }),
@@ -816,7 +851,8 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.darkSurface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(

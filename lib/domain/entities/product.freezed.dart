@@ -26,8 +26,12 @@ mixin _$Product {
   String? get imageUrl => throw _privateConstructorUsedError;
   bool get isAvailable => throw _privateConstructorUsedError;
   int get sortOrder => throw _privateConstructorUsedError;
+  int? get preparationTime => throw _privateConstructorUsedError;
+  int? get calories => throw _privateConstructorUsedError;
+  List<String> get tags => throw _privateConstructorUsedError;
   Map<String, dynamic>? get businessHours => throw _privateConstructorUsedError;
   List<ProductOption> get options => throw _privateConstructorUsedError;
+  bool get showInBanner => throw _privateConstructorUsedError;
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
@@ -51,8 +55,12 @@ abstract class $ProductCopyWith<$Res> {
       String? imageUrl,
       bool isAvailable,
       int sortOrder,
+      int? preparationTime,
+      int? calories,
+      List<String> tags,
       Map<String, dynamic>? businessHours,
-      List<ProductOption> options});
+      List<ProductOption> options,
+      bool showInBanner});
 }
 
 /// @nodoc
@@ -67,7 +75,7 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
+  @pragma('dart2js:noInline')
   @override
   $Res call({
     Object? id = null,
@@ -80,8 +88,12 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
     Object? imageUrl = freezed,
     Object? isAvailable = null,
     Object? sortOrder = null,
+    Object? preparationTime = freezed,
+    Object? calories = freezed,
+    Object? tags = null,
     Object? businessHours = freezed,
     Object? options = null,
+    Object? showInBanner = null,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -124,6 +136,18 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as int,
+      preparationTime: freezed == preparationTime
+          ? _value.preparationTime
+          : preparationTime // ignore: cast_nullable_to_non_nullable
+              as int?,
+      calories: freezed == calories
+          ? _value.calories
+          : calories // ignore: cast_nullable_to_non_nullable
+              as int?,
+      tags: null == tags
+          ? _value.tags
+          : tags // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       businessHours: freezed == businessHours
           ? _value.businessHours
           : businessHours // ignore: cast_nullable_to_non_nullable
@@ -132,6 +156,10 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
           ? _value.options
           : options // ignore: cast_nullable_to_non_nullable
               as List<ProductOption>,
+      showInBanner: null == showInBanner
+          ? _value.showInBanner
+          : showInBanner // ignore: cast_nullable_to_non_nullable
+              as bool,
     ) as $Val);
   }
 }
@@ -154,8 +182,12 @@ abstract class _$$ProductImplCopyWith<$Res> implements $ProductCopyWith<$Res> {
       String? imageUrl,
       bool isAvailable,
       int sortOrder,
+      int? preparationTime,
+      int? calories,
+      List<String> tags,
       Map<String, dynamic>? businessHours,
-      List<ProductOption> options});
+      List<ProductOption> options,
+      bool showInBanner});
 }
 
 /// @nodoc
@@ -168,7 +200,7 @@ class __$$ProductImplCopyWithImpl<$Res>
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('vm:prefer-inline')
+  @pragma('dart2js:noInline')
   @override
   $Res call({
     Object? id = null,
@@ -181,8 +213,12 @@ class __$$ProductImplCopyWithImpl<$Res>
     Object? imageUrl = freezed,
     Object? isAvailable = null,
     Object? sortOrder = null,
+    Object? preparationTime = freezed,
+    Object? calories = freezed,
+    Object? tags = null,
     Object? businessHours = freezed,
     Object? options = null,
+    Object? showInBanner = null,
   }) {
     return _then(_$ProductImpl(
       id: null == id
@@ -225,6 +261,18 @@ class __$$ProductImplCopyWithImpl<$Res>
           ? _value.sortOrder
           : sortOrder // ignore: cast_nullable_to_non_nullable
               as int,
+      preparationTime: freezed == preparationTime
+          ? _value.preparationTime
+          : preparationTime // ignore: cast_nullable_to_non_nullable
+              as int?,
+      calories: freezed == calories
+          ? _value.calories
+          : calories // ignore: cast_nullable_to_non_nullable
+              as int?,
+      tags: null == tags
+          ? _value._tags
+          : tags // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       businessHours: freezed == businessHours
           ? _value._businessHours
           : businessHours // ignore: cast_nullable_to_non_nullable
@@ -233,6 +281,10 @@ class __$$ProductImplCopyWithImpl<$Res>
           ? _value._options
           : options // ignore: cast_nullable_to_non_nullable
               as List<ProductOption>,
+      showInBanner: null == showInBanner
+          ? _value.showInBanner
+          : showInBanner // ignore: cast_nullable_to_non_nullable
+              as bool,
     ));
   }
 }
@@ -251,9 +303,14 @@ class _$ProductImpl implements _Product {
       this.imageUrl,
       required this.isAvailable,
       required this.sortOrder,
+      this.preparationTime,
+      this.calories,
+      final List<String> tags = const [],
       final Map<String, dynamic>? businessHours,
-      final List<ProductOption> options = const []})
-      : _businessHours = businessHours,
+      final List<ProductOption> options = const [],
+      this.showInBanner = false})
+      : _tags = tags,
+        _businessHours = businessHours,
         _options = options;
 
   @override
@@ -276,6 +333,19 @@ class _$ProductImpl implements _Product {
   final bool isAvailable;
   @override
   final int sortOrder;
+  @override
+  final int? preparationTime;
+  @override
+  final int? calories;
+  final List<String> _tags;
+  @override
+  @JsonKey()
+  List<String> get tags {
+    if (_tags is EqualUnmodifiableListView) return _tags;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_tags);
+  }
+
   final Map<String, dynamic>? _businessHours;
   @override
   Map<String, dynamic>? get businessHours {
@@ -296,8 +366,12 @@ class _$ProductImpl implements _Product {
   }
 
   @override
+  @JsonKey()
+  final bool showInBanner;
+
+  @override
   String toString() {
-    return 'Product(id: $id, categoryId: $categoryId, name: $name, nameAr: $nameAr, description: $description, descriptionAr: $descriptionAr, price: $price, imageUrl: $imageUrl, isAvailable: $isAvailable, sortOrder: $sortOrder, businessHours: $businessHours, options: $options)';
+    return 'Product(id: $id, categoryId: $categoryId, name: $name, nameAr: $nameAr, description: $description, descriptionAr: $descriptionAr, price: $price, imageUrl: $imageUrl, isAvailable: $isAvailable, sortOrder: $sortOrder, preparationTime: $preparationTime, calories: $calories, tags: $tags, businessHours: $businessHours, options: $options, showInBanner: $showInBanner)';
   }
 
   @override
@@ -321,9 +395,16 @@ class _$ProductImpl implements _Product {
                 other.isAvailable == isAvailable) &&
             (identical(other.sortOrder, sortOrder) ||
                 other.sortOrder == sortOrder) &&
+            (identical(other.preparationTime, preparationTime) ||
+                other.preparationTime == preparationTime) &&
+            (identical(other.calories, calories) ||
+                other.calories == calories) &&
+            const DeepCollectionEquality().equals(other._tags, _tags) &&
             const DeepCollectionEquality()
                 .equals(other._businessHours, _businessHours) &&
-            const DeepCollectionEquality().equals(other._options, _options));
+            const DeepCollectionEquality().equals(other._options, _options) &&
+            (identical(other.showInBanner, showInBanner) ||
+                other.showInBanner == showInBanner));
   }
 
   @override
@@ -339,14 +420,18 @@ class _$ProductImpl implements _Product {
       imageUrl,
       isAvailable,
       sortOrder,
+      preparationTime,
+      calories,
+      const DeepCollectionEquality().hash(_tags),
       const DeepCollectionEquality().hash(_businessHours),
-      const DeepCollectionEquality().hash(_options));
+      const DeepCollectionEquality().hash(_options),
+      showInBanner);
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('vm:prefer-inline')
+  @pragma('dart2js:noInline')
   _$$ProductImplCopyWith<_$ProductImpl> get copyWith =>
       __$$ProductImplCopyWithImpl<_$ProductImpl>(this, _$identity);
 }
@@ -363,8 +448,12 @@ abstract class _Product implements Product {
       final String? imageUrl,
       required final bool isAvailable,
       required final int sortOrder,
+      final int? preparationTime,
+      final int? calories,
+      final List<String> tags,
       final Map<String, dynamic>? businessHours,
-      final List<ProductOption> options}) = _$ProductImpl;
+      final List<ProductOption> options,
+      final bool showInBanner}) = _$ProductImpl;
 
   @override
   String get id;
@@ -387,9 +476,17 @@ abstract class _Product implements Product {
   @override
   int get sortOrder;
   @override
+  int? get preparationTime;
+  @override
+  int? get calories;
+  @override
+  List<String> get tags;
+  @override
   Map<String, dynamic>? get businessHours;
   @override
   List<ProductOption> get options;
+  @override
+  bool get showInBanner;
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.

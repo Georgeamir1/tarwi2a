@@ -10,5 +10,6 @@ abstract class CategoryRepository {
     String? id,
   });
   Future<Either<Failure, void>> toggleActive(String id, bool isActive);
+  Future<Either<Failure, void>> deleteCategory(String id);
   Stream<List<Category>> watchCategories();
 }

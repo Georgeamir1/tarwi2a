@@ -17,6 +17,8 @@ void main() {
 
   setUp(() {
     mockRepo = MockBusinessProfileRepository();
+    when(() => mockRepo.watchProfile())
+        .thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminBusinessProfileCubit', () {

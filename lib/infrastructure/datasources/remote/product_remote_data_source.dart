@@ -49,6 +49,10 @@ class ProductRemoteDataSource {
         .update({'is_available': isAvailable}).eq('id', id);
   }
 
+  Future<void> delete(String id) async {
+    await _client.from('products').delete().eq('id', id);
+  }
+
   Stream<List<ProductDTO>> watchProducts({String? categoryId}) {
     return _client.from('products').stream(primaryKey: ['id']).map((data) {
       final dtos = data.map((json) => ProductDTO.fromJson(json)).toList();
