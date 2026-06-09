@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-08 |
+| **Last session** | 2026-06-09 |
 | **Phase** | 28 (Light Theme & UX Redesign) |
-| **Task** | Resolved context/provider scope exception in AdminReportsCubit/AdminBusinessProfileCubit and fixed asynchronous context linter warnings. |
-| **Notes** | Verified code quality with `flutter analyze` passing successfully with 0 errors, 0 warnings, 0 infos. |
+| **Task** | Completed all remaining customer-facing screens conversion to the light warm-rose theme using AppColors tokens and updated DESIGN.md to document the split theme strategy. |
+| **Notes** | Verified that all customer screens compile correctly. `flutter analyze` passed with 0 errors and 0 warnings. |
 
 ---
 
@@ -614,20 +614,20 @@ alter publication supabase_realtime add table business_profiles;
 
 ### Remaining (Light Theme Conversion)
 - [✓] 28.12 Redesign bottom nav bar — custom animated indicator, proper safe area
-- [ ] 28.13 product_detail_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.14 product_customization_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.15 product_reviews_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.16 checkout_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.17 payment_methods_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.18 payment_proof_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.19 order_success_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.13 product_detail_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.14 product_customization_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.15 product_reviews_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.16 checkout_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.17 payment_methods_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.18 payment_proof_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.19 order_success_screen.dart — convert to light theme + AppColors tokens
 - [✓] 28.20 orders_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.21 order_detail_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.22 order_tracking_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.23 rate_order_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.24 my_profile_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.25 my_addresses_screen.dart — convert to light theme + AppColors tokens
-- [ ] 28.26 settings_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.21 order_detail_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.22 order_tracking_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.23 rate_order_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.24 my_profile_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.25 my_addresses_screen.dart — convert to light theme + AppColors tokens
+- [✓] 28.26 settings_screen.dart — convert to light theme + AppColors tokens
 
 ### Phase 28b: UX Redesign (Customer-Facing)
 - [✓] 28b.1 Redesign menu compact tile — larger image (92x92), price badge, row layout with cart button
@@ -637,5 +637,5 @@ alter publication supabase_realtime add table business_profiles;
 - [✓] 28b.5 Cart item card — product icon placeholder, option pills, inline quantity controls, swipe-to-delete
 - [✓] 28b.6 Display product details (preparation time, calories, tags) on customer-facing screens (detail view, horizontal/vertical cards)
 - [✓] 28b.7 Implement showInBanner flag to allow admin to toggle which products appear in the home sliding carousel
-- [ ] 28.26 Update DESIGN.md — document split strategy (auth=dark, customer=light)
+- [✓] 28.26 Update DESIGN.md — document split strategy (auth=dark, customer=light)
 - [✓] 28.27 Run flutter analyze — must pass 0 errors

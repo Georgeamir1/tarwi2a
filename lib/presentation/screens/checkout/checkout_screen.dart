@@ -14,6 +14,7 @@ import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
 import '../../extensions/payment_method_x.dart';
 import '../../widgets/loading_button.dart';
+import '../../widgets/app_top_bar.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -152,7 +153,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
-        final isDark = theme.brightness == Brightness.dark;
         
         return TweenAnimationBuilder<double>(
           duration: const Duration(milliseconds: 550),
@@ -170,11 +170,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(28),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surface,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadius.xxl),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 24,
                           offset: const Offset(0, 8),
                         ),
@@ -194,24 +194,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 width: 80,
                                 height: 80,
                                 decoration: BoxDecoration(
-                                  color: isDark 
-                                      ? const Color(0xFF1B3D2F) 
-                                      : AppColors.successContainer,
+                                  color: AppColors.successContainer,
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: (isDark ? const Color(0xFF2D8C5E) : AppColors.success)
-                                          .withValues(alpha: 0.2),
+                                      color: AppColors.success.withValues(alpha: 0.2),
                                       blurRadius: 16,
                                       offset: const Offset(0, 6),
                                     ),
                                   ],
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.check_circle_rounded,
-                                  color: isDark 
-                                      ? const Color(0xFF81C784) 
-                                      : AppColors.successOnContainer,
+                                  color: AppColors.successOnContainer,
                                   size: 46,
                                 ),
                               ),
@@ -223,7 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           'تم الطلب بنجاح!',
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w900,
-                            color: theme.colorScheme.onSurface,
+                            color: AppColors.textPrimary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -231,7 +226,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Text(
                           'هنتواصل معاك في أقرب وقت لتأكيد وتوصيل طلبك',
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                            color: AppColors.textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -243,10 +238,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             context.go('/orders');
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: AppColors.onPrimary,
                             elevation: 2,
-                            shadowColor: theme.colorScheme.primary.withValues(alpha: 0.3),
+                            shadowColor: AppColors.primary.withValues(alpha: 0.3),
                             minimumSize: const Size(double.infinity, 54),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -258,13 +253,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               Text(
                                 'شوف طلباتي',
                                 style: theme.textTheme.titleMedium?.copyWith(
-                                  color: theme.colorScheme.onPrimary,
+                                  color: AppColors.onPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(Icons.arrow_forward_rounded, 
-                                   color: theme.colorScheme.onPrimary, 
+                              const Icon(Icons.arrow_forward_rounded, 
+                                   color: AppColors.onPrimary, 
                                    size: 20),
                             ],
                           ),
@@ -342,25 +337,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, cartState) {
         return Scaffold(
-          appBar: AppBar(
-            elevation: 0,
-            title: const Text('إتمام الطلب'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () {
-                appLogger.i('[CheckoutScreen] back pressed');
-                if (Navigator.of(context).canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/cart');
-                }
-              },
-            ),
+          backgroundColor: AppColors.background,
+          appBar: const AppTopBar(
+            title: 'إتمـام الطلب',
+            variant: TopBarVariant.withBack,
           ),
           body: SafeArea(
             child: Form(
@@ -429,15 +413,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _selectedAddress != null
-                              ? (isDark ? const Color(0xFF81C784) : AppColors.successOnContainer)
-                              : theme.colorScheme.primary,
+                              ? AppColors.successOnContainer
+                              : AppColors.primary,
                           backgroundColor: _selectedAddress != null
-                              ? (isDark ? const Color(0xFF1B3D2F) : AppColors.successContainer)
+                              ? AppColors.successContainer
                               : Colors.transparent,
                           side: BorderSide(
                             color: _selectedAddress != null
-                                ? (isDark ? const Color(0xFF2D8C5E) : AppColors.success)
-                                : theme.colorScheme.outlineVariant,
+                                ? AppColors.success
+                                : AppColors.outlineVariant,
                             width: 1.5,
                           ),
                           minimumSize: const Size(double.infinity, 48),
@@ -455,9 +439,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface,
+                      color: AppColors.surface,
                       borderRadius: AppRadius.lgAll,
-                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
                       boxShadow: const [AppShadows.card],
                     ),
                     child: Column(
@@ -490,15 +474,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                                color: AppColors.primary.withValues(alpha: 0.08),
                                 borderRadius: AppRadius.mdAll,
                                 border: Border.all(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+                                    color: AppColors.primary.withValues(alpha: 0.3)),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.calendar_today_rounded,
-                                      color: theme.colorScheme.primary, size: 18),
+                                  const Icon(Icons.calendar_today_rounded,
+                                      color: AppColors.primary, size: 18),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
@@ -509,8 +493,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       style:
                                           theme.textTheme.bodyMedium?.copyWith(
                                         color: _scheduledDateTime != null
-                                            ? theme.colorScheme.onSurface
-                                            : theme.colorScheme.onSurfaceVariant,
+                                            ? AppColors.textPrimary
+                                            : AppColors.textSecondary,
                                         fontWeight: _scheduledDateTime != null
                                             ? FontWeight.w600
                                             : FontWeight.w400,
@@ -559,23 +543,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: isDark 
-                            ? theme.colorScheme.tertiaryContainer.withValues(alpha: 0.15)
-                            : theme.colorScheme.tertiaryContainer,
+                        color: AppColors.tertiaryContainer,
                         borderRadius: AppRadius.lgAll,
                         border: Border.all(
-                            color: theme.colorScheme.tertiary.withValues(alpha: 0.3)),
+                            color: AppColors.tertiary.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline_rounded,
-                              color: theme.colorScheme.tertiary, size: 18),
+                          const Icon(Icons.info_outline_rounded,
+                              color: AppColors.tertiary, size: 18),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
                               style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: theme.colorScheme.onTertiaryContainer),
+                                  ?.copyWith(color: AppColors.onTertiaryContainer),
                             ),
                           ),
                         ],
@@ -588,9 +570,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface,
+                      color: AppColors.surface,
                       borderRadius: AppRadius.lgAll,
-                      border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
                       boxShadow: const [AppShadows.card],
                     ),
                     child: Column(
@@ -609,7 +591,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         Text(
                                           '${item.productNameAr} × ${item.quantity}',
                                           style: theme.textTheme.bodySmall
-                                              ?.copyWith(fontSize: 13),
+                                              ?.copyWith(fontSize: 13, color: AppColors.textPrimary),
                                         ),
                                         if (item.selectedOptions.isNotEmpty)
                                           Text(
@@ -618,7 +600,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                                 .join(', '),
                                             style: theme.textTheme.labelSmall
                                                 ?.copyWith(
-                                              color: theme.colorScheme.onSurfaceVariant,
+                                              color: AppColors.textSecondary,
                                             ),
                                           ),
                                       ],
@@ -630,25 +612,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                         theme.textTheme.labelMedium?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
                                 ],
                               ),
                             )),
-                        Divider(height: 24, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                        const Divider(height: 24, color: AppColors.outlineVariant),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
                               'الإجمالي',
                               style: TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 16),
+                                  fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
                             ),
                             Text(
                               '${cartState.total.toStringAsFixed(0)} جنيه',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.w900,
-                                color: theme.colorScheme.primary,
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -749,7 +732,6 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isSelected = widget.type == widget.selected;
 
     return MouseRegion(
@@ -771,17 +753,17 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
             constraints: const BoxConstraints(minHeight: 76),
             decoration: BoxDecoration(
               color: isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                  : (isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface),
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : AppColors.surface,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )
@@ -794,7 +776,7 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
               children: [
                 Icon(
                   widget.type.icon,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
                   size: 24,
                 ),
                 const SizedBox(height: 6),
@@ -802,7 +784,7 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
                   widget.type.arabicLabel,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -855,7 +837,6 @@ class _ScheduleChipState extends State<_ScheduleChip>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -875,11 +856,11 @@ class _ScheduleChipState extends State<_ScheduleChip>
             padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               color: widget.selected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                  : (isDark ? theme.colorScheme.surfaceContainerLowest : theme.colorScheme.surfaceContainerLow),
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : AppColors.surfaceContainerLow,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: widget.selected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: widget.selected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: widget.selected ? 1.5 : 1.0,
               ),
             ),
@@ -888,7 +869,7 @@ class _ScheduleChipState extends State<_ScheduleChip>
               widget.label,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
-                color: widget.selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                color: widget.selected ? AppColors.primary : AppColors.textSecondary,
               ),
             ),
           ),
@@ -943,7 +924,6 @@ class _PaymentOptionState extends State<_PaymentOption>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isSelected = widget.method == widget.selected;
 
     return MouseRegion(
@@ -964,17 +944,17 @@ class _PaymentOptionState extends State<_PaymentOption>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isSelected
-                  ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                  : (isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface),
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : AppColors.surface,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        color: AppColors.primary.withValues(alpha: 0.12),
                         blurRadius: 8,
                         offset: const Offset(0, 4),
                       )
@@ -985,7 +965,7 @@ class _PaymentOptionState extends State<_PaymentOption>
               children: [
                 Icon(
                   widget.icon,
-                  color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
                   size: 24,
                 ),
                 const SizedBox(width: 14),
@@ -994,14 +974,14 @@ class _PaymentOptionState extends State<_PaymentOption>
                     widget.label,
                     style: theme.textTheme.labelLarge?.copyWith(
                       fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
                     ),
                   ),
                 ),
                 if (isSelected)
-                  Icon(
+                  const Icon(
                     Icons.check_circle_rounded,
-                    color: theme.colorScheme.primary,
+                    color: AppColors.primary,
                     size: 20,
                   ),
               ],
@@ -1058,13 +1038,12 @@ class _CheckoutTextFieldState extends State<_CheckoutTextField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     
-    final primary = theme.colorScheme.primary;
-    final outlineVariant = theme.colorScheme.outlineVariant;
-    final textPrimary = theme.colorScheme.onSurface;
-    final textSecondary = theme.colorScheme.onSurfaceVariant;
-    final fill = isDark ? theme.colorScheme.surfaceContainerLow : theme.colorScheme.surface;
+    final primary = AppColors.primary;
+    final outlineVariant = AppColors.outlineVariant;
+    final textPrimary = AppColors.textPrimary;
+    final textSecondary = AppColors.textSecondary;
+    const fill = AppColors.surface;
     
     final hasError = _errorText != null;
     final borderColor = hasError

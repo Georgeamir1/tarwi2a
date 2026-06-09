@@ -10,7 +10,6 @@ import '../application/admin/admin_coupons_cubit.dart';
 import '../application/admin/admin_customers_cubit.dart';
 import '../application/admin/admin_delivery_zones_cubit.dart';
 import '../application/admin/admin_business_profile_cubit.dart';
-import '../application/admin/admin_reports_cubit.dart';
 import '../core/di/injection_container.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/order.dart';
@@ -103,12 +102,6 @@ Widget _adminWrap(Widget child) {
       BlocProvider.value(value: sl<AdminCustomersCubit>()..loadCustomers()),
       BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()..loadZones()),
       BlocProvider.value(value: sl<AdminBusinessProfileCubit>()..loadProfile()),
-      BlocProvider.value(
-          value: sl<AdminReportsCubit>()
-            ..loadReports(
-              startDate: DateTime.now().subtract(const Duration(days: 7)),
-              endDate: DateTime.now(),
-            )),
     ],
     child: child,
   );
@@ -188,17 +181,7 @@ final appRouter = GoRouter(
             ),
           ],
         ),
-        // Tab 2: Favorites
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/favorites',
-              pageBuilder: (c, s) =>
-                  _fadeTransition(c, s, const MyFavoritesScreen()),
-            ),
-          ],
-        ),
-        // Tab 3: Orders
+        // Tab 2: Orders
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -208,7 +191,7 @@ final appRouter = GoRouter(
             ),
           ],
         ),
-        // Tab 4: Profile
+        // Tab 3: Profile
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -226,7 +209,14 @@ final appRouter = GoRouter(
       path: '/product/:id',
       pageBuilder: (c, s) {
         final product = s.extra as Product;
-        return _fadeTransition(c, s, ProductDetailScreen(product: product));
+        return _fadeTransition(
+          c,
+          s,
+          BlocProvider<AdminProductOptionsCubit>.value(
+            value: sl<AdminProductOptionsCubit>(),
+            child: ProductDetailScreen(product: product),
+          ),
+        );
       },
     ),
     GoRoute(
@@ -361,12 +351,6 @@ final appRouter = GoRouter(
                 value: sl<AdminDeliveryZonesCubit>()..loadZones()),
             BlocProvider.value(
                 value: sl<AdminBusinessProfileCubit>()..loadProfile()),
-            BlocProvider.value(
-                value: sl<AdminReportsCubit>()
-                  ..loadReports(
-                    startDate: DateTime.now().subtract(const Duration(days: 7)),
-                    endDate: DateTime.now(),
-                  )),
           ],
           child: AdminShell(navigationShell: navigationShell),
         );

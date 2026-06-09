@@ -11,8 +11,8 @@ class OrderSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -38,15 +38,14 @@ class OrderSuccessScreen extends StatelessWidget {
                 'تم الطلب بنجاح!',
                 style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'رقم الطلب: #${orderId.substring(0, 8)}',
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.onSurfaceVariant,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -54,9 +53,7 @@ class OrderSuccessScreen extends StatelessWidget {
                 'طلبك قيد المراجعة وهنبلغك بكل التحديثات',
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.onSurfaceVariant,
+                  color: AppColors.textSecondary,
                   height: 1.5,
                 ),
               ),

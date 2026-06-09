@@ -28,8 +28,8 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppTopBar(title: 'تخصيص الطلب', variant: TopBarVariant.withBack),
       body: Column(
         children: [
@@ -43,6 +43,7 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                     'الحجم',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -54,9 +55,10 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                         label: Text(size),
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedSize = size),
-                        selectedColor: AppColors.secondary,
+                        selectedColor: AppColors.primary,
+                        backgroundColor: AppColors.surface,
                         labelStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: selected ? Colors.white : null,
+                          color: selected ? AppColors.onPrimary : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       );
@@ -67,15 +69,22 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                     'الإضافات',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   ..._extras.keys.map((extra) => CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: Text(extra),
+                        title: Text(
+                          extra,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                         value: _extras[extra],
                         onChanged: (v) => setState(() => _extras[extra] = v ?? false),
                         activeColor: AppColors.primary,
+                        checkColor: AppColors.onPrimary,
                         controlAffinity: ListTileControlAffinity.leading,
                       )),
                   const SizedBox(height: 24),
@@ -83,12 +92,14 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                     'ملاحظات خاصة',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: _notesController,
                     maxLines: 3,
+                    style: const TextStyle(color: AppColors.textPrimary),
                     decoration: const InputDecoration(
                       hintText: 'اكتب أي ملاحظات خاصة هنا...',
                     ),
@@ -98,6 +109,7 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                     'الكمية',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -115,9 +127,9 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
           ),
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkSurface : AppColors.surface,
-              border: const Border(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              border: Border(
                 top: BorderSide(color: AppColors.outlineVariant),
               ),
             ),

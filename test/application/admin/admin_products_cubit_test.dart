@@ -20,6 +20,8 @@ void main() {
     mockRepo = MockProductRepository();
     when(() => mockRepo.watchProducts(categoryId: any(named: 'categoryId')))
         .thenAnswer((_) => const Stream.empty());
+    when(() => mockRepo.watchProducts())
+        .thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminProductsCubit', () {
@@ -99,36 +101,37 @@ void main() {
     });
 
     group('toggleAvailable', () {
-      test('calls repo.toggleAvailable then reloads', () async {
-        when(() => mockRepo.toggleAvailable(any(), any()))
-            .thenAnswer((_) async => right<Failure, void>(null));
+      test('updates product optimistically, no reload', () async {
         when(() => mockRepo.getAllAdmin())
             .thenAnswer((_) async => right([testProduct]));
-
         cubit = AdminProductsCubit(mockRepo);
+        await cubit.loadProducts();
+
+        when(() => mockRepo.toggleAvailable('prod-1', false))
+            .thenAnswer((_) async => right<Failure, void>(null));
 
         await cubit.toggleAvailable('prod-1', false);
-        await Future.delayed(const Duration(milliseconds: 50));
 
         verify(() => mockRepo.toggleAvailable('prod-1', false)).called(1);
-        verify(() => mockRepo.getAllAdmin()).called(1);
         expect(cubit.state.status, AdminProductsStatus.loaded);
-        expect(cubit.state.products, [testProduct]);
+        expect(cubit.state.products.single.id, testProduct.id);
+        expect(cubit.state.products.single.isAvailable, false);
       });
 
-      test('emits error when toggleAvailable fails and reload also fails', () async {
-        when(() => mockRepo.toggleAvailable(any(), any()))
-            .thenAnswer((_) async => left(testServerFailure));
+      test('reverts state on toggle failure', () async {
         when(() => mockRepo.getAllAdmin())
-            .thenAnswer((_) async => left(testServerFailure));
-
+            .thenAnswer((_) async => right([testProduct]));
         cubit = AdminProductsCubit(mockRepo);
+        await cubit.loadProducts();
+
+        when(() => mockRepo.toggleAvailable('prod-1', false))
+            .thenAnswer((_) async => left(testServerFailure));
 
         await cubit.toggleAvailable('prod-1', false);
-        await Future.delayed(const Duration(milliseconds: 50));
 
         verify(() => mockRepo.toggleAvailable('prod-1', false)).called(1);
-        expect(cubit.state.status, AdminProductsStatus.error);
+        expect(
+            cubit.state.products.single.isAvailable, testProduct.isAvailable);
         expect(cubit.state.failure, testServerFailure);
       });
     });

@@ -15,6 +15,7 @@ class ProductReviewsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppTopBar(
         title: 'التقييمات',
         variant: TopBarVariant.withBack,
@@ -22,7 +23,7 @@ class ProductReviewsScreen extends StatelessWidget {
       body: Column(
         children: [
           _RatingSummary(productName: productName),
-          const Divider(),
+          const Divider(color: AppColors.outlineVariant),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -61,6 +62,7 @@ class _RatingSummary extends StatelessWidget {
                   productName,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -71,13 +73,14 @@ class _RatingSummary extends StatelessWidget {
                         (i) => Icon(
                               Icons.star,
                               size: 20,
-                              color: i < 4 ? AppColors.statusPending : AppColors.grey300,
+                              color: i < 4 ? AppColors.statusPending : AppColors.outlineVariant,
                             )),
                     const SizedBox(width: 8),
                     Text(
                       '4.2',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                   ],
@@ -107,9 +110,14 @@ class _ReviewTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
+      color: AppColors.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: const BorderSide(color: AppColors.outlineVariant),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
@@ -122,14 +130,13 @@ class _ReviewTile extends StatelessWidget {
                   name,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
                   date,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.onSurfaceVariant,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -150,6 +157,7 @@ class _ReviewTile extends StatelessWidget {
               comment,
               style: theme.textTheme.bodyMedium?.copyWith(
                 height: 1.5,
+                color: AppColors.textPrimary,
               ),
             ),
           ],

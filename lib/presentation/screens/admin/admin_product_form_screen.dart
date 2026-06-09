@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +10,7 @@ import '../../../application/admin/admin_product_options_cubit.dart';
 import '../../../core/services/image_upload_service.dart';
 import '../../../domain/entities/product.dart';
 import '../../../domain/entities/product_option.dart';
+import '../../widgets/app_top_bar.dart';
 import '../../widgets/image_picker_sheet.dart';
 import '../../widgets/loading_button.dart';
 import '../../widgets/option_form_sheet.dart';
@@ -70,6 +72,15 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     _showInBanner = p?.showInBanner ?? false;
     _selectedTags = List<String>.from(p?.tags ?? []);
 
+    // Load options for existing product
+    if (_isEditing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context
+            .read<AdminProductOptionsCubit>()
+            .loadByProductId(widget.product!.id);
+      });
+    }
+
     // Track unsaved changes
     for (final c in [
       _nameArController,
@@ -79,6 +90,7 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
       _priceController,
       _prepTimeController,
       _caloriesController,
+      _sortOrderController,
     ]) {
       c.addListener(_markDirty);
     }
@@ -108,19 +120,39 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تجاهل التعديلات؟'),
-        content: const Text('عندك تعديلات مش محفوظة. هتخسرها لو رجعت.'),
+        title: const Text(
+          'تجاهل التعديلات؟',
+          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'لديك تعديلات غير محفوظة. هل تريد تجاهلها والخروج؟',
+          style: TextStyle(fontFamily: 'Cairo'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('متابعة التعديل'),
+            child: const Text(
+              'متابعة التعديل',
+              style:
+                  TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
             ),
-            child: const Text('تجاهل'),
+            child: const Text(
+              'تجاهل',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -142,14 +174,14 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
 
     if (result.hasFile) {
       setState(() => _isUploading = true);
-      final uploadResult =
-          await ImageUploadService().uploadImage(result.file!);
+      final uploadResult = await ImageUploadService().uploadImage(result.file!);
       if (!mounted) return;
       uploadResult.fold(
         (failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(failure.message),
+              content: Text(failure.message,
+                  style: const TextStyle(fontFamily: 'Cairo')),
               backgroundColor: AppColors.error,
             ),
           );
@@ -211,7 +243,12 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
               const Icon(Icons.check_circle_rounded,
                   color: Colors.white, size: 20),
               const SizedBox(width: 8),
-              Text(_isEditing ? 'تم التعديل بنجاح ✓' : 'تم الإضافة بنجاح ✓'),
+              Text(
+                _isEditing
+                    ? 'تم حفظ التعديلات بنجاح ✓'
+                    : 'تم إضافة الصنف بنجاح ✓',
+                style: const TextStyle(fontFamily: 'Cairo'),
+              ),
             ],
           ),
           backgroundColor: AppColors.success,
@@ -225,7 +262,8 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('حصل خطأ، حاول تاني'),
+          content:
+              Text('حصل خطأ، حاول ثاني', style: TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -240,21 +278,40 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.delete_forever_rounded,
             color: AppColors.error, size: 48),
-        title: const Text('حذف الصنف'),
+        title: const Text(
+          'حذف الصنف',
+          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700),
+        ),
         content: Text(
           'هل أنت متأكد من حذف "${widget.product!.nameAr}"؟\nلا يمكن التراجع عن هذا الإجراء.',
+          style: const TextStyle(fontFamily: 'Cairo'),
+          textAlign: TextAlign.center,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء'),
+            child: const Text(
+              'إلغاء',
+              style:
+                  TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600),
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
             ),
-            child: const Text('حذف'),
+            child: const Text(
+              'حذف',
+              style: TextStyle(
+                fontFamily: 'Cairo',
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
           ),
         ],
       ),
@@ -266,9 +323,19 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     _hasUnsavedChanges = false;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم حذف الصنف'),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.delete_outline_rounded,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            const Text('تم حذف الصنف بنجاح',
+                style: TextStyle(fontFamily: 'Cairo')),
+          ],
+        ),
         backgroundColor: AppColors.statusCancelled,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
     context.pop();
@@ -297,12 +364,51 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('تم نسخ الصنف بنجاح'),
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.copy_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            const Text('تم نسخ الصنف بنجاح بنسخة غير مفعلة',
+                style: TextStyle(fontFamily: 'Cairo')),
+          ],
+        ),
         backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
     context.pop();
+  }
+
+  InputDecoration _getInputDecoration({
+    required String labelText,
+    String? hintText,
+    Widget? prefixIcon,
+    Widget? suffix,
+    String? suffixText,
+  }) {
+    final theme = Theme.of(context);
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      suffixIcon: suffix,
+      suffixText: suffixText,
+      labelStyle: theme.textTheme.bodyMedium?.copyWith(
+        fontFamily: 'Cairo',
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
+      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+        fontFamily: 'Cairo',
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+      ),
+      suffixStyle: theme.textTheme.bodyMedium?.copyWith(
+        fontFamily: 'Cairo',
+        fontWeight: FontWeight.w600,
+        color: theme.colorScheme.primary,
+      ),
+    );
   }
 
   @override
@@ -317,24 +423,25 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
         }
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(_isEditing ? 'تعديل الصنف' : 'صنف جديد'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () async {
-              if (_hasUnsavedChanges) {
-                final shouldPop = await _onWillPop();
-                if (!shouldPop || !context.mounted) return;
-              }
-              if (context.mounted) context.pop();
-            },
-          ),
+        appBar: AppTopBar(
+          title: _isEditing ? 'تعديل الصنف' : 'صنف جديد',
+          variant: TopBarVariant.withBack,
+          onBack: () async {
+            if (_hasUnsavedChanges) {
+              final shouldPop = await _onWillPop();
+              if (!shouldPop || !context.mounted) return;
+            }
+            if (context.mounted) context.pop();
+          },
           actions: [
             if (_isEditing) ...[
               IconButton(
                 icon: const Icon(Icons.copy_rounded),
                 tooltip: 'نسخ الصنف',
-                onPressed: _duplicateProduct,
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  _duplicateProduct();
+                },
               ),
             ],
           ],
@@ -342,11 +449,11 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
         body: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               // ── Image Section ──
               _buildImageSection(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // ── Name Section ──
               _SectionCard(
@@ -356,26 +463,30 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                   children: [
                     TextFormField(
                       controller: _nameArController,
-                      decoration: const InputDecoration(
-                        hintText: 'اسم الصنف بالعربي *',
-                        prefixIcon: Icon(Icons.edit_rounded, size: 20),
+                      decoration: _getInputDecoration(
+                        labelText: 'اسم الصنف بالعربي *',
+                        hintText: 'مثال: شاورما دجاج دبل',
+                        prefixIcon: const Icon(Icons.edit_rounded, size: 20),
                       ),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'مطلوب' : null,
+                      validator: (v) => (v == null || v.isEmpty)
+                          ? 'اسم الصنف بالعربي مطلوب'
+                          : null,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _nameController,
                       textDirection: TextDirection.ltr,
-                      decoration: const InputDecoration(
-                        hintText: 'Product name in English (optional)',
-                        prefixIcon: Icon(Icons.translate_rounded, size: 20),
+                      decoration: _getInputDecoration(
+                        labelText: 'Product Name (English)',
+                        hintText: 'e.g. Double Chicken Shawarma',
+                        prefixIcon:
+                            const Icon(Icons.translate_rounded, size: 20),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Category & Price ──
               _SectionCard(
@@ -388,20 +499,28 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                         if (state.status == AdminCategoriesStatus.loaded) {
                           return DropdownButtonFormField<String>(
                             initialValue: _selectedCategoryId,
-                            decoration: const InputDecoration(
-                              hintText: 'اختر فئة',
+                            decoration: _getInputDecoration(
+                              labelText: 'الفئة',
                               prefixIcon:
-                                  Icon(Icons.folder_rounded, size: 20),
+                                  const Icon(Icons.folder_rounded, size: 20),
                             ),
                             items: [
                               const DropdownMenuItem(
-                                  value: null, child: Text('بدون فئة')),
+                                value: null,
+                                child: Text('بدون فئة',
+                                    style: TextStyle(fontFamily: 'Cairo')),
+                              ),
                               ...state.categories.map(
                                 (c) => DropdownMenuItem(
-                                    value: c.id, child: Text(c.nameAr)),
+                                  value: c.id,
+                                  child: Text(c.nameAr,
+                                      style:
+                                          const TextStyle(fontFamily: 'Cairo')),
+                                ),
                               ),
                             ],
                             onChanged: (v) {
+                              HapticFeedback.lightImpact();
                               setState(() {
                                 _selectedCategoryId = v;
                                 _hasUnsavedChanges = true;
@@ -418,19 +537,22 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           flex: 2,
                           child: TextFormField(
                             controller: _priceController,
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             textDirection: TextDirection.ltr,
-                            decoration: const InputDecoration(
+                            decoration: _getInputDecoration(
+                              labelText: 'السعر بالريال *',
                               hintText: '0',
                               prefixIcon:
-                                  Icon(Icons.payments_rounded, size: 20),
+                                  const Icon(Icons.payments_rounded, size: 20),
                               suffixText: 'ر.س',
                             ),
                             inputFormatters: [
@@ -438,28 +560,28 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                                   RegExp(r'[\d.]')),
                             ],
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'أدخل السعر';
+                              if (v == null || v.isEmpty) return 'مطلوب';
                               if (double.tryParse(v) == null) {
                                 return 'رقم غير صحيح';
                               }
                               if (double.parse(v) <= 0) {
-                                return 'السعر أكبر من صفر';
+                                return 'يجب أن يكون أكبر من 0';
                               }
                               return null;
                             },
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: TextFormField(
                             controller: _sortOrderController,
                             keyboardType: TextInputType.number,
                             textDirection: TextDirection.ltr,
-                            decoration: const InputDecoration(
+                            decoration: _getInputDecoration(
+                              labelText: 'الترتيب',
                               hintText: '0',
                               prefixIcon:
-                                  Icon(Icons.sort_rounded, size: 20),
-                              labelText: 'الترتيب',
+                                  const Icon(Icons.sort_rounded, size: 20),
                             ),
                             inputFormatters: [
                               FilteringTextInputFormatter.digitsOnly,
@@ -471,73 +593,76 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Description Section ──
               _SectionCard(
                 icon: Icons.description_rounded,
-                title: 'الوصف',
+                title: 'الوصف والتفاصيل',
                 child: Column(
                   children: [
                     TextFormField(
                       controller: _descArController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        hintText: 'وصف الصنف بالعربي...',
-                        alignLabelWithHint: true,
+                      decoration: _getInputDecoration(
+                        labelText: 'وصف الصنف بالعربي',
+                        hintText:
+                            'مثال: قطع دجاج متبلة بالثوم مع بطاطس مقرمشة مجهزة طازجة يومياً...',
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _descController,
                       maxLines: 2,
                       textDirection: TextDirection.ltr,
-                      decoration: const InputDecoration(
-                        hintText: 'Description in English (optional)...',
-                        alignLabelWithHint: true,
+                      decoration: _getInputDecoration(
+                        labelText: 'Description (English)',
+                        hintText:
+                            'e.g. Marinated chicken strips with fresh garlic sauce and crispy fries...',
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Kitchen Details ──
               _SectionCard(
                 icon: Icons.kitchen_rounded,
-                title: 'تفاصيل المطبخ',
+                title: 'تفاصيل المطبخ والتحضير',
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextFormField(
                         controller: _prepTimeController,
                         keyboardType: TextInputType.number,
                         textDirection: TextDirection.ltr,
-                        decoration: const InputDecoration(
-                          hintText: '30',
-                          prefixIcon: Icon(Icons.timer_rounded, size: 20),
-                          suffixText: 'دقيقة',
+                        decoration: _getInputDecoration(
                           labelText: 'وقت التحضير',
+                          hintText: '30',
+                          prefixIcon: const Icon(Icons.timer_rounded, size: 20),
+                          suffixText: 'دقيقة',
                         ),
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
                         controller: _caloriesController,
                         keyboardType: TextInputType.number,
                         textDirection: TextDirection.ltr,
-                        decoration: const InputDecoration(
+                        decoration: _getInputDecoration(
+                          labelText: 'السعرات',
                           hintText: '350',
-                          prefixIcon: Icon(
+                          prefixIcon: const Icon(
                             Icons.local_fire_department_rounded,
                             size: 20,
                           ),
                           suffixText: 'سعرة',
-                          labelText: 'السعرات',
                         ),
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
@@ -547,12 +672,12 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Tags Section ──
               _SectionCard(
                 icon: Icons.label_rounded,
-                title: 'الشارات',
+                title: 'شارات الصنف التوضيحية',
                 child: TagSelector(
                   selectedTags: _selectedTags,
                   onChanged: (tags) {
@@ -563,98 +688,66 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Options Section ──
               if (_isEditing) ...[
                 _buildOptionsSection(),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
               ],
 
               // ── Availability Toggle ──
               _buildAvailabilityToggle(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
 
               // ── Show In Banner Toggle ──
               _buildShowInBannerToggle(),
-              const SizedBox(height: 24),
-
-              // ── Save Button ──
-              LoadingButton(
-                onPressed: _save,
-                label: _isEditing ? 'حفظ التعديلات' : 'إضافة الصنف',
-                isLoading: _isLoading,
-              ),
-
-              // ── Delete Button (edit mode only) ──
-              if (_isEditing) ...[
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _deleteProduct,
-                  icon: const Icon(Icons.delete_forever_rounded,
-                      color: AppColors.error),
-                  label: const Text('حذف الصنف'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                    minimumSize: const Size(double.infinity, 52),
-                  ),
-                ),
-              ],
+              const SizedBox(height: 16),
             ],
           ),
         ),
+        bottomNavigationBar: _buildBottomActionBar(),
       ),
     );
   }
 
   // ── Image Section ──
   Widget _buildImageSection() {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: _isUploading ? null : _pickImage,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+      child: Container(
         height: 200,
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: _imageUrl != null
-                ? AppColors.primary.withValues(alpha: 0.3)
-                : AppColors.outlineVariant,
-            width: _imageUrl != null ? 2 : 1,
-          ),
-          boxShadow: _imageUrl != null
-              ? [
-                  BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : null,
-        ),
+        width: double.infinity,
         clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
         child: _isUploading
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      color: AppColors.primary,
+            ? Container(
+                color: theme.colorScheme.surfaceContainerLow,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 36,
+                      height: 36,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'جاري رفع الصورة...',
-                    style: AppTypography.footnote.copyWith(
-                      color: AppColors.textSecondary,
+                    const SizedBox(height: 12),
+                    Text(
+                      'جاري رفع الصورة...',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'Cairo',
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               )
             : _imageUrl != null && _imageUrl!.isNotEmpty
                 ? Stack(
@@ -669,55 +762,76 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
                         ),
                         errorWidget: _buildImagePlaceholder(),
                       ),
-                      // Overlay actions
+                      // Glassmorphic Overlay actions
                       Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.7),
-                                Colors.transparent,
-                              ],
+                        top: 12,
+                        right: 12,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.lg),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.15),
+                                  width: 1.0,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _GlassIconButton(
+                                    icon: Icons.edit_rounded,
+                                    tooltip: 'تغيير الصورة',
+                                    onTap: _pickImage,
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 20,
+                                    color: Colors.white.withValues(alpha: 0.2),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 4),
+                                  ),
+                                  _GlassIconButton(
+                                    icon: Icons.delete_outline_rounded,
+                                    color: AppColors.error,
+                                    tooltip: 'حذف الصورة',
+                                    onTap: () {
+                                      HapticFeedback.mediumImpact();
+                                      setState(() {
+                                        _imageUrl = null;
+                                        _hasUnsavedChanges = true;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _ImageActionButton(
-                                icon: Icons.edit_rounded,
-                                label: 'تغيير',
-                                onTap: _pickImage,
-                              ),
-                              const SizedBox(width: 16),
-                              _ImageActionButton(
-                                icon: Icons.delete_outline_rounded,
-                                label: 'حذف',
-                                onTap: () {
-                                  setState(() {
-                                    _imageUrl = null;
-                                    _hasUnsavedChanges = true;
-                                  });
-                                },
-                              ),
-                            ],
                           ),
                         ),
                       ),
                     ],
                   )
-                : _buildImagePlaceholder(),
+                : CustomPaint(
+                    painter: _DashedBorderPainter(
+                      color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                      radius: AppRadius.xl,
+                    ),
+                    child: Container(
+                      color: theme.colorScheme.surfaceContainerLow,
+                      child: _buildImagePlaceholder(),
+                    ),
+                  ),
       ),
     );
   }
 
   Widget _buildImagePlaceholder() {
+    final theme = Theme.of(context);
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -725,28 +839,29 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.add_photo_alternate_rounded,
             size: 28,
-            color: AppColors.primary,
+            color: theme.colorScheme.primary,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Text(
-          'اضغط لإضافة صورة',
-          style: AppTypography.callout.copyWith(
-            fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
+          'اضغط لإضافة صورة الصنف',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Cairo',
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          'كاميرا • معرض الصور • رابط',
-          style: AppTypography.footnote.copyWith(
-            color: AppColors.textSecondary,
+          'كاميرا • معرض الصور • رابط مباشر',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            fontFamily: 'Cairo',
           ),
         ),
       ],
@@ -755,13 +870,19 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
 
   // ── Options Section ──
   Widget _buildOptionsSection() {
+    final theme = Theme.of(context);
     return _SectionCard(
       icon: Icons.tune_rounded,
-      title: 'الخيارات الإضافية',
+      title: 'الخيارات الإضافية والمعدّلات',
       trailing: IconButton(
-        onPressed: () => _addOption(),
-        icon: const Icon(Icons.add_circle_rounded, color: AppColors.primary),
-        tooltip: 'إضافة خيار',
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          _addOption();
+        },
+        icon: const Icon(Icons.add_circle_rounded,
+            color: AppColors.primary, size: 28),
+        tooltip: 'إضافة خيار جديد',
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
       ),
       child: BlocBuilder<AdminProductOptionsCubit, AdminProductOptionsState>(
         builder: (context, state) {
@@ -778,27 +899,34 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
 
           if (options.isEmpty) {
             return Container(
-              padding: const EdgeInsets.symmetric(vertical: 20),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              width: double.infinity,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.add_box_outlined,
-                    size: 36,
-                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                    Icons.tune_rounded,
+                    size: 40,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
-                    'لا توجد خيارات بعد',
-                    style: AppTypography.footnote.copyWith(
-                      color: AppColors.textSecondary,
+                    'لا توجد خيارات إضافية لهذا الصنف بعد',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Cairo',
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'مثل: حجم كبير، إضافة جبن',
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textMuted,
+                    'يمكنك إضافة خيارات مثل: الحجم، الإضافات، الصوصات',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontFamily: 'Cairo',
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -806,11 +934,13 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
           }
 
           return Column(
-            children: options.map((opt) => _OptionCard(
-              option: opt,
-              onEdit: () => _editOption(opt),
-              onDelete: () => _deleteOption(opt),
-            )).toList(),
+            children: options
+                .map((opt) => _OptionCard(
+                      option: opt,
+                      onEdit: () => _editOption(opt),
+                      onDelete: () => _deleteOption(opt),
+                    ))
+                .toList(),
           );
         },
       ),
@@ -847,19 +977,32 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('حذف الخيار'),
-        content: Text('حذف "${option.nameAr ?? option.name}"؟'),
+        title: const Text('حذف الخيار',
+            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700)),
+        content: Text(
+          'هل أنت متأكد من حذف الخيار "${option.nameAr ?? option.name}"؟',
+          style: const TextStyle(fontFamily: 'Cairo'),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('إلغاء'),
+            child: const Text('إلغاء',
+                style: TextStyle(
+                    fontFamily: 'Cairo', fontWeight: FontWeight.w600)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.error,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
             ),
-            child: const Text('حذف'),
+            child: const Text('حذف',
+                style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
           ),
         ],
       ),
@@ -874,15 +1017,16 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
 
   // ── Availability Toggle ──
   Widget _buildAvailabilityToggle() {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: _isAvailable
               ? AppColors.success.withValues(alpha: 0.3)
-              : AppColors.outlineVariant,
+              : theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -910,24 +1054,31 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
               children: [
                 Text(
                   _isAvailable ? 'متاح للطلب' : 'غير متاح',
-                  style: AppTypography.callout.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Cairo',
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   _isAvailable
-                      ? 'الصنف ظاهر للزبائن'
-                      : 'الصنف مخفي عن الزبائن',
-                  style: AppTypography.footnote.copyWith(
-                    color: AppColors.textSecondary,
+                      ? 'الصنف ظاهر للزبائن في قائمة الطعام ويمكنهم طلبه'
+                      : 'الصنف مخفي عن قائمة الطعام ولا يمكن طلبه حالياً',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           Switch.adaptive(
+            key: const Key('product_available_switch'),
             value: _isAvailable,
             onChanged: (v) {
+              HapticFeedback.lightImpact();
               setState(() {
                 _isAvailable = v;
                 _hasUnsavedChanges = true;
@@ -941,15 +1092,16 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
 
   // ── Show In Banner Toggle ──
   Widget _buildShowInBannerToggle() {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: _showInBanner
               ? AppColors.tertiary.withValues(alpha: 0.3)
-              : AppColors.outlineVariant,
+              : theme.colorScheme.outline.withValues(alpha: 0.15),
         ),
       ),
       child: Row(
@@ -959,12 +1111,14 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
             decoration: BoxDecoration(
               color: _showInBanner
                   ? AppColors.tertiary.withValues(alpha: 0.1)
-                  : AppColors.textMuted.withValues(alpha: 0.1),
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               Icons.view_carousel_rounded,
-              color: _showInBanner ? AppColors.tertiary : AppColors.textMuted,
+              color: _showInBanner
+                  ? AppColors.tertiary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               size: 22,
             ),
           ),
@@ -975,25 +1129,32 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
               children: [
                 Text(
                   'عرض في البانر المتحرك',
-                  style: AppTypography.callout.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Cairo',
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   _showInBanner
-                      ? 'يظهر هذا الصنف في البانر المتحرك أعلى الصفحة الرئيسية'
-                      : 'لا يظهر هذا الصنف في البانر المتحرك',
-                  style: AppTypography.footnote.copyWith(
-                    color: AppColors.textSecondary,
+                      ? 'يظهر هذا الصنف في البانر المميز أعلى الصفحة الرئيسية للزبائن'
+                      : 'لا يظهر هذا الصنف في البانر المتحرك العلوي',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 12),
           Switch.adaptive(
+            key: const Key('product_banner_switch'),
             value: _showInBanner,
             activeTrackColor: AppColors.tertiary,
             onChanged: (v) {
+              HapticFeedback.lightImpact();
               setState(() {
                 _showInBanner = v;
                 _hasUnsavedChanges = true;
@@ -1001,6 +1162,102 @@ class _AdminProductFormScreenState extends State<AdminProductFormScreen> {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Bottom Action Bar ──
+  Widget? _buildBottomActionBar() {
+    final theme = Theme.of(context);
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.15),
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (_isEditing) ...[
+            Container(
+              height: 52,
+              width: 52,
+              margin: const EdgeInsets.only(left: 12),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.delete_forever_rounded,
+                    color: AppColors.error),
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  _deleteProduct();
+                },
+                tooltip: 'حذف الصنف',
+              ),
+            ),
+          ],
+          Expanded(
+            child: LoadingButton(
+              onPressed: _save,
+              label: _isEditing ? 'حفظ التعديلات' : 'إضافة الصنف',
+              isLoading: _isLoading,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Glass Icon Button ──
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final Color? color;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _GlassIconButton({
+    required this.icon,
+    this.color,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Icon(
+              icon,
+              color: color ?? Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1020,25 +1277,28 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.1),
+        ),
       ),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(Icons.tune_rounded,
-                size: 18, color: AppColors.primary),
+            child: Icon(Icons.tune_rounded,
+                size: 20, color: theme.colorScheme.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1047,98 +1307,85 @@ class _OptionCard extends StatelessWidget {
               children: [
                 Text(
                   option.nameAr ?? option.name,
-                  style: AppTypography.callout.copyWith(
-                    fontWeight: FontWeight.w600,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Cairo',
                   ),
                 ),
-                if (option.nameAr != null)
+                if (option.nameAr != null && option.name.isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
                     option.name,
-                    style: AppTypography.caption.copyWith(
-                      color: AppColors.textSecondary,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontSize: 12,
                     ),
                   ),
+                ],
               ],
             ),
           ),
-          if (option.priceDelta > 0)
+          const SizedBox(width: 8),
+          if (option.isRequired) ...[
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppRadius.full),
-              ),
-              child: Text(
-                '+${option.priceDelta.toInt()} ر.س',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          const SizedBox(width: 4),
-          if (option.isRequired)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.12),
+                color: AppColors.statusPending.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Text(
                 'إجباري',
-                style: AppTypography.caption.copyWith(
-                  color: AppColors.warning,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 10,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: AppColors.statusPending,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ),
-          const SizedBox(width: 4),
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_rounded, size: 18),
-            color: AppColors.textSecondary,
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-          ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
-            color: AppColors.error,
-            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Image Action Button ──
-class _ImageActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ImageActionButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 16),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: AppTypography.caption.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+            const SizedBox(width: 8),
+          ],
+          if (option.priceDelta > 0) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Text(
+                '+${option.priceDelta.toInt()} ر.س',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w700,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
             ),
+            const SizedBox(width: 8),
+          ],
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  onEdit();
+                },
+                icon: const Icon(Icons.edit_rounded, size: 18),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                tooltip: 'تعديل',
+              ),
+              IconButton(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  onDelete();
+                },
+                icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                color: AppColors.error,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                tooltip: 'حذف',
+              ),
+            ],
           ),
         ],
       ),
@@ -1162,36 +1409,110 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.15),
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   title,
-                  style: AppTypography.callout.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurface,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ),
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 12),
+          const Divider(height: 24, thickness: 1),
           child,
         ],
       ),
     );
+  }
+}
+
+// ── Dashed Border Painter ──
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double radius;
+
+  _DashedBorderPainter({
+    required this.color,
+    required this.radius,
+  });
+
+  double get strokeWidth => 1.5;
+  double get gap => 4.0;
+  double get dashLength => 6.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    path.addRRect(RRect.fromRectAndRadius(
+      Rect.fromLTWH(strokeWidth / 2, strokeWidth / 2, size.width - strokeWidth,
+          size.height - strokeWidth),
+      Radius.circular(radius),
+    ));
+
+    final dashedPath = Path();
+    var distance = 0.0;
+    for (final pathMetric in path.computeMetrics()) {
+      while (distance < pathMetric.length) {
+        dashedPath.addPath(
+          pathMetric.extractPath(distance, distance + dashLength),
+          Offset.zero,
+        );
+        distance += dashLength + gap;
+      }
+    }
+    canvas.drawPath(dashedPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.gap != gap ||
+        oldDelegate.dashLength != dashLength ||
+        oldDelegate.radius != radius;
   }
 }

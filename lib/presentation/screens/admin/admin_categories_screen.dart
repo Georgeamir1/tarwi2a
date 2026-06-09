@@ -204,12 +204,13 @@ class _CategoryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isActive ? AppColors.outlineVariant : AppColors.outlineVariant.withValues(alpha: 0.5),
+            width: isActive ? 1.2 : 1.0,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.02),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ]
@@ -221,11 +222,12 @@ class _CategoryCard extends StatelessWidget {
             children: [
               // Icon / Emoji Avatar
               Container(
-                width: 50,
-                height: 50,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
                 ),
                 alignment: Alignment.center,
                 child: category.imageUrl != null && category.imageUrl!.isNotEmpty
@@ -251,14 +253,15 @@ class _CategoryCard extends StatelessWidget {
                         Text(
                           category.nameAr,
                           style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Cairo',
+                            fontWeight: FontWeight.w800,
                             color: isActive ? AppColors.onSurface : AppColors.textSecondary,
                           ),
                         ),
                         if (!isActive) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -280,9 +283,10 @@ class _CategoryCard extends StatelessWidget {
                       category.name,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         // Sort Order Badge
@@ -291,7 +295,7 @@ class _CategoryCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(AppRadius.full),
-                            border: Border.all(color: AppColors.outlineVariant),
+                            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.8)),
                           ),
                           child: Row(
                             children: [
@@ -300,8 +304,10 @@ class _CategoryCard extends StatelessWidget {
                               Text(
                                 'الترتيب: ${category.sortOrder}',
                                 style: theme.textTheme.labelSmall?.copyWith(
+                                  fontFamily: 'Cairo',
                                   color: AppColors.textSecondary,
                                   fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ],
@@ -318,6 +324,7 @@ class _CategoryCard extends StatelessWidget {
                           child: Text(
                             '$productCount صنف',
                             style: theme.textTheme.labelSmall?.copyWith(
+                              fontFamily: 'Cairo',
                               color: AppColors.primary,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -330,29 +337,57 @@ class _CategoryCard extends StatelessWidget {
                 ),
               ),
 
-              // Actions
+              // Actions (Switch, Edit, Delete)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Switch.adaptive(
-                    value: category.isActive,
-                    onChanged: onToggle,
-                    activeTrackColor: AppColors.success,
+                  Semantics(
+                    label: 'نشط',
+                    child: Switch.adaptive(
+                      value: category.isActive,
+                      onChanged: onToggle,
+                      activeTrackColor: AppColors.success,
+                    ),
                   ),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      IconButton(
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_rounded, size: 18),
-                        color: AppColors.primary,
-                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          onTap: onEdit,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                            ),
+                            child: const Icon(Icons.edit_rounded, size: 16, color: AppColors.primary),
+                          ),
+                        ),
                       ),
-                      IconButton(
-                        onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                        color: AppColors.error,
-                        constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      const SizedBox(width: 8),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          onTap: onDelete,
+                          child: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                            ),
+                            child: const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.error),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -411,6 +446,43 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
     super.dispose();
   }
 
+  InputDecoration _inputDecoration({
+    required String labelText,
+    required String hintText,
+    required IconData prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: Icon(prefixIcon, color: AppColors.textMuted, size: 20),
+      labelStyle: const TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13),
+      hintStyle: const TextStyle(fontFamily: 'Cairo', color: AppColors.textMuted, fontSize: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      filled: true,
+      fillColor: AppColors.surfaceContainerLow,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: const BorderSide(color: AppColors.error, width: 1),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
@@ -435,7 +507,7 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEditing ? 'تم تعديل القسم بنجاح' : 'تم إضافة القسم بنجاح'),
+          content: Text(_isEditing ? 'تم تعديل القسم بنجاح' : 'تم إضافة القسم بنجاح', style: const TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.success,
         ),
       );
@@ -444,7 +516,7 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('حدث خطأ أثناء الحفظ. يرجى المحاولة لاحقاً.'),
+          content: Text('حدث خطأ أثناء الحفظ. يرجى المحاولة لاحقاً.', style: TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -464,176 +536,202 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Title
-                Text(
-                  _isEditing ? 'تعديل القسم' : 'إضافة قسم جديد',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-
-                // Name AR
-                TextFormField(
-                  controller: _nameArController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم بالعربية *',
-                    hintText: 'مثال: المشروبات',
-                    prefixIcon: Icon(Icons.edit_rounded, size: 20),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال الاسم بالعربية' : null,
-                ),
-                const SizedBox(height: 14),
-
-                // Name EN
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: TextFormField(
-                    controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'الاسم بالإنجليزية (اختياري)',
-                      hintText: 'e.g. Beverages',
-                      prefixIcon: Icon(Icons.translate_rounded, size: 20),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Sort Order
-                TextFormField(
-                  controller: _sortOrderController,
-                  keyboardType: TextInputType.number,
-                  textDirection: TextDirection.ltr,
-                  decoration: const InputDecoration(
-                    labelText: 'الترتيب التنازلي',
-                    prefixIcon: Icon(Icons.sort_rounded, size: 20),
-                  ),
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال رقم الترتيب' : null,
-                ),
-                const SizedBox(height: 20),
-
-                // Emoji picker / selector
-                Row(
-                  children: [
-                    const Icon(Icons.emoji_emotions_outlined, size: 16, color: AppColors.textSecondary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'أيقونة القسم (رموز تعبيرية)',
-                      style: AppTypography.footnote.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+      child: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Drag handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.outlineVariant,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  height: 48,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _emojis.length,
-                    itemBuilder: (ctx, index) {
-                      final emoji = _emojis[index];
-                      final isSelected = _selectedEmoji == emoji;
-
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() {
-                            _selectedEmoji = isSelected ? null : emoji;
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 44,
-                          margin: const EdgeInsets.only(left: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary.withValues(alpha: 0.12)
-                                : AppColors.surfaceContainerLow,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: isSelected ? AppColors.primary : AppColors.outlineVariant,
-                              width: isSelected ? 2 : 1,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            emoji,
-                            style: const TextStyle(fontSize: 22),
-                          ),
-                        ),
-                      );
-                    },
                   ),
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                // Active Switch
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: AppColors.outlineVariant),
+                  // Title
+                  Text(
+                    _isEditing ? 'تعديل القسم' : 'إضافة قسم جديد',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontFamily: 'Cairo',
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
-                  child: Row(
+                  const SizedBox(height: 24),
+
+                  // Name AR
+                  TextFormField(
+                    controller: _nameArController,
+                    style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                    decoration: _inputDecoration(
+                      labelText: 'الاسم بالعربية *',
+                      hintText: 'مثال: المشروبات',
+                      prefixIcon: Icons.edit_rounded,
+                    ),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال الاسم بالعربية' : null,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Name EN
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                      decoration: _inputDecoration(
+                        labelText: 'الاسم بالإنجليزية (اختياري)',
+                        hintText: 'e.g. Beverages',
+                        prefixIcon: Icons.translate_rounded,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Sort Order
+                  TextFormField(
+                    controller: _sortOrderController,
+                    keyboardType: TextInputType.number,
+                    textDirection: TextDirection.ltr,
+                    style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                    decoration: _inputDecoration(
+                      labelText: 'الترتيب التنازلي',
+                      hintText: '0',
+                      prefixIcon: Icons.sort_rounded,
+                    ),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال رقم الترتيب' : null,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Emoji picker / selector
+                  Row(
                     children: [
-                      const Icon(Icons.check_circle_outline_rounded, size: 20, color: AppColors.textSecondary),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'قسم نشط (يظهر للعملاء)',
-                          style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                      const Icon(Icons.emoji_emotions_outlined, size: 16, color: AppColors.textSecondary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'أيقونة القسم (رموز تعبيرية)',
+                        style: TextStyle(
+                          fontFamily: 'Cairo',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
                         ),
-                      ),
-                      Switch(
-                        value: _isActive,
-                        onChanged: (v) => setState(() => _isActive = v),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 52,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _emojis.length,
+                      itemBuilder: (ctx, index) {
+                        final emoji = _emojis[index];
+                        final isSelected = _selectedEmoji == emoji;
 
-                // Save button
-                LoadingButton(
-                  onPressed: _save,
-                  label: _isEditing ? 'حفظ التعديلات' : 'إضافة القسم',
-                  isLoading: _isLoading,
-                ),
-                const SizedBox(height: 8),
+                        return GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            setState(() {
+                              _selectedEmoji = isSelected ? null : emoji;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 48,
+                            height: 48,
+                            margin: const EdgeInsets.only(left: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary.withValues(alpha: 0.12)
+                                  : AppColors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.8),
+                                width: isSelected ? 2 : 1,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(alpha: 0.08),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              emoji,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
-                // Cancel button
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('إلغاء'),
-                ),
-              ],
+                  // Active Switch
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline_rounded, size: 20, color: AppColors.textSecondary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'قسم نشط (يظهر للعملاء)',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        Switch(
+                          value: _isActive,
+                          onChanged: (v) => setState(() => _isActive = v),
+                          activeTrackColor: AppColors.success,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  LoadingButton(
+                    onPressed: _save,
+                    label: _isEditing ? 'حفظ التعديلات' : 'إضافة القسم',
+                    isLoading: _isLoading,
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Cancel button
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

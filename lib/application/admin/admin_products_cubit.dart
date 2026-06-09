@@ -48,33 +48,52 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
     );
   }
 
+  /// Optimistic toggle — updates local state instantly, syncs to server
+  /// in the background. Reverts on failure. No full reload.
+  Future<void> toggleAvailable(String id, bool isAvailable) async {
+    final previousState = state;
+
+    final updatedProducts = state.products.map((p) {
+      if (p.id == id) return p.copyWith(isAvailable: isAvailable);
+      return p;
+    }).toList();
+
+    emit(state.copyWith(products: updatedProducts));
+
+    final result = await _repository.toggleAvailable(id, isAvailable);
+    if (result.isLeft()) {
+      if (!isClosed) {
+        emit(previousState.copyWith(
+          failure: result.fold((f) => f, (_) => null),
+        ));
+      }
+    }
+  }
+
+  /// Optimistic deletion — removes from list instantly, syncs to server.
+  /// Reverts on failure. No full reload.
+  Future<void> deleteProduct(String id) async {
+    final previousState = state;
+
+    emit(state.copyWith(
+      products: state.products.where((p) => p.id != id).toList(),
+    ));
+
+    final result = await _repository.deleteProduct(id);
+    if (result.isLeft()) {
+      if (!isClosed) {
+        emit(previousState.copyWith(
+          failure: result.fold((f) => f, (_) => null),
+        ));
+      }
+    }
+  }
+
+  /// Creates or updates a product. For updates the realtime stream handles
+  /// sync; for creates a single reload fetches the server-generated ID.
   Future<void> upsert(Map<String, dynamic> data, {String? id}) async {
     emit(state.copyWith(status: AdminProductsStatus.loading));
     final result = await _repository.upsertProduct(data, id: id);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminProductsStatus.error,
-        failure: failure,
-      )),
-      (_) => loadProducts(),
-    );
-  }
-
-  Future<void> toggleAvailable(String id, bool isAvailable) async {
-    emit(state.copyWith(status: AdminProductsStatus.loading));
-    final result = await _repository.toggleAvailable(id, isAvailable);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AdminProductsStatus.error,
-        failure: failure,
-      )),
-      (_) => loadProducts(),
-    );
-  }
-
-  Future<void> deleteProduct(String id) async {
-    emit(state.copyWith(status: AdminProductsStatus.loading));
-    final result = await _repository.deleteProduct(id);
     result.fold(
       (failure) => emit(state.copyWith(
         status: AdminProductsStatus.error,

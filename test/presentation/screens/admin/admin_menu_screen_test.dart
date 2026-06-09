@@ -37,6 +37,10 @@ GoRouter _createRouter(NavigatorObserver observer) {
         path: '/admin/product/edit',
         builder: (_, __) => const Placeholder(),
       ),
+      GoRoute(
+        path: '/admin/categories',
+        builder: (_, __) => const Placeholder(),
+      ),
     ],
   );
 }
@@ -89,10 +93,14 @@ void main() {
         categories: [testCategory],
       ),
     );
+
+    // Stub auto-load called from initState
+    when(() => mockProductsCubit.loadProducts()).thenAnswer((_) async {});
+    when(() => mockCategoriesCubit.loadCategories()).thenAnswer((_) async {});
   });
 
   group('AdminMenuScreen', () {
-    testWidgets('products grouped by category', (tester) async {
+    testWidgets('shows header title and products', (tester) async {
       await tester.pumpWidget(_buildTestWidget(
         productsCubit: mockProductsCubit,
         categoriesCubit: mockCategoriesCubit,
@@ -101,7 +109,6 @@ void main() {
       await tester.pump();
 
       expect(find.text('إدارة المنيو'), findsOneWidget);
-      expect(find.text(testCategory.nameAr), findsOneWidget);
       expect(find.text(testProduct.nameAr), findsOneWidget);
       expect(find.text(_testProduct2.nameAr), findsOneWidget);
     });
@@ -153,8 +160,7 @@ void main() {
       verify(() => observer.didPush(any(), any())).called(2);
     });
 
-    testWidgets('edit icon navigates to edit form with product',
-        (tester) async {
+    testWidgets('tapping product card navigates to edit form', (tester) async {
       final observer = MockNavObserver();
 
       await tester.pumpWidget(_buildTestWidget(
@@ -164,7 +170,7 @@ void main() {
       ));
       await tester.pump();
 
-      await tester.tap(find.byIcon(Icons.edit_outlined).first);
+      await tester.tap(find.text(testProduct.nameAr));
       await tester.pumpAndSettle();
 
       verify(() => observer.didPush(any(), any())).called(2);

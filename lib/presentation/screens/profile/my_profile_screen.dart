@@ -12,12 +12,12 @@ class MyProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
         final profile = state is Authenticated ? state.profile : null;
 
         return Scaffold(
+          backgroundColor: AppColors.background,
           appBar: const AppTopBar(title: 'حسابي', variant: TopBarVariant.withBack),
           body: SingleChildScrollView(
             child: Column(
@@ -41,6 +41,7 @@ class MyProfileScreen extends StatelessWidget {
                   profile?.name ?? 'زائر',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 if (profile?.phone != null) ...[
@@ -48,9 +49,7 @@ class MyProfileScreen extends StatelessWidget {
                   Text(
                     profile!.phone!,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.onSurfaceVariant,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

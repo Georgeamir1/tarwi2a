@@ -17,8 +17,8 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppTopBar(
         title: 'إثبات الدفع',
         variant: TopBarVariant.withBack,
@@ -47,6 +47,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
               'ارفع صورة إثبات الدفع',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -54,9 +55,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
               'من فضلك ارفع صورة إيصال التحويل عشان نقدر نأكد طلبك',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.onSurfaceVariant,
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 32),
@@ -66,7 +65,7 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                 width: double.infinity,
                 height: 200,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.darkCard : AppColors.surfaceContainerLow,
+                  color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
                     color: AppColors.outlineVariant,
@@ -86,13 +85,13 @@ class _PaymentProofScreenState extends State<PaymentProofScreen> {
                           const Icon(
                             Icons.cloud_upload_outlined,
                             size: 48,
-                            color: AppColors.onSurfaceVariant,
+                            color: AppColors.textSecondary,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'اضغط لاختيار صورة',
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: AppColors.onSurfaceVariant,
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],

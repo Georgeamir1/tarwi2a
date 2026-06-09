@@ -169,10 +169,10 @@ void main() {
         ),
       );
 
-      expect(find.text('رابط الصورة'), findsOneWidget);
+      expect(find.text('اضغط لإضافة صورة'), findsOneWidget);
       expect(find.text('اسم الصنف'), findsOneWidget);
       expect(find.text('الفئة والسعر'), findsOneWidget);
-      expect(find.byType(TextFormField), findsNWidgets(5));
+      expect(find.byType(TextFormField), findsNWidgets(8));
     });
 
     testWidgets('form validation on empty required fields', (tester) async {
@@ -201,10 +201,10 @@ void main() {
         ),
       );
 
-      expect(find.byType(Switch), findsOneWidget);
+      expect(find.byKey(const Key('product_available_switch')), findsOneWidget);
       expect(find.text('متاح للطلب'), findsOneWidget);
 
-      await tester.tap(find.byType(Switch));
+      await tester.tap(find.byKey(const Key('product_available_switch')));
       await tester.pump();
       await tester.pump();
 

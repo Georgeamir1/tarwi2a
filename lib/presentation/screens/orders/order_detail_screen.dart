@@ -10,6 +10,7 @@ import '../../../core/logger/app_logger.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
 import '../../extensions/payment_method_x.dart';
+import '../../widgets/app_top_bar.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   final String orderId;
@@ -65,9 +66,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           }
           return Scaffold(
             backgroundColor: AppColors.background,
-            appBar: AppBar(
-              title: const Text('تفاصيل الطلب'),
-              elevation: 0,
+            appBar: const AppTopBar(
+              title: 'تفاصيل الطلب',
+              variant: TopBarVariant.withBack,
             ),
             body: Center(
               child: Text(
@@ -86,20 +87,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
         return Scaffold(
           backgroundColor: AppColors.background,
-          appBar: AppBar(
-            elevation: 0,
-            title: Text('#${order.id.substring(0, 8).toUpperCase()}'),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () {
-                appLogger.i('[OrderDetailScreen] back pressed');
-                if (Navigator.of(context).canPop()) {
-                  context.pop();
-                } else {
-                  context.go('/orders');
-                }
-              },
-            ),
+          appBar: AppTopBar(
+            title: '#${order.id.substring(0, 8).toUpperCase()}',
+            variant: TopBarVariant.withBack,
           ),
           body: Stack(
             children: [

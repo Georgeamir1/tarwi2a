@@ -22,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isDark = themeMode == ThemeMode.dark;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: const AppTopBar(title: 'الإعدادات', variant: TopBarVariant.withBack),
       body: ListView(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -77,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               'الإصدار 1.0.0',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: AppColors.textSecondary,
                   ),
             ),
           ),
@@ -104,7 +105,7 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: AppColors.textSecondary,
             ),
       ),
     );
@@ -124,20 +125,25 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 4),
-      leading: Icon(icon, size: 22, color: AppColors.primary),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-      trailing: trailing,
-      tileColor: AppColors.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.outlineVariant),
+      ),
+      child: ListTile(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 4),
+        leading: Icon(icon, size: 22, color: AppColors.primary),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+        ),
+        trailing: trailing,
       ),
     );
   }

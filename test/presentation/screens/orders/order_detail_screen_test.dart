@@ -283,7 +283,7 @@ void main() {
         await tester.pumpWidget(_buildTestWidget(manyItemsOrder));
         await tester.pump();
 
-        expect(find.text('الأصناف'), findsOneWidget);
+        expect(find.text('الأصناف المطلوبة'), findsOneWidget);
         expect(find.text('300 جنيه'), findsWidgets);
       });
     });

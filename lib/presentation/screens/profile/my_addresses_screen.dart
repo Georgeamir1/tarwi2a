@@ -22,6 +22,7 @@ class MyAddressesScreen extends StatelessWidget {
       child: BlocBuilder<AddressCubit, AddressState>(
         builder: (context, state) {
           return Scaffold(
+            backgroundColor: AppColors.background,
             appBar: const AppTopBar(
                 title: 'عناويني', variant: TopBarVariant.withBack),
             floatingActionButton: FloatingActionButton.extended(
@@ -49,7 +50,7 @@ class MyAddressesScreen extends StatelessWidget {
   Widget _buildBody(BuildContext context, AddressState state, String userId) {
     switch (state.status) {
       case AddressStatus.loading:
-        return const Center(child: CircularProgressIndicator());
+        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
       case AddressStatus.loaded:
         if (state.addresses.isEmpty) {
           return const Center(
@@ -83,7 +84,10 @@ class MyAddressesScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('حصل خطأ: ${state.failure?.message ?? ''}'),
+              Text(
+                'حصل خطأ: ${state.failure?.message ?? ''}',
+                style: const TextStyle(color: AppColors.textPrimary),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () =>
@@ -143,6 +147,12 @@ class _AddressCard extends StatelessWidget {
     final theme = Theme.of(context);
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      color: AppColors.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: const BorderSide(color: AppColors.outlineVariant),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -182,6 +192,7 @@ class _AddressCard extends StatelessWidget {
                                 address.label,
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
                                 ),
                               ),
                             ),
@@ -207,7 +218,9 @@ class _AddressCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           address.address,
-                          style: theme.textTheme.bodySmall,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -243,7 +256,7 @@ class _AddressCard extends StatelessWidget {
                 Text(
                   address.notes!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceVariant,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -298,11 +311,13 @@ class _DetailChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: AppColors.onSurfaceVariant),
+          Icon(icon, size: 14, color: AppColors.textSecondary),
           const SizedBox(width: 4),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),

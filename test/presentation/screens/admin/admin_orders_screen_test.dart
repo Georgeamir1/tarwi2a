@@ -130,7 +130,8 @@ void main() {
       expect(find.text('سارة'), findsOneWidget);
 
       await tester.enterText(find.byType(TextField), 'أحمد');
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('أحمد'), findsAtLeastNWidgets(1));
       expect(find.text('سارة'), findsNothing);
@@ -179,7 +180,8 @@ void main() {
       expect(find.text('سارة'), findsOneWidget);
 
       await tester.tap(find.text('جديدة'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('أحمد'), findsOneWidget);
       expect(find.text('سارة'), findsNothing);
@@ -202,7 +204,8 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.text('أحمد'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       verify(() => observer.didPush(any(), any())).called(2);
     });

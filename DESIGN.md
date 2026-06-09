@@ -137,32 +137,29 @@ spacing:
   section-padding: 24px
 ---
 
-# Design System: Levantine Clarity — Dark Cinematic
+# Design System: Levantine Clarity — Theme Split Strategy
 
 ## 1. Overview
 
 **Creative North Star: "Cinematic Arabic Hospitality"**
 
-Tarwika is a dark cinematic experience from the first splash to the last admin screen. The entire app lives within a deep, warm dark shell — no light mode, no mid-flow theme switches. The background is always dark; content that needs contrast for readability lives in elevated light cards that float on the dark surface.
+Tarwika uses a **Theme Split Strategy** to balance premium cinematic branding with high customer-facing usability:
 
-The system uses a **Committed + Drenched** color strategy. Cherry Red and Amber Gold carry significant surface area, not just accent touches. The dark shell makes food photography explode with color, creates a premium lounge atmosphere, and reduces eye strain for late-night ordering and kitchen environments.
-
-**Why dark cinematic, everywhere:**
-- Food photography is more appetizing against dark surfaces (warm colors pop, whites glow).
-- Kitchen admins work in variable, often dim lighting. Dark surfaces reduce glare.
-- The splash and onboarding already establish this language. Consistency is trust.
-- One theme halves the design system surface area and eliminates light/dark bugs.
+1. **Auth & Splash Screens (Splash, Onboarding, Login, Register, OTP):** Lives in the **Dark Cinematic Theme** (base `#1F1615` shell). This establishes a premium lounge, high-hospitality first impression and makes photography/graphics pop.
+2. **Customer-Facing Screens (Home, Product, Cart, Checkout, Orders, Profile):** Converted to the **Light Warm-Rose Theme** (AppColors.background `#FDF8F7`, surface `#FFFFFF`). This ensures maximum readability, comfort under daylight, and a clean modern aesthetic for day-to-day shopping and management.
 
 **Key Characteristics:**
-- Dark warm shell on every screen, every context
+- Splitted theme: auth is dark cinematic; customer-facing is light warm-rose
 - Three-color harmony: cherry red (action), warm cocoa (structure), amber gold (accent)
-- Light content cards float on dark surfaces for readability where needed
+- Light content cards float on light warm-rose background for modern iOS-style layouts
 - Cairo font for Arabic-optimized typography (Inter supplementary for Latin text)
 - RTL-native layouts with generous whitespace
-- Glassmorphism and backdrop blur used purposefully throughout
+- Glassmorphic backdrops on auth pages
 - Ambient motion adds life without distraction
-- Cinematic depth gradients, particle effects, and glow animations across the full experience
-- iOS-style bottom navigation with blur backdrop
+- iOS-style bottom navigation with custom animated indicator and proper safe area
+- Mobile cart access simplified to two points (app bar icon + floating gradient CTA bar)
+- Bottom nav cart tab removed (now 4 tabs instead of 5)
+
 
 ## 2. Colors
 

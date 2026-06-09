@@ -137,7 +137,7 @@ Future<void> initDependencies() async {
       () => AdminDeliveryZonesCubit(sl()));
   sl.registerLazySingleton<AdminBusinessProfileCubit>(
       () => AdminBusinessProfileCubit(sl()));
-  sl.registerLazySingleton<AdminReportsCubit>(() => AdminReportsCubit(sl()));
+  sl.registerFactory<AdminReportsCubit>(() => AdminReportsCubit(sl()));
   sl.registerLazySingleton<AdminProductOptionsCubit>(
       () => AdminProductOptionsCubit(sl()));
 }

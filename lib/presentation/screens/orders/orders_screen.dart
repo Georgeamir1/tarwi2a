@@ -311,7 +311,7 @@ class _OrderCardState extends State<OrderCard> {
                     ),
                   ],
                 ),
-              ],
+          ],
               AppSpacing.gapH12,
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

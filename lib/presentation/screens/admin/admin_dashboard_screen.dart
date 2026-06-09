@@ -3,18 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_orders_cubit.dart';
-import '../../../application/admin/admin_reports_cubit.dart';
 import '../../../application/admin/admin_business_profile_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/enums/order_status.dart';
 import '../../extensions/order_status_x.dart';
-import '../../widgets/dashboard_revenue_chart.dart';
-import '../../widgets/dashboard_top_products_chart.dart';
-import '../../widgets/dashboard_orders_chart.dart';
-import '../../widgets/time_filter_chips.dart';
 import '../../widgets/app_button.dart';
-import '../../../domain/repositories/report_repository.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -24,33 +18,6 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  TimeFilter _timeFilter = TimeFilter.week;
-
-  DateTimeRange _getDateRange() {
-    final now = DateTime.now();
-    return switch (_timeFilter) {
-      TimeFilter.today =>
-        DateTimeRange(start: DateTime(now.year, now.month, now.day), end: now),
-      TimeFilter.week =>
-        DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
-      TimeFilter.month =>
-        DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now),
-      TimeFilter.quarter =>
-        DateTimeRange(start: now.subtract(const Duration(days: 90)), end: now),
-      TimeFilter.custom =>
-        DateTimeRange(start: now.subtract(const Duration(days: 7)), end: now),
-    };
-  }
-
-  void _onFilterChanged(TimeFilter filter) {
-    setState(() => _timeFilter = filter);
-    final range = _getDateRange();
-    context.read<AdminReportsCubit>().updateDateRange(
-          range.start,
-          range.end,
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -65,6 +32,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             final pendingCount = ordersLoaded
                 ? orders.where((o) => o.status == OrderStatus.pending).length
                 : 0;
+            final totalOrdersCount = ordersLoaded ? orders.length : 0;
+            final cancelledCount = ordersLoaded
+                ? orders.where((o) => o.status == OrderStatus.cancelled).length
+                : 0;
+            final customerCount = ordersLoaded
+                ? orders.map((o) => o.customerId).toSet().length
+                : 0;
             final profileName =
                 authState is Authenticated ? authState.profile.name : null;
 
@@ -77,11 +51,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   context.read<AdminOrdersCubit>().loadOrders();
                   context.read<AuthCubit>().checkAuthStatus();
                   context.read<AdminBusinessProfileCubit>().loadProfile();
-                  final range = _getDateRange();
-                  context.read<AdminReportsCubit>().loadReports(
-                        startDate: range.start,
-                        endDate: range.end,
-                      );
                   await Future.delayed(const Duration(milliseconds: 500));
                 },
                 child: CustomScrollView(
@@ -90,7 +59,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       child: _DashboardHeader(
                         profileName: profileName,
                         pendingCount: pendingCount,
-                        onSettingsTap: () => _showSettingsMenu(context),
                         onBackTap: () => context.go('/home'),
                       ),
                     ),
@@ -98,78 +66,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate([
-                          // ── KPI Cards ──────────────────────────────────
-                          BlocBuilder<AdminReportsCubit, AdminReportsState>(
-                            builder: (context, reportsState) {
-                              return _KpiGrid(
-                                reportsState: reportsState,
-                                pendingCount: pendingCount,
-                              );
-                            },
+                          // ── KPI Cards (operational only) ────────────────
+                          _KpiGrid(
+                            pendingCount: pendingCount,
+                            totalOrders: totalOrdersCount,
+                            customerCount: customerCount,
+                            cancelledCount: cancelledCount,
                           ),
 
                           AppSpacing.gapH20,
-
-                          // ── Time Filter ────────────────────────────────
-                          TimeFilterChips(
-                            selected: _timeFilter,
-                            onChanged: _onFilterChanged,
-                          ),
-
-                          AppSpacing.gapH16,
-
-                          // ── Charts ─────────────────────────────────────
-                          BlocBuilder<AdminReportsCubit, AdminReportsState>(
-                            builder: (context, state) {
-                              if (state.data == null) {
-                                return const _ChartSkeleton();
-                              }
-                              return Column(
-                                children: [
-                                  _ChartCard(
-                                    title: 'المبيعات',
-                                    unit: 'ج',
-                                    totalValue: state.data!.totalRevenue,
-                                    child: DashboardRevenueChart(
-                                      data: state.data!.revenueByDay,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  AppSpacing.gapH16,
-                                  _ChartCard(
-                                    title: 'حجم الطلبات',
-                                    totalValue:
-                                        state.data!.totalOrders.toDouble(),
-                                    isCount: true,
-                                    child: DashboardOrdersChart(
-                                      data: state.data!.revenueByDay,
-                                      color: AppColors.statusConfirmed,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-
-                          AppSpacing.gapH16,
-
-                          // ── Top Products ───────────────────────────────
-                          BlocBuilder<AdminReportsCubit, AdminReportsState>(
-                            builder: (context, state) {
-                              if (state.data == null ||
-                                  state.data!.topProducts.isEmpty) {
-                                return const SizedBox.shrink();
-                              }
-                              return Column(
-                                children: [
-                                  _TopProductsSection(
-                                    data: state.data!.topProducts,
-                                  ),
-                                  AppSpacing.gapH16,
-                                ],
-                              );
-                            },
-                          ),
 
                           // ── Quick Actions ──────────────────────────────
                           _SectionHeader(title: 'الإجراءات السريعة'),
@@ -318,114 +223,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
   }
-
-  void _showSettingsMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              AppSpacing.gapH16,
-              ListTile(
-                leading: const Icon(Icons.storefront_rounded,
-                    color: AppColors.primary),
-                title: const Text('الملف التجاري',
-                    style: TextStyle(fontFamily: 'Cairo')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/admin/business-profile');
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.analytics_rounded,
-                    color: AppColors.primary),
-                title: const Text('التقارير المالية',
-                    style: TextStyle(fontFamily: 'Cairo')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/admin/reports');
-                },
-              ),
-              ListTile(
-                leading:
-                    const Icon(Icons.print_rounded, color: AppColors.primary),
-                title: const Text('إعدادات الطابعة',
-                    style: TextStyle(fontFamily: 'Cairo')),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  context.push('/admin/printer-settings');
-                },
-              ),
-              const Divider(),
-              ListTile(
-                leading:
-                    const Icon(Icons.logout_rounded, color: AppColors.error),
-                title: const Text(
-                  'تسجيل الخروج',
-                  style: TextStyle(
-                      color: AppColors.error,
-                      fontFamily: 'Cairo',
-                      fontWeight: FontWeight.bold),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showLogoutDialog(context);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg)),
-        title: const Text('تسجيل الخروج',
-            style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.bold)),
-        content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟',
-            style: TextStyle(fontFamily: 'Cairo')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo')),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await context.read<AuthCubit>().signOut();
-              if (context.mounted) context.go('/login');
-            },
-            child: const Text(
-              'خروج',
-              style: TextStyle(
-                  color: AppColors.error,
-                  fontFamily: 'Cairo',
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -435,13 +232,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 class _DashboardHeader extends StatelessWidget {
   final String? profileName;
   final int pendingCount;
-  final VoidCallback onSettingsTap;
   final VoidCallback onBackTap;
 
   const _DashboardHeader({
     required this.profileName,
     required this.pendingCount,
-    required this.onSettingsTap,
     required this.onBackTap,
   });
 
@@ -489,12 +284,6 @@ class _DashboardHeader extends StatelessWidget {
                     icon: Icons.arrow_back_ios_new_rounded,
                     size: 16,
                     onTap: onBackTap,
-                  ),
-                  const SizedBox(width: 8),
-                  _HeaderIconBtn(
-                    icon: Icons.settings_rounded,
-                    size: 18,
-                    onTap: onSettingsTap,
                   ),
                   const Spacer(),
                   // Notification bell with badge
@@ -943,25 +732,24 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ──────────────────────────────────────────────────────────────
-// KPI Grid  (8 cards, 2×4)
+// KPI Grid  (4 operational cards, 2×2)
 // ──────────────────────────────────────────────────────────────
 
 class _KpiGrid extends StatelessWidget {
-  final AdminReportsState reportsState;
   final int pendingCount;
+  final int totalOrders;
+  final int customerCount;
+  final int cancelledCount;
 
-  const _KpiGrid({required this.reportsState, required this.pendingCount});
+  const _KpiGrid({
+    required this.pendingCount,
+    required this.totalOrders,
+    required this.customerCount,
+    required this.cancelledCount,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final data = reportsState.data;
-
-    final total = data?.totalOrders ?? 0;
-    final cancelled = data?.cancelledOrders ?? 0;
-    final completionRate = total > 0
-        ? ((total - cancelled) / total * 100).toStringAsFixed(0)
-        : '100';
-
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -971,17 +759,7 @@ class _KpiGrid extends StatelessWidget {
       childAspectRatio: 1.45,
       children: [
         _KpiCard(
-          title: 'إجمالي المبيعات',
-          value: data != null
-              ? '${(data.totalRevenue / 1000).toStringAsFixed(1)}K'
-              : null,
-          unit: 'ج',
-          icon: Icons.monetization_on_rounded,
-          iconColor: const Color(0xFF2E7D32),
-          iconBgColor: const Color(0xFFE8F5E9),
-        ),
-        _KpiCard(
-          title: 'طلبات قيد الانتظار',
+          title: 'بانتظار التأكيد',
           value: '$pendingCount',
           unit: 'طلب',
           icon: Icons.hourglass_empty_rounded,
@@ -989,52 +767,28 @@ class _KpiGrid extends StatelessWidget {
           iconBgColor: const Color(0xFFFFF3E0),
         ),
         _KpiCard(
-          title: 'متوسط قيمة الطلب',
-          value: data != null ? '${data.averageOrder.toInt()}' : null,
-          unit: 'ج',
-          icon: Icons.calculate_rounded,
-          iconColor: const Color(0xFF1565C0),
-          iconBgColor: const Color(0xFFE3F2FD),
-        ),
-        _KpiCard(
           title: 'إجمالي الطلبات',
-          value: data != null ? '${data.totalOrders}' : null,
+          value: '$totalOrders',
           unit: 'طلب',
-          icon: Icons.shopping_cart_rounded,
+          icon: Icons.receipt_long_rounded,
           iconColor: const Color(0xFF7B1FA2),
           iconBgColor: const Color(0xFFF3E5F5),
         ),
         _KpiCard(
           title: 'عدد العملاء',
-          value: data != null ? '${data.totalCustomers}' : null,
+          value: '$customerCount',
           unit: 'عميل',
           icon: Icons.people_alt_rounded,
           iconColor: const Color(0xFF00838F),
           iconBgColor: const Color(0xFFE0F7FA),
         ),
         _KpiCard(
-          title: 'قيمة الخصومات',
-          value: data != null ? '${data.discountTotal.toInt()}' : null,
-          unit: 'ج',
-          icon: Icons.local_offer_rounded,
-          iconColor: const Color(0xFFC62828),
-          iconBgColor: const Color(0xFFFFEBEE),
-        ),
-        _KpiCard(
           title: 'الطلبات الملغاة',
-          value: data != null ? '${data.cancelledOrders}' : null,
+          value: '$cancelledCount',
           unit: 'طلب',
           icon: Icons.cancel_rounded,
           iconColor: const Color(0xFFD84315),
           iconBgColor: const Color(0xFFFBE9E7),
-        ),
-        _KpiCard(
-          title: 'نسبة نجاح الطلبات',
-          value: data != null ? completionRate : null,
-          unit: '%',
-          icon: Icons.check_circle_rounded,
-          iconColor: const Color(0xFF558B2F),
-          iconBgColor: const Color(0xFFF1F8E9),
         ),
       ],
     );
@@ -1153,310 +907,6 @@ class _KpiCard extends StatelessWidget {
                 ),
               ],
             ),
-        ],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Chart Card  (full-width, rich header + existing chart widget)
-// ──────────────────────────────────────────────────────────────
-
-class _ChartCard extends StatelessWidget {
-  final String title;
-  final String? unit;
-  final double totalValue;
-  final bool isCount;
-  final Widget child;
-
-  const _ChartCard({
-    required this.title,
-    this.unit,
-    required this.totalValue,
-    this.isCount = false,
-    required this.child,
-  });
-
-  String get _formattedTotal {
-    if (isCount) return totalValue.toInt().toString();
-    if (totalValue >= 1000) {
-      return '${(totalValue / 1000).toStringAsFixed(1)}K';
-    }
-    return totalValue.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkDivider
-              : AppColors.outlineVariant.withValues(alpha: 0.6),
-        ),
-        boxShadow: const [AppShadows.card],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.secondary.withValues(alpha: 0.8),
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        _formattedTotal,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.primary,
-                          fontFamily: 'Cairo',
-                        ),
-                      ),
-                      if (unit != null) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          unit!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark
-                                ? AppColors.darkTextSecondary
-                                : AppColors.onSurfaceVariant,
-                            fontFamily: 'Cairo',
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.primary.withValues(alpha: 0.15)
-                      : AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'هذه الفترة',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                    fontFamily: 'Cairo',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(height: 160, child: child),
-        ],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────
-// Top Products Section
-// ──────────────────────────────────────────────────────────────
-
-class _TopProductsSection extends StatelessWidget {
-  final List<TopProduct> data;
-
-  const _TopProductsSection({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final total = data.fold(0.0, (sum, p) => sum + p.revenue);
-
-    const dotColors = [
-      AppColors.primary,
-      AppColors.statusConfirmed,
-      AppColors.statusPreparing,
-      Color(0xFFC68B59),
-      Color(0xFF00658B),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkDivider
-              : AppColors.outlineVariant.withValues(alpha: 0.6),
-        ),
-        boxShadow: const [AppShadows.card],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'المنتجات الأكثر مبيعاً',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color:
-                      isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
-                  fontFamily: 'Cairo',
-                ),
-              ),
-              GestureDetector(
-                onTap: () => context.push('/admin/reports'),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'التفاصيل',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                    SizedBox(width: 2),
-                    Icon(Icons.chevron_left,
-                        size: 16, color: AppColors.primary),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 100,
-                height: 100,
-                child: DashboardTopProductsChart(data: data),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: data.take(4).toList().asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final p = entry.value;
-                    final percent = total > 0 ? p.revenue / total : 0.0;
-                    final color = dotColors[i % dotColors.length];
-                    final revenueStr = p.revenue >= 1000
-                        ? '${(p.revenue / 1000).toStringAsFixed(1)}K'
-                        : p.revenue.toStringAsFixed(0);
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  p.name,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppColors.darkTextPrimary
-                                        : AppColors.onSurface,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$revenueStr ج',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: isDark
-                                      ? AppColors.darkTextSecondary
-                                      : AppColors.secondary
-                                          .withValues(alpha: 0.8),
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${(percent * 100).toStringAsFixed(0)}%',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: color,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          // Progress bar
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: percent.clamp(0.0, 1.0),
-                              minHeight: 4,
-                              backgroundColor: color.withValues(alpha: 0.1),
-                              valueColor: AlwaysStoppedAnimation<Color>(color),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1734,33 +1184,6 @@ class _OrderListItem extends StatelessWidget {
 // ──────────────────────────────────────────────────────────────
 // Skeleton / Loading states
 // ──────────────────────────────────────────────────────────────
-
-class _ChartSkeleton extends StatelessWidget {
-  const _ChartSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? AppColors.darkDivider
-              : AppColors.outlineVariant.withValues(alpha: 0.6),
-        ),
-      ),
-      child: const Center(
-        child: CircularProgressIndicator(
-          strokeWidth: 2.5,
-          color: AppColors.primary,
-        ),
-      ),
-    );
-  }
-}
 
 class _OrdersSkeleton extends StatelessWidget {
   const _OrdersSkeleton();
