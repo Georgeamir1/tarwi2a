@@ -12,6 +12,7 @@ import '../application/admin/admin_delivery_zones_cubit.dart';
 import '../application/admin/admin_business_profile_cubit.dart';
 import '../core/di/injection_container.dart';
 import '../domain/entities/product.dart';
+import '../domain/entities/address.dart';
 import '../domain/entities/order.dart';
 import '../domain/entities/coupon.dart';
 import '../domain/entities/customer.dart';
@@ -35,8 +36,6 @@ import '../presentation/screens/checkout/payment_methods_screen.dart';
 import '../presentation/screens/checkout/payment_proof_screen.dart';
 import '../presentation/screens/checkout/order_success_screen.dart';
 import '../presentation/screens/orders/orders_screen.dart';
-import '../presentation/screens/orders/order_detail_screen.dart';
-import '../presentation/screens/orders/order_tracking_screen.dart';
 import '../presentation/screens/orders/rate_order_screen.dart';
 import '../presentation/screens/profile/my_profile_screen.dart';
 import '../presentation/screens/profile/my_addresses_screen.dart';
@@ -186,8 +185,14 @@ final appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/orders',
-              pageBuilder: (c, s) =>
-                  _fadeTransition(c, s, const OrdersScreen()),
+              pageBuilder: (c, s) {
+                final expand = s.uri.queryParameters['expand'];
+                return _fadeTransition(
+                  c,
+                  s,
+                  OrdersScreen(expandOrderId: expand),
+                );
+              },
             ),
           ],
         ),
@@ -268,26 +273,16 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/orders/:id',
-      pageBuilder: (c, s) {
-        final orderId = s.pathParameters['id'] ?? '';
-        final order = s.extra is Order ? s.extra as Order : null;
-        return _fadeTransition(
-          c,
-          s,
-          OrderDetailScreen(orderId: orderId, initialOrder: order),
-        );
+      redirect: (c, s) {
+        final id = s.pathParameters['id'] ?? '';
+        return '/orders?expand=$id';
       },
     ),
     GoRoute(
       path: '/orders/:id/track',
-      pageBuilder: (c, s) {
-        final orderId = s.pathParameters['id'] ?? '';
-        final order = s.extra is Order ? s.extra as Order : null;
-        return _fadeTransition(
-          c,
-          s,
-          OrderTrackingScreen(orderId: orderId, initialOrder: order),
-        );
+      redirect: (c, s) {
+        final id = s.pathParameters['id'] ?? '';
+        return '/orders?expand=$id';
       },
     ),
     GoRoute(
@@ -307,7 +302,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/profile/addresses/add',
-      pageBuilder: (c, s) => _fadeTransition(c, s, const AddAddressScreen()),
+      pageBuilder: (c, s) {
+        final address = s.extra as Address?;
+        return _fadeTransition(c, s, AddAddressScreen(addressToEdit: address));
+      },
     ),
     GoRoute(
       path: '/profile/favorites',

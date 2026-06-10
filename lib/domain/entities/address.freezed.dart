@@ -28,6 +28,9 @@ mixin _$Address {
   String? get notes => throw _privateConstructorUsedError;
   bool get isDefault => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
+  String? get deliveryZoneId => throw _privateConstructorUsedError;
+  String? get deliveryZoneName => throw _privateConstructorUsedError;
+  double? get deliveryFee => throw _privateConstructorUsedError;
 
   /// Create a copy of Address
   /// with the given fields replaced by the non-null parameter values.
@@ -52,7 +55,10 @@ abstract class $AddressCopyWith<$Res> {
       String? apartment,
       String? notes,
       bool isDefault,
-      DateTime createdAt});
+      DateTime createdAt,
+      String? deliveryZoneId,
+      String? deliveryZoneName,
+      double? deliveryFee});
 }
 
 /// @nodoc
@@ -82,6 +88,9 @@ class _$AddressCopyWithImpl<$Res, $Val extends Address>
     Object? notes = freezed,
     Object? isDefault = null,
     Object? createdAt = null,
+    Object? deliveryZoneId = freezed,
+    Object? deliveryZoneName = freezed,
+    Object? deliveryFee = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -132,6 +141,18 @@ class _$AddressCopyWithImpl<$Res, $Val extends Address>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      deliveryZoneId: freezed == deliveryZoneId
+          ? _value.deliveryZoneId
+          : deliveryZoneId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryZoneName: freezed == deliveryZoneName
+          ? _value.deliveryZoneName
+          : deliveryZoneName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryFee: freezed == deliveryFee
+          ? _value.deliveryFee
+          : deliveryFee // ignore: cast_nullable_to_non_nullable
+              as double?,
     ) as $Val);
   }
 }
@@ -155,7 +176,10 @@ abstract class _$$AddressImplCopyWith<$Res> implements $AddressCopyWith<$Res> {
       String? apartment,
       String? notes,
       bool isDefault,
-      DateTime createdAt});
+      DateTime createdAt,
+      String? deliveryZoneId,
+      String? deliveryZoneName,
+      double? deliveryFee});
 }
 
 /// @nodoc
@@ -183,6 +207,9 @@ class __$$AddressImplCopyWithImpl<$Res>
     Object? notes = freezed,
     Object? isDefault = null,
     Object? createdAt = null,
+    Object? deliveryZoneId = freezed,
+    Object? deliveryZoneName = freezed,
+    Object? deliveryFee = freezed,
   }) {
     return _then(_$AddressImpl(
       id: null == id
@@ -233,6 +260,18 @@ class __$$AddressImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      deliveryZoneId: freezed == deliveryZoneId
+          ? _value.deliveryZoneId
+          : deliveryZoneId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryZoneName: freezed == deliveryZoneName
+          ? _value.deliveryZoneName
+          : deliveryZoneName // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryFee: freezed == deliveryFee
+          ? _value.deliveryFee
+          : deliveryFee // ignore: cast_nullable_to_non_nullable
+              as double?,
     ));
   }
 }
@@ -252,7 +291,10 @@ class _$AddressImpl implements _Address {
       this.apartment,
       this.notes,
       this.isDefault = false,
-      required this.createdAt});
+      required this.createdAt,
+      this.deliveryZoneId,
+      this.deliveryZoneName,
+      this.deliveryFee});
 
   @override
   final String id;
@@ -279,10 +321,16 @@ class _$AddressImpl implements _Address {
   final bool isDefault;
   @override
   final DateTime createdAt;
+  @override
+  final String? deliveryZoneId;
+  @override
+  final String? deliveryZoneName;
+  @override
+  final double? deliveryFee;
 
   @override
   String toString() {
-    return 'Address(id: $id, userId: $userId, label: $label, address: $address, latitude: $latitude, longitude: $longitude, building: $building, floor: $floor, apartment: $apartment, notes: $notes, isDefault: $isDefault, createdAt: $createdAt)';
+    return 'Address(id: $id, userId: $userId, label: $label, address: $address, latitude: $latitude, longitude: $longitude, building: $building, floor: $floor, apartment: $apartment, notes: $notes, isDefault: $isDefault, createdAt: $createdAt, deliveryZoneId: $deliveryZoneId, deliveryZoneName: $deliveryZoneName, deliveryFee: $deliveryFee)';
   }
 
   @override
@@ -307,7 +355,13 @@ class _$AddressImpl implements _Address {
             (identical(other.isDefault, isDefault) ||
                 other.isDefault == isDefault) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.deliveryZoneId, deliveryZoneId) ||
+                other.deliveryZoneId == deliveryZoneId) &&
+            (identical(other.deliveryZoneName, deliveryZoneName) ||
+                other.deliveryZoneName == deliveryZoneName) &&
+            (identical(other.deliveryFee, deliveryFee) ||
+                other.deliveryFee == deliveryFee));
   }
 
   @override
@@ -324,7 +378,10 @@ class _$AddressImpl implements _Address {
       apartment,
       notes,
       isDefault,
-      createdAt);
+      createdAt,
+      deliveryZoneId,
+      deliveryZoneName,
+      deliveryFee);
 
   /// Create a copy of Address
   /// with the given fields replaced by the non-null parameter values.
@@ -348,7 +405,10 @@ abstract class _Address implements Address {
       final String? apartment,
       final String? notes,
       final bool isDefault,
-      required final DateTime createdAt}) = _$AddressImpl;
+      required final DateTime createdAt,
+      final String? deliveryZoneId,
+      final String? deliveryZoneName,
+      final double? deliveryFee}) = _$AddressImpl;
 
   @override
   String get id;
@@ -374,6 +434,12 @@ abstract class _Address implements Address {
   bool get isDefault;
   @override
   DateTime get createdAt;
+  @override
+  String? get deliveryZoneId;
+  @override
+  String? get deliveryZoneName;
+  @override
+  double? get deliveryFee;
 
   /// Create a copy of Address
   /// with the given fields replaced by the non-null parameter values.

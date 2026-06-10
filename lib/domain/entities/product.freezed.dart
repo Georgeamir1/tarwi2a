@@ -75,7 +75,7 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('dart2js:noInline')
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
@@ -200,7 +200,7 @@ class __$$ProductImplCopyWithImpl<$Res>
 
   /// Create a copy of Product
   /// with the given fields replaced by the non-null parameter values.
-  @pragma('dart2js:noInline')
+  @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? id = null,
@@ -431,7 +431,7 @@ class _$ProductImpl implements _Product {
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  @pragma('dart2js:noInline')
+  @pragma('vm:prefer-inline')
   _$$ProductImplCopyWith<_$ProductImpl> get copyWith =>
       __$$ProductImplCopyWithImpl<_$ProductImpl>(this, _$identity);
 }

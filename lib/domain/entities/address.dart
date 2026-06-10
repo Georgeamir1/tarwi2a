@@ -17,5 +17,8 @@ class Address with _$Address {
     String? notes,
     @Default(false) bool isDefault,
     required DateTime createdAt,
+    String? deliveryZoneId,
+    String? deliveryZoneName,
+    double? deliveryFee,
   }) = _Address;
 }

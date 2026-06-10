@@ -9,12 +9,15 @@ import '../../../core/logger/app_logger.dart';
 import '../../../domain/enums/order_type.dart';
 import '../../../domain/enums/payment_method.dart';
 import '../../../domain/entities/address.dart';
+import '../../../domain/repositories/coupon_repository.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
+import '../../../application/coupon/coupon_cubit.dart';
 import '../../extensions/payment_method_x.dart';
 import '../../widgets/loading_button.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/coupon_input.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -29,6 +32,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
+  final _couponCodeController = TextEditingController();
 
   PaymentMethod _paymentMethod = PaymentMethod.cash;
   OrderType _orderType = OrderType.delivery;
@@ -37,6 +41,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _scheduleOrder = false;
   String? _selectedAddressId;
   Address? _selectedAddress;
+  String? _addressValidationError;
 
   @override
   void initState() {
@@ -60,10 +65,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _notesController.dispose();
+    _couponCodeController.dispose();
     super.dispose();
   }
 
   Future<void> _placeOrder() async {
+    if (_orderType == OrderType.delivery && _selectedAddress == null) {
+      setState(() {
+        _addressValidationError = 'من فضلك اختر أو أضف عنواناً للتوصيل أولاً';
+      });
+      HapticFeedback.heavyImpact();
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) {
       appLogger.i('[CheckoutScreen] _placeOrder — form validation failed');
       return;
@@ -115,11 +129,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ? null
             : _notesController.text.trim(),
         paymentMethod: _paymentMethod.value,
-        totalAmount: cartState.total,
+        totalAmount: cartState.finalTotal,
         items: items,
         scheduledFor: _scheduleOrder ? _scheduledDateTime : null,
         orderType: _orderType.value,
+        couponId: cartState.appliedCouponId,
+        discountAmount: cartState.discountAmount,
+        deliveryFee: cartState.deliveryFee > 0 ? cartState.deliveryFee : null,
+        deliveryZoneId: cartState.deliveryZoneId,
+        deliveryZoneName: cartState.deliveryZoneName,
       );
+
+      if (cartState.appliedCouponId != null) {
+        await sl<CouponRepository>()
+            .incrementUsage(cartState.appliedCouponId!);
+      }
 
       await sl<CustomerOrdersCubit>().loadOrders(profile.id);
 
@@ -283,9 +307,25 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _selectedAddress = result;
         _selectedAddressId = result.id;
         _addressController.text = result.address;
+        _addressValidationError = null;
       });
+
+      final cartCubit = context.read<CartCubit>();
+      if (result.deliveryZoneId != null && result.deliveryZoneName != null) {
+        cartCubit.setDeliveryZone(
+          deliveryZoneId: result.deliveryZoneId!,
+          deliveryZoneName: result.deliveryZoneName!,
+          deliveryFee: result.deliveryFee ?? 0,
+        );
+      } else {
+        cartCubit.clearDeliveryZone();
+      }
+
+      appLogger.i(
+          '[CheckoutScreen] address selected — zone: ${result.deliveryZoneName ?? "none"}, fee: ${result.deliveryFee ?? 0}');
     }
   }
+
   Future<void> _pickScheduleDateTime() async {
     final date = await showDatePicker(
       context: context,
@@ -334,362 +374,777 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     });
   }
 
+  Widget _buildSelectedAddressCard(ThemeData theme) {
+    final address = _selectedAddress!;
+    IconData addressIcon = Icons.location_on_rounded;
+    final labelLower = address.label.trim().toLowerCase();
+    if (labelLower == 'البيت' || labelLower == 'home') {
+      addressIcon = Icons.home_rounded;
+    } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+      addressIcon = Icons.work_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  addressIcon,
+                  color: AppColors.onPrimaryContainer,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      address.label,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (address.deliveryZoneName != null) ...[
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.successContainer,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Text(
+                          'منطقة: ${address.deliveryZoneName}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: AppColors.successOnContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: _pickAddress,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text('تغيير'),
+              ),
+            ],
+          ),
+          const Divider(height: 20, color: AppColors.outlineVariant),
+          Text(
+            address.address,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (address.building != null || address.floor != null || address.apartment != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              [
+                if (address.building != null) 'عمارة: ${address.building}',
+                if (address.floor != null) 'دور: ${address.floor}',
+                if (address.apartment != null) 'شقة: ${address.apartment}',
+              ].join(' - '),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+          if (address.notes != null && address.notes!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    address.notes!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     
-    return BlocBuilder<CartCubit, CartState>(
-      builder: (context, cartState) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: const AppTopBar(
-            title: 'إتمـام الطلب',
-            variant: TopBarVariant.withBack,
-          ),
-          body: SafeArea(
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  const _SectionTitle(title: 'نوع الطلب'),
-                  AppSpacing.gapH12,
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _OrderTypeChip(
-                          type: OrderType.delivery,
-                          selected: _orderType,
-                          onSelect: (v) => setState(() => _orderType = v),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _OrderTypeChip(
-                          type: OrderType.pickup,
-                          selected: _orderType,
-                          onSelect: (v) => setState(() => _orderType = v),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _OrderTypeChip(
-                          type: OrderType.dineIn,
-                          selected: _orderType,
-                          onSelect: (v) => setState(() => _orderType = v),
-                        ),
-                      ),
-                    ],
-                  ),
-                  AppSpacing.gapH24,
-                  const _SectionTitle(title: 'بيانات التواصل'),
-                  AppSpacing.gapH12,
-                  _buildTextField(
-                      _nameController, 'الاسم', Icons.person_outline,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'أدخل اسمك' : null),
-                  AppSpacing.gapH12,
-                  _buildTextField(
-                      _phoneController, 'رقم الهاتف', Icons.phone_outlined,
-                      keyboardType: TextInputType.phone,
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'أدخل رقم الهاتف' : null),
-                  if (_orderType == OrderType.delivery) ...[
-                    AppSpacing.gapH12,
-                    _buildTextField(_addressController, 'العنوان',
-                        Icons.location_on_outlined,
-                        validator: (v) =>
-                            (v == null || v.isEmpty) ? 'أدخل العنوان' : null),
-                    AppSpacing.gapH8,
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _pickAddress,
-                        icon: const Icon(Icons.my_location, size: 18),
-                        label: Text(
-                          _selectedAddress != null
-                              ? 'تم اختيار: ${_selectedAddress!.label}'
-                              : 'اختيار من العناوين المحفوظة',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _selectedAddress != null
-                              ? AppColors.successOnContainer
-                              : AppColors.primary,
-                          backgroundColor: _selectedAddress != null
-                              ? AppColors.successContainer
-                              : Colors.transparent,
-                          side: BorderSide(
-                            color: _selectedAddress != null
-                                ? AppColors.success
-                                : AppColors.outlineVariant,
-                            width: 1.5,
-                          ),
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                      ),
-                    ),
-                  ],
-                  AppSpacing.gapH12,
-                  _buildTextField(_notesController, 'ملاحظات (اختياري)',
-                      Icons.note_outlined,
-                      maxLines: 2),
-                  AppSpacing.gapH24,
-                  const _SectionTitle(title: 'موعد التوصيل'),
-                  AppSpacing.gapH12,
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.lgAll,
-                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
-                      boxShadow: const [AppShadows.card],
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _ScheduleChip(
-                                label: 'في أقرب وقت',
-                                selected: !_scheduleOrder,
-                                onTap: () =>
-                                    setState(() => _scheduleOrder = false),
-                              ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<CouponCubit>()),
+      ],
+      child: BlocBuilder<CartCubit, CartState>(
+        builder: (context, cartState) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: const AppTopBar(
+              title: 'إتمـام الطلب',
+              variant: TopBarVariant.withBack,
+            ),
+            body: SafeArea(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _CheckoutSectionCard(
+                      title: 'نوع الطلب',
+                      icon: Icons.restaurant_menu_rounded,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _OrderTypeChip(
+                              type: OrderType.delivery,
+                              selected: _orderType,
+                              onSelect: (v) => setState(() => _orderType = v),
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _ScheduleChip(
-                                label: 'جدولة',
-                                selected: _scheduleOrder,
-                                onTap: () =>
-                                    setState(() => _scheduleOrder = true),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _OrderTypeChip(
+                              type: OrderType.pickup,
+                              selected: _orderType,
+                              onSelect: (v) => setState(() => _orderType = v),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _OrderTypeChip(
+                              type: OrderType.dineIn,
+                              selected: _orderType,
+                              onSelect: (v) => setState(() => _orderType = v),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _CheckoutSectionCard(
+                      title: _orderType == OrderType.delivery ? 'بيانات التوصيل والتواصل' : 'بيانات التواصل',
+                      icon: _orderType == OrderType.delivery ? Icons.person_pin_circle_rounded : Icons.person_outline_rounded,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTextField(
+                            _nameController,
+                            'الاسم',
+                            Icons.person_outline,
+                            validator: (v) => (v == null || v.isEmpty) ? 'أدخل اسمك' : null,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            _phoneController,
+                            'رقم الهاتف',
+                            Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                            validator: (v) => (v == null || v.isEmpty) ? 'أدخل رقم الهاتف' : null,
+                          ),
+                          if (_orderType == OrderType.delivery) ...[
+                            const SizedBox(height: 16),
+                            if (_selectedAddress != null)
+                              _buildSelectedAddressCard(theme)
+                            else ...[
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: _addressValidationError != null
+                                      ? AppColors.errorContainer.withValues(alpha: 0.15)
+                                      : AppColors.background,
+                                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  border: Border.all(
+                                    color: _addressValidationError != null
+                                        ? AppColors.error
+                                        : AppColors.outlineVariant.withValues(alpha: 0.8),
+                                    width: _addressValidationError != null ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.location_off_rounded,
+                                      color: _addressValidationError != null ? AppColors.error : AppColors.textSecondary,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'لم يتم تحديد عنوان للتوصيل',
+                                      style: theme.textTheme.titleSmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'يجب اختيار عنوان توصيل محفوظ لتأكيد الطلب وحساب الرسوم',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    if (_addressValidationError != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _addressValidationError!,
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                          color: AppColors.error,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _pickAddress,
+                                      icon: const Icon(Icons.add_location_alt_rounded, size: 18),
+                                      label: const Text('اختيار أو إضافة عنوان جديد'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: AppColors.onPrimary,
+                                        elevation: 0,
+                                        minimumSize: const Size(double.infinity, 48),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            _notesController,
+                            'ملاحظات إضافية (مثلاً: رقم الشقة، علامة مميزة)',
+                            Icons.note_outlined,
+                            maxLines: 2,
+                          ),
+                        ],
+                      ),
+                    ),
+                    _CheckoutSectionCard(
+                      title: _orderType == OrderType.delivery ? 'موعد التوصيل' : 'موعد الاستلام',
+                      icon: Icons.schedule_rounded,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _ScheduleChip(
+                                  label: 'في أقرب وقت',
+                                  selected: !_scheduleOrder,
+                                  onTap: () => setState(() => _scheduleOrder = false),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _ScheduleChip(
+                                  label: 'جدولة',
+                                  selected: _scheduleOrder,
+                                  onTap: () => setState(() => _scheduleOrder = true),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_scheduleOrder) ...[
+                            const SizedBox(height: 12),
+                            GestureDetector(
+                              onTap: _pickScheduleDateTime,
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  border: Border.all(
+                                    color: AppColors.primary.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today_rounded,
+                                        color: AppColors.primary, size: 18),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _scheduledDateTime != null
+                                            ? DateFormat('dd/MM/yyyy - hh:mm a').format(_scheduledDateTime!)
+                                            : 'اختر التاريخ والوقت',
+                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                          color: _scheduledDateTime != null
+                                              ? AppColors.textPrimary
+                                              : AppColors.textSecondary,
+                                          fontWeight: _scheduledDateTime != null
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                        ),
+                                      ),
+                                    ),
+                                    if (_scheduledDateTime != null)
+                                      const Icon(Icons.check_circle_rounded,
+                                          color: AppColors.success, size: 20),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                        if (_scheduleOrder) ...[
-                          AppSpacing.gapH12,
-                          GestureDetector(
-                            onTap: _pickScheduleDateTime,
-                            child: Container(
+                        ],
+                      ),
+                    ),
+                    _CheckoutSectionCard(
+                      title: 'طريقة الدفع',
+                      icon: Icons.payment_rounded,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _PaymentOption(
+                            label: 'كاش عند الاستلام',
+                            icon: Icons.money_rounded,
+                            method: PaymentMethod.cash,
+                            selected: _paymentMethod,
+                            onSelect: (v) => setState(() => _paymentMethod = v),
+                          ),
+                          const SizedBox(height: 8),
+                          _PaymentOption(
+                            label: 'محفظة إلكترونية',
+                            icon: Icons.account_balance_wallet_outlined,
+                            method: PaymentMethod.wallet,
+                            selected: _paymentMethod,
+                            onSelect: (v) => setState(() => _paymentMethod = v),
+                          ),
+                          const SizedBox(height: 8),
+                          _PaymentOption(
+                            label: 'InstaPay',
+                            icon: Icons.payment_rounded,
+                            method: PaymentMethod.instapay,
+                            selected: _paymentMethod,
+                            onSelect: (v) => setState(() => _paymentMethod = v),
+                          ),
+                          if (_paymentMethod != PaymentMethod.cash) ...[
+                            const SizedBox(height: 12),
+                            Container(
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.08),
-                                borderRadius: AppRadius.mdAll,
+                                color: AppColors.tertiaryContainer,
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
                                 border: Border.all(
-                                    color: AppColors.primary.withValues(alpha: 0.3)),
+                                  color: AppColors.tertiary.withValues(alpha: 0.3),
+                                ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_rounded,
-                                      color: AppColors.primary, size: 18),
-                                  const SizedBox(width: 12),
+                                  const Icon(Icons.info_outline_rounded,
+                                      color: AppColors.tertiary, size: 18),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      _scheduledDateTime != null
-                                          ? DateFormat('dd/MM/yyyy - hh:mm a')
-                                              .format(_scheduledDateTime!)
-                                          : 'اختر التاريخ والوقت',
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        color: _scheduledDateTime != null
-                                            ? AppColors.textPrimary
-                                            : AppColors.textSecondary,
-                                        fontWeight: _scheduledDateTime != null
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
+                                      'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: AppColors.onTertiaryContainer,
                                       ),
                                     ),
                                   ),
-                                  if (_scheduledDateTime != null)
-                                    const Icon(Icons.check_circle_rounded,
-                                        color: AppColors.success, size: 20),
                                 ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  AppSpacing.gapH24,
-                  const _SectionTitle(title: 'طريقة الدفع'),
-                  AppSpacing.gapH12,
-                  _PaymentOption(
-                    label: 'كاش عند الاستلام',
-                    icon: Icons.money_rounded,
-                    method: PaymentMethod.cash,
-                    selected: _paymentMethod,
-                    onSelect: (v) => setState(() => _paymentMethod = v),
-                  ),
-                  AppSpacing.gapH8,
-                  _PaymentOption(
-                    label: 'محفظة إلكترونية',
-                    icon: Icons.account_balance_wallet_outlined,
-                    method: PaymentMethod.wallet,
-                    selected: _paymentMethod,
-                    onSelect: (v) => setState(() => _paymentMethod = v),
-                  ),
-                  AppSpacing.gapH8,
-                  _PaymentOption(
-                    label: 'InstaPay',
-                    icon: Icons.payment_rounded,
-                    method: PaymentMethod.instapay,
-                    selected: _paymentMethod,
-                    onSelect: (v) => setState(() => _paymentMethod = v),
-                  ),
-                  if (_paymentMethod != PaymentMethod.cash) ...[
-                    AppSpacing.gapH12,
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.tertiaryContainer,
-                        borderRadius: AppRadius.lgAll,
-                        border: Border.all(
-                            color: AppColors.tertiary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.info_outline_rounded,
-                              color: AppColors.tertiary, size: 18),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.onTertiaryContainer),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  AppSpacing.gapH24,
-                  const _SectionTitle(title: 'ملخص الطلب'),
-                  AppSpacing.gapH12,
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: AppRadius.lgAll,
-                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
-                      boxShadow: const [AppShadows.card],
-                    ),
-                    child: Column(
-                      children: [
-                        ...cartState.items.map((item) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${item.productNameAr} × ${item.quantity}',
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(fontSize: 13, color: AppColors.textPrimary),
-                                        ),
-                                        if (item.selectedOptions.isNotEmpty)
-                                          Text(
-                                            item.selectedOptions
-                                                .map((e) => e.name)
-                                                .join(', '),
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
-                                              color: AppColors.textSecondary,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item.subtotal.toStringAsFixed(0)} ج',
-                                    style:
-                                        theme.textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-                        const Divider(height: 24, color: AppColors.outlineVariant),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'الإجمالي',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.textPrimary),
-                            ),
-                            Text(
-                              '${cartState.total.toStringAsFixed(0)} جنيه',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: AppColors.primary,
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+                    _CheckoutSectionCard(
+                      title: 'كود الخصم',
+                      icon: Icons.local_offer_outlined,
+                      child: BlocConsumer<CouponCubit, CouponState>(
+                        listener: (context, couponState) {
+                          if (couponState.status == CouponStatus.applied) {
+                            context.read<CartCubit>().applyCoupon(
+                                  couponState.appliedCoupon!.id,
+                                  couponState.discountAmount,
+                                );
+                            HapticFeedback.lightImpact();
+                          } else if (couponState.status == CouponStatus.error) {
+                            HapticFeedback.heavyImpact();
+                          } else if (couponState.status == CouponStatus.removing ||
+                              couponState.status == CouponStatus.initial) {
+                            context.read<CartCubit>().removeCoupon();
+                          }
+                        },
+                        builder: (context, couponState) {
+                          final isLoading = couponState.status == CouponStatus.validating;
+                          final hasError = couponState.status == CouponStatus.error;
+                          final isApplied = couponState.status == CouponStatus.applied;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (isApplied)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.successContainer,
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    border: Border.all(
+                                      color: AppColors.success.withValues(alpha: 0.3),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.check_circle_rounded,
+                                          color: AppColors.success, size: 22),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'تم تطبيق كود: ${couponState.appliedCoupon!.code}',
+                                              style: theme.textTheme.titleSmall?.copyWith(
+                                                color: AppColors.successOnContainer,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              'وفرت ${couponState.discountAmount.toStringAsFixed(0)} ج من إجمالي طلبك',
+                                              style: theme.textTheme.labelMedium?.copyWith(
+                                                color: AppColors.successOnContainer.withValues(alpha: 0.8),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          HapticFeedback.lightImpact();
+                                          context.read<CouponCubit>().removeCoupon();
+                                          _couponCodeController.clear();
+                                        },
+                                        icon: const Icon(Icons.close_rounded, size: 16),
+                                        label: const Text('إزالة'),
+                                        style: TextButton.styleFrom(
+                                          foregroundColor: AppColors.error,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else ...[
+                                CouponInput(
+                                  controller: _couponCodeController,
+                                  isLoading: isLoading,
+                                  onChanged: (String value) {
+                                    final couponCubit = context.read<CouponCubit>();
+                                    if (couponCubit.state.status == CouponStatus.error) {
+                                      couponCubit.clearError();
+                                    }
+                                  },
+                                  onApply: () {
+                                    final code = _couponCodeController.text.trim();
+                                    if (code.isEmpty) return;
+                                    context.read<CouponCubit>().validateAndApply(code, cartState.total);
+                                  },
+                                ),
+                                if (hasError) ...[
+                                  const SizedBox(height: 8),
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 300),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.errorContainer,
+                                      borderRadius: BorderRadius.circular(AppRadius.md),
+                                      border: Border.all(
+                                        color: AppColors.error.withValues(alpha: 0.25),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            couponState.errorMessage ?? 'حصل خطأ في كود الخصم',
+                                            style: theme.textTheme.labelMedium?.copyWith(
+                                              color: AppColors.onErrorContainer,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    _CheckoutSectionCard(
+                      title: 'ملخص الطلب',
+                      icon: Icons.receipt_long_rounded,
+                      child: Column(
+                        children: [
+                          ...cartState.items.map((item) => Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${item.productNameAr} × ${item.quantity}',
+                                            style: theme.textTheme.bodySmall?.copyWith(
+                                              fontSize: 13,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          if (item.selectedOptions.isNotEmpty)
+                                            Text(
+                                              item.selectedOptions.map((e) => e.name).join(', '),
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item.subtotal.toStringAsFixed(0)} ج',
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          const Divider(height: 24, color: AppColors.outlineVariant),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'الإجمالي',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${cartState.total.toStringAsFixed(0)} جنيه',
+                                style: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (cartState.deliveryFee > 0) ...[
+                            const Divider(height: 16, color: AppColors.outlineVariant),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'رسوم التوصيل${cartState.deliveryZoneName != null ? " (${cartState.deliveryZoneName})" : ""}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                Text(
+                                  '+${cartState.deliveryFee.toStringAsFixed(0)} ج',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                                ],
+                              ),
+                            ],
+                            if (cartState.discountAmount > 0) ...[
+                              const Divider(height: 16, color: AppColors.outlineVariant),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'الخصم',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: AppColors.successOnContainer,
+                                    ),
+                                  ),
+                                  Text(
+                                    '-${cartState.discountAmount.toStringAsFixed(0)} ج',
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                            if (cartState.deliveryFee > 0 || cartState.discountAmount > 0) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'المبلغ النهائي',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${cartState.finalTotal.toStringAsFixed(0)} جنيه',
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
+                      const SizedBox(height: 8),
+                      LoadingButton(
+                        onPressed: _placeOrder,
+                        label: 'تأكيد الطلب',
+                        isLoading: _isLoading,
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    Widget _buildTextField(
+      TextEditingController controller,
+      String hint,
+      IconData icon, {
+      TextInputType? keyboardType,
+      int maxLines = 1,
+      String? Function(String?)? validator,
+    }) {
+      return _CheckoutTextField(
+        controller: controller,
+        hint: hint,
+        icon: icon,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        validator: validator,
+      );
+    }
+  }
+
+  class _CheckoutSectionCard extends StatelessWidget {
+    final String title;
+    final IconData icon;
+    final Widget child;
+
+    const _CheckoutSectionCard({
+      required this.title,
+      required this.icon,
+      required this.child,
+    });
+
+    @override
+    Widget build(BuildContext context) {
+      final theme = Theme.of(context);
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        elevation: 0,
+        color: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          side: BorderSide(
+            color: AppColors.outlineVariant.withValues(alpha: 0.5),
+            width: 1,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    icon,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
                   ),
-                  AppSpacing.gapH24,
-                  LoadingButton(
-                    onPressed: _placeOrder,
-                    label: 'تأكيد الطلب',
-                    isLoading: _isLoading,
-                  ),
-                  AppSpacing.gapH24,
                 ],
               ),
-            ),
+              const SizedBox(height: 16),
+              child,
+            ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    }
   }
 
-  Widget _buildTextField(
-    TextEditingController controller,
-    String hint,
-    IconData icon, {
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    String? Function(String?)? validator,
-  }) {
-    return _CheckoutTextField(
-      controller: controller,
-      hint: hint,
-      icon: icon,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      validator: validator,
-    );
-  }
-}
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle({required this.title});
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Text(
-      title,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w700,
-        color: theme.colorScheme.onSurface,
-      ),
-    );
-  }
-}
 
 class _OrderTypeChip extends StatefulWidget {
   final OrderType type;

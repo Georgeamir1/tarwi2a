@@ -27,5 +27,8 @@ class Order with _$Order {
     String? paymentProofUrl,
     String? couponId,
     @Default(0.0) double discountAmount,
+    @Default(0.0) double deliveryFee,
+    String? deliveryZoneId,
+    String? deliveryZoneName,
   }) = _Order;
 }

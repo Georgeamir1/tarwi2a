@@ -20,6 +20,26 @@ class CouponRepositoryImpl implements CouponRepository {
   }
 
   @override
+  Future<Either<Failure, Coupon?>> getByCode(String code) async {
+    try {
+      final dto = await _remoteDataSource.getByCode(code);
+      return right(dto?.toDomain());
+    } catch (e) {
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> incrementUsage(String couponId) async {
+    try {
+      await _remoteDataSource.incrementUsage(couponId);
+      return right<Failure, void>(null);
+    } catch (e) {
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> create(Map<String, dynamic> data) async {
     try {
       await _remoteDataSource.create(data);

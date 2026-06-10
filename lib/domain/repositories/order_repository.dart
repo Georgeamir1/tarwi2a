@@ -17,6 +17,9 @@ abstract class OrderRepository {
     String? addressId,
     String? couponId,
     double? discountAmount,
+    double? deliveryFee,
+    String? deliveryZoneId,
+    String? deliveryZoneName,
   });
 
   Future<Either<Failure, List<Order>>> getCustomerOrders(String customerId);

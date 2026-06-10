@@ -19,7 +19,9 @@ ProductDTO _$ProductDTOFromJson(Map<String, dynamic> json) => ProductDTO(
       sortOrder: (json['sort_order'] as num).toInt(),
       preparationTime: (json['preparation_time'] as num?)?.toInt(),
       calories: (json['calories'] as num?)?.toInt(),
-      tags: ProductDTO._tagsFromJson(json['tags']),
+      tags: json['tags'] == null
+          ? const []
+          : ProductDTO._tagsFromJson(json['tags']),
       showInBanner: json['show_in_banner'] as bool? ?? false,
     );
 

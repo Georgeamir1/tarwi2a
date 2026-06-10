@@ -4,6 +4,8 @@ import '../failures/failure.dart';
 
 abstract class CouponRepository {
   Future<Either<Failure, List<Coupon>>> getAll();
+  Future<Either<Failure, Coupon?>> getByCode(String code);
+  Future<Either<Failure, void>> incrementUsage(String couponId);
   Future<Either<Failure, void>> create(Map<String, dynamic> data);
   Future<Either<Failure, void>> update(String id, Map<String, dynamic> data);
   Future<Either<Failure, void>> toggleActive(String id, bool isActive);

@@ -44,6 +44,12 @@ class OrderDTO {
   final String? couponId;
   @JsonKey(name: 'discount_amount')
   final double? discountAmount;
+  @JsonKey(name: 'delivery_fee')
+  final double? deliveryFee;
+  @JsonKey(name: 'delivery_zone_id')
+  final String? deliveryZoneId;
+  @JsonKey(name: 'delivery_zone_name')
+  final String? deliveryZoneName;
 
   const OrderDTO({
     required this.id,
@@ -65,6 +71,9 @@ class OrderDTO {
     this.paymentProofUrl,
     this.couponId,
     this.discountAmount,
+    this.deliveryFee,
+    this.deliveryZoneId,
+    this.deliveryZoneName,
   });
 
   factory OrderDTO.fromJson(Map<String, dynamic> json) =>
@@ -92,5 +101,8 @@ class OrderDTO {
         paymentProofUrl: paymentProofUrl,
         couponId: couponId,
         discountAmount: discountAmount ?? 0.0,
+        deliveryFee: deliveryFee ?? 0.0,
+        deliveryZoneId: deliveryZoneId,
+        deliveryZoneName: deliveryZoneName,
       );
 }

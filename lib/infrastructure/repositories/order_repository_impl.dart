@@ -24,6 +24,9 @@ class OrderRepositoryImpl implements OrderRepository {
     String? addressId,
     String? couponId,
     double? discountAmount,
+    double? deliveryFee,
+    String? deliveryZoneId,
+    String? deliveryZoneName,
   }) async {
     try {
       final orderData = {
@@ -41,6 +44,9 @@ class OrderRepositoryImpl implements OrderRepository {
         if (addressId != null) 'address_id': addressId,
         if (couponId != null) 'coupon_id': couponId,
         if (discountAmount != null) 'discount_amount': discountAmount,
+        if (deliveryFee != null) 'delivery_fee': deliveryFee,
+        if (deliveryZoneId != null) 'delivery_zone_id': deliveryZoneId,
+        if (deliveryZoneName != null) 'delivery_zone_name': deliveryZoneName,
       };
       final dto = await _remoteDataSource.createOrder(
         orderData: orderData,

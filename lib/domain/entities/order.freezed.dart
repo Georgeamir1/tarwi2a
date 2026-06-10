@@ -35,6 +35,9 @@ mixin _$Order {
   String? get paymentProofUrl => throw _privateConstructorUsedError;
   String? get couponId => throw _privateConstructorUsedError;
   double get discountAmount => throw _privateConstructorUsedError;
+  double get deliveryFee => throw _privateConstructorUsedError;
+  String? get deliveryZoneId => throw _privateConstructorUsedError;
+  String? get deliveryZoneName => throw _privateConstructorUsedError;
 
   /// Create a copy of Order
   /// with the given fields replaced by the non-null parameter values.
@@ -66,7 +69,10 @@ abstract class $OrderCopyWith<$Res> {
       String paymentStatus,
       String? paymentProofUrl,
       String? couponId,
-      double discountAmount});
+      double discountAmount,
+      double deliveryFee,
+      String? deliveryZoneId,
+      String? deliveryZoneName});
 }
 
 /// @nodoc
@@ -103,6 +109,9 @@ class _$OrderCopyWithImpl<$Res, $Val extends Order>
     Object? paymentProofUrl = freezed,
     Object? couponId = freezed,
     Object? discountAmount = null,
+    Object? deliveryFee = null,
+    Object? deliveryZoneId = freezed,
+    Object? deliveryZoneName = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -181,6 +190,18 @@ class _$OrderCopyWithImpl<$Res, $Val extends Order>
           ? _value.discountAmount
           : discountAmount // ignore: cast_nullable_to_non_nullable
               as double,
+      deliveryFee: null == deliveryFee
+          ? _value.deliveryFee
+          : deliveryFee // ignore: cast_nullable_to_non_nullable
+              as double,
+      deliveryZoneId: freezed == deliveryZoneId
+          ? _value.deliveryZoneId
+          : deliveryZoneId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryZoneName: freezed == deliveryZoneName
+          ? _value.deliveryZoneName
+          : deliveryZoneName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -211,7 +232,10 @@ abstract class _$$OrderImplCopyWith<$Res> implements $OrderCopyWith<$Res> {
       String paymentStatus,
       String? paymentProofUrl,
       String? couponId,
-      double discountAmount});
+      double discountAmount,
+      double deliveryFee,
+      String? deliveryZoneId,
+      String? deliveryZoneName});
 }
 
 /// @nodoc
@@ -246,6 +270,9 @@ class __$$OrderImplCopyWithImpl<$Res>
     Object? paymentProofUrl = freezed,
     Object? couponId = freezed,
     Object? discountAmount = null,
+    Object? deliveryFee = null,
+    Object? deliveryZoneId = freezed,
+    Object? deliveryZoneName = freezed,
   }) {
     return _then(_$OrderImpl(
       id: null == id
@@ -324,6 +351,18 @@ class __$$OrderImplCopyWithImpl<$Res>
           ? _value.discountAmount
           : discountAmount // ignore: cast_nullable_to_non_nullable
               as double,
+      deliveryFee: null == deliveryFee
+          ? _value.deliveryFee
+          : deliveryFee // ignore: cast_nullable_to_non_nullable
+              as double,
+      deliveryZoneId: freezed == deliveryZoneId
+          ? _value.deliveryZoneId
+          : deliveryZoneId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      deliveryZoneName: freezed == deliveryZoneName
+          ? _value.deliveryZoneName
+          : deliveryZoneName // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -350,7 +389,10 @@ class _$OrderImpl implements _Order {
       this.paymentStatus = 'pending',
       this.paymentProofUrl,
       this.couponId,
-      this.discountAmount = 0.0})
+      this.discountAmount = 0.0,
+      this.deliveryFee = 0.0,
+      this.deliveryZoneId,
+      this.deliveryZoneName})
       : _items = items;
 
   @override
@@ -401,10 +443,17 @@ class _$OrderImpl implements _Order {
   @override
   @JsonKey()
   final double discountAmount;
+  @override
+  @JsonKey()
+  final double deliveryFee;
+  @override
+  final String? deliveryZoneId;
+  @override
+  final String? deliveryZoneName;
 
   @override
   String toString() {
-    return 'Order(id: $id, customerId: $customerId, customerName: $customerName, customerPhone: $customerPhone, customerAddress: $customerAddress, notes: $notes, paymentMethod: $paymentMethod, status: $status, totalAmount: $totalAmount, createdAt: $createdAt, updatedAt: $updatedAt, items: $items, scheduledFor: $scheduledFor, orderType: $orderType, addressId: $addressId, paymentStatus: $paymentStatus, paymentProofUrl: $paymentProofUrl, couponId: $couponId, discountAmount: $discountAmount)';
+    return 'Order(id: $id, customerId: $customerId, customerName: $customerName, customerPhone: $customerPhone, customerAddress: $customerAddress, notes: $notes, paymentMethod: $paymentMethod, status: $status, totalAmount: $totalAmount, createdAt: $createdAt, updatedAt: $updatedAt, items: $items, scheduledFor: $scheduledFor, orderType: $orderType, addressId: $addressId, paymentStatus: $paymentStatus, paymentProofUrl: $paymentProofUrl, couponId: $couponId, discountAmount: $discountAmount, deliveryFee: $deliveryFee, deliveryZoneId: $deliveryZoneId, deliveryZoneName: $deliveryZoneName)';
   }
 
   @override
@@ -445,7 +494,13 @@ class _$OrderImpl implements _Order {
             (identical(other.couponId, couponId) ||
                 other.couponId == couponId) &&
             (identical(other.discountAmount, discountAmount) ||
-                other.discountAmount == discountAmount));
+                other.discountAmount == discountAmount) &&
+            (identical(other.deliveryFee, deliveryFee) ||
+                other.deliveryFee == deliveryFee) &&
+            (identical(other.deliveryZoneId, deliveryZoneId) ||
+                other.deliveryZoneId == deliveryZoneId) &&
+            (identical(other.deliveryZoneName, deliveryZoneName) ||
+                other.deliveryZoneName == deliveryZoneName));
   }
 
   @override
@@ -469,7 +524,10 @@ class _$OrderImpl implements _Order {
         paymentStatus,
         paymentProofUrl,
         couponId,
-        discountAmount
+        discountAmount,
+        deliveryFee,
+        deliveryZoneId,
+        deliveryZoneName
       ]);
 
   /// Create a copy of Order
@@ -501,7 +559,10 @@ abstract class _Order implements Order {
       final String paymentStatus,
       final String? paymentProofUrl,
       final String? couponId,
-      final double discountAmount}) = _$OrderImpl;
+      final double discountAmount,
+      final double deliveryFee,
+      final String? deliveryZoneId,
+      final String? deliveryZoneName}) = _$OrderImpl;
 
   @override
   String get id;
@@ -541,6 +602,12 @@ abstract class _Order implements Order {
   String? get couponId;
   @override
   double get discountAmount;
+  @override
+  double get deliveryFee;
+  @override
+  String? get deliveryZoneId;
+  @override
+  String? get deliveryZoneName;
 
   /// Create a copy of Order
   /// with the given fields replaced by the non-null parameter values.

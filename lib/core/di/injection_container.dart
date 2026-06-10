@@ -51,6 +51,7 @@ import '../../application/admin/admin_categories_cubit.dart';
 import '../../application/admin/admin_products_cubit.dart';
 import '../../application/theme/theme_cubit.dart';
 import '../../application/address/address_cubit.dart';
+import '../../application/coupon/coupon_cubit.dart';
 import '../../application/admin/admin_coupons_cubit.dart';
 import '../../application/admin/admin_customers_cubit.dart';
 import '../../application/admin/admin_delivery_zones_cubit.dart';
@@ -131,6 +132,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit());
   sl.registerFactory<AddressCubit>(() => AddressCubit(sl()));
   sl.registerLazySingleton<AdminCouponsCubit>(() => AdminCouponsCubit(sl()));
+  sl.registerFactory<CouponCubit>(() => CouponCubit(sl()));
   sl.registerLazySingleton<AdminCustomersCubit>(
       () => AdminCustomersCubit(sl()));
   sl.registerLazySingleton<AdminDeliveryZonesCubit>(

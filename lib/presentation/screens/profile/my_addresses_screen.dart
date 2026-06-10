@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme/app_theme.dart';
@@ -24,11 +25,13 @@ class MyAddressesScreen extends StatelessWidget {
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: const AppTopBar(
-                title: 'عناويني', variant: TopBarVariant.withBack),
+              title: 'عناويني',
+              variant: TopBarVariant.withBack,
+            ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
-                final result =
-                    await context.push<bool>('/profile/addresses/add');
+                HapticFeedback.lightImpact();
+                final result = await context.push<bool>('/profile/addresses/add');
                 if (result == true && userId.isNotEmpty) {
                   if (context.mounted) {
                     context.read<AddressCubit>().loadAddresses(userId);
@@ -50,29 +53,59 @@ class MyAddressesScreen extends StatelessWidget {
   Widget _buildBody(BuildContext context, AddressState state, String userId) {
     switch (state.status) {
       case AddressStatus.loading:
-        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        return const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
       case AddressStatus.loaded:
         if (state.addresses.isEmpty) {
-          return const Center(
+          return Center(
             child: EmptyState(
               icon: Icons.location_on_outlined,
               title: 'مفيش عناوين محفوظة',
-              subtitle: 'ضيف عنوان التوصيل بتاعك',
-              actionLabel: 'إضافة عنوان',
-              onAction: null,
+              subtitle: 'ضيف عنوان التوصيل بتاعك وسهل على نفسك الشراء',
+              actionLabel: 'إضافة عنوان جديد',
+              onAction: () async {
+                HapticFeedback.lightImpact();
+                final result = await context.push<bool>('/profile/addresses/add');
+                if (result == true && userId.isNotEmpty) {
+                  if (context.mounted) {
+                    context.read<AddressCubit>().loadAddresses(userId);
+                  }
+                }
+              },
             ),
           );
         }
         return ListView.builder(
-          padding: const EdgeInsets.all(AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
           itemCount: state.addresses.length,
           itemBuilder: (context, index) {
             final address = state.addresses[index];
-            return _AddressCard(
+            return _AnimatedAddressCard(
+              index: index,
               address: address,
-              isSelected: false,
-              onTap: () => context.pop(address),
+              userId: userId,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.pop(address);
+              },
+              onEdit: () async {
+                HapticFeedback.lightImpact();
+                final result = await context.push<bool>(
+                  '/profile/addresses/add',
+                  extra: address,
+                );
+                if (result == true && userId.isNotEmpty) {
+                  if (context.mounted) {
+                    context.read<AddressCubit>().loadAddresses(userId);
+                  }
+                }
+              },
               onSetDefault: () {
+                HapticFeedback.mediumImpact();
                 context.read<AddressCubit>().setDefault(address.id, userId);
               },
               onDelete: () => _confirmDelete(context, address, userId),
@@ -84,15 +117,20 @@ class MyAddressesScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Icon(Icons.error_outline, size: 48, color: AppColors.error.withValues(alpha: 0.8)),
+              const SizedBox(height: 16),
               Text(
                 'حصل خطأ: ${state.failure?.message ?? ''}',
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () =>
-                    context.read<AddressCubit>().loadAddresses(userId),
-                child: const Text('حاول تاني'),
+              ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  context.read<AddressCubit>().loadAddresses(userId);
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('حاول تاني'),
               ),
             ],
           ),
@@ -115,6 +153,7 @@ class MyAddressesScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              HapticFeedback.mediumImpact();
               Navigator.pop(ctx);
               context.read<AddressCubit>().deleteAddress(address.id, userId);
             },
@@ -127,17 +166,65 @@ class MyAddressesScreen extends StatelessWidget {
   }
 }
 
+class _AnimatedAddressCard extends StatelessWidget {
+  final int index;
+  final Address address;
+  final String userId;
+  final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onSetDefault;
+  final VoidCallback onDelete;
+
+  const _AnimatedAddressCard({
+    required this.index,
+    required this.address,
+    required this.userId,
+    required this.onTap,
+    required this.onEdit,
+    required this.onSetDefault,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      duration: Duration(milliseconds: 300 + (index * 80)),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) {
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(0, 15 * (1.0 - value)),
+            child: child,
+          ),
+        );
+      },
+      child: _AddressCard(
+        address: address,
+        userId: userId,
+        onTap: onTap,
+        onEdit: onEdit,
+        onSetDefault: onSetDefault,
+        onDelete: onDelete,
+      ),
+    );
+  }
+}
+
 class _AddressCard extends StatelessWidget {
   final Address address;
-  final bool isSelected;
+  final String userId;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onSetDefault;
   final VoidCallback onDelete;
 
   const _AddressCard({
     required this.address,
-    required this.isSelected,
+    required this.userId,
     required this.onTap,
+    required this.onEdit,
     required this.onSetDefault,
     required this.onDelete,
   });
@@ -145,148 +232,255 @@ class _AddressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      color: AppColors.surface,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: const BorderSide(color: AppColors.outlineVariant),
+    
+    // Map address label to icon
+    IconData typeIcon = Icons.location_on_rounded;
+    final labelLower = address.label.trim().toLowerCase();
+    if (labelLower == 'البيت' || labelLower == 'home') {
+      typeIcon = Icons.home_rounded;
+    } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+      typeIcon = Icons.work_rounded;
+    }
+
+    return Dismissible(
+      key: Key(address.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        HapticFeedback.mediumImpact();
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('حذف العنوان'),
+            content: Text('متأكد إنك عايز تحذف "${address.label}"؟'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                child: const Text('حذف'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (direction) {
+        onDelete();
+      },
+      background: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: AppColors.error,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+        ),
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            const Icon(Icons.delete_sweep, color: Colors.white, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'اسحب لحذف العنوان',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: AppSpacing.md),
+        color: AppColors.surface,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          side: BorderSide(
+            color: address.isDefault ? AppColors.primary : AppColors.outlineVariant,
+            width: address.isDefault ? 2 : 1,
+          ),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: address.isDefault
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                      ),
+                      child: Icon(
+                        typeIcon,
+                        color: address.isDefault ? AppColors.primary : AppColors.textSecondary,
+                        size: 24,
+                      ),
                     ),
-                    child: Icon(
-                      isSelected
-                          ? Icons.check_circle
-                          : Icons.location_on_outlined,
-                      color: isSelected ? AppColors.onPrimary : AppColors.primary,
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                address.label,
-                                style: theme.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                            if (address.isDefault)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.success.withValues(alpha: 0.12),
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.full),
-                                ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
                                 child: Text(
-                                  'افتراضي',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: AppColors.success,
-                                    fontWeight: FontWeight.w700,
+                                  address.label,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          address.address,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.textSecondary,
+                              if (address.isDefault)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.successContainer,
+                                    borderRadius: BorderRadius.circular(AppRadius.full),
+                                  ),
+                                  child: Text(
+                                    'افتراضي',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: AppColors.successOnContainer,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          const SizedBox(height: 6),
+                          Text(
+                            address.address,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                if (address.building != null || address.floor != null || address.apartment != null) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      if (address.building != null && address.building!.isNotEmpty)
+                        _DetailChip(icon: Icons.business, label: 'مبنى ${address.building}'),
+                      if (address.floor != null && address.floor!.isNotEmpty)
+                        _DetailChip(icon: Icons.layers, label: 'دور ${address.floor}'),
+                      if (address.apartment != null && address.apartment!.isNotEmpty)
+                        _DetailChip(icon: Icons.door_front_door, label: 'شقة ${address.apartment}'),
+                    ],
+                  ),
+                ],
+                if (address.notes != null && address.notes!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.note_outlined, size: 16, color: AppColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            address.notes!,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
                 ],
-              ),
-              if (address.building != null ||
-                  address.floor != null ||
-                  address.apartment != null) ...[
+                if (address.deliveryZoneName != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.delivery_dining_outlined, size: 16, color: AppColors.tertiary),
+                      const SizedBox(width: 6),
+                      Text(
+                        'توصيل لـ ${address.deliveryZoneName}',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.tertiary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 12),
+                const Divider(color: AppColors.outlineVariant),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (address.building != null &&
-                        address.building!.isNotEmpty)
-                      _DetailChip(
-                          icon: Icons.business, label: 'عمارة ${address.building}'),
-                    if (address.floor != null && address.floor!.isNotEmpty)
-                      _DetailChip(
-                          icon: Icons.layers, label: 'دور ${address.floor}'),
-                    if (address.apartment != null &&
-                        address.apartment!.isNotEmpty)
-                      _DetailChip(
-                          icon: Icons.door_front_door,
-                          label: 'شقة ${address.apartment}'),
+                    if (!address.isDefault)
+                      TextButton.icon(
+                        onPressed: onSetDefault,
+                        icon: const Icon(Icons.star_outline, size: 16),
+                        label: const Text('تعيين كافتراضي'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextButton.icon(
+                          onPressed: onEdit,
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('تعديل'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.secondary,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          onPressed: onDelete,
+                          icon: const Icon(Icons.delete_outline, size: 20),
+                          color: AppColors.error,
+                          tooltip: 'حذف',
+                          constraints: const BoxConstraints(),
+                          padding: const EdgeInsets.all(8),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
-              if (address.notes != null && address.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  address.notes!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (!address.isDefault)
-                    TextButton.icon(
-                      onPressed: onSetDefault,
-                      icon: const Icon(Icons.star_outline, size: 16),
-                      label: const Text('تعيين كافتراضي'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        textStyle: theme.textTheme.labelMedium,
-                      ),
-                    ),
-                  const SizedBox(width: 4),
-                  TextButton.icon(
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline, size: 16),
-                    label: const Text('حذف'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      textStyle: theme.textTheme.labelMedium,
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -303,20 +497,22 @@ class _DetailChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: AppColors.textSecondary),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

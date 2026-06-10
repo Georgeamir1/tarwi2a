@@ -13,6 +13,9 @@ class AddressDTO {
   final String? notes;
   final bool isDefault;
   final DateTime createdAt;
+  final String? deliveryZoneId;
+  final String? deliveryZoneName;
+  final double? deliveryFee;
 
   const AddressDTO({
     required this.id,
@@ -27,6 +30,9 @@ class AddressDTO {
     this.notes,
     required this.isDefault,
     required this.createdAt,
+    this.deliveryZoneId,
+    this.deliveryZoneName,
+    this.deliveryFee,
   });
 
   factory AddressDTO.fromJson(Map<String, dynamic> json) {
@@ -43,6 +49,9 @@ class AddressDTO {
       notes: json['notes'] as String?,
       isDefault: json['is_default'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
+      deliveryZoneId: json['delivery_zone_id'] as String?,
+      deliveryZoneName: json['delivery_zone_name'] as String?,
+      deliveryFee: (json['delivery_fee'] as num?)?.toDouble(),
     );
   }
 
@@ -60,6 +69,9 @@ class AddressDTO {
       if (notes != null) 'notes': notes,
       'is_default': isDefault,
       'created_at': createdAt.toIso8601String(),
+      if (deliveryZoneId != null) 'delivery_zone_id': deliveryZoneId,
+      if (deliveryZoneName != null) 'delivery_zone_name': deliveryZoneName,
+      if (deliveryFee != null) 'delivery_fee': deliveryFee,
     };
   }
 
@@ -77,6 +89,9 @@ class AddressDTO {
       notes: notes,
       isDefault: isDefault,
       createdAt: createdAt,
+      deliveryZoneId: deliveryZoneId,
+      deliveryZoneName: deliveryZoneName,
+      deliveryFee: deliveryFee,
     );
   }
 }

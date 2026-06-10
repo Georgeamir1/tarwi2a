@@ -30,6 +30,9 @@ OrderDTO _$OrderDTOFromJson(Map<String, dynamic> json) => OrderDTO(
       paymentProofUrl: json['payment_proof_url'] as String?,
       couponId: json['coupon_id'] as String?,
       discountAmount: (json['discount_amount'] as num?)?.toDouble(),
+      deliveryFee: (json['delivery_fee'] as num?)?.toDouble(),
+      deliveryZoneId: json['delivery_zone_id'] as String?,
+      deliveryZoneName: json['delivery_zone_name'] as String?,
     );
 
 Map<String, dynamic> _$OrderDTOToJson(OrderDTO instance) => <String, dynamic>{
@@ -52,4 +55,7 @@ Map<String, dynamic> _$OrderDTOToJson(OrderDTO instance) => <String, dynamic>{
       'payment_proof_url': instance.paymentProofUrl,
       'coupon_id': instance.couponId,
       'discount_amount': instance.discountAmount,
+      'delivery_fee': instance.deliveryFee,
+      'delivery_zone_id': instance.deliveryZoneId,
+      'delivery_zone_name': instance.deliveryZoneName,
     };

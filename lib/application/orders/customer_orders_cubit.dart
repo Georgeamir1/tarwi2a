@@ -39,6 +39,9 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
     String? addressId,
     String? couponId,
     double? discountAmount,
+    double? deliveryFee,
+    String? deliveryZoneId,
+    String? deliveryZoneName,
   }) async {
     emit(state.copyWith(status: CustomerOrdersStatus.placing));
     final result = await _orderRepository.createOrder(
@@ -55,6 +58,9 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
       addressId: addressId,
       couponId: couponId,
       discountAmount: discountAmount,
+      deliveryFee: deliveryFee,
+      deliveryZoneId: deliveryZoneId,
+      deliveryZoneName: deliveryZoneName,
     );
     result.fold(
       (failure) => emit(state.copyWith(

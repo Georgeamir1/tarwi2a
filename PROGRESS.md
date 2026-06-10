@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-09 |
-| **Phase** | 28 (Light Theme & UX Redesign) |
-| **Task** | Completed all remaining customer-facing screens conversion to the light warm-rose theme using AppColors tokens and updated DESIGN.md to document the split theme strategy. |
-| **Notes** | Verified that all customer screens compile correctly. `flutter analyze` passed with 0 errors and 0 warnings. |
+| **Last session** | 2026-06-10 |
+| **Phase** | 28b (UX Redesign) |
+| **Task** | Consolidated 3 customer-order screens (`OrdersScreen` list, `OrderDetailScreen`, `OrderTrackingScreen`) into ONE inline-expandable surface. `OrderCard` is now an expandable widget — collapsed = summary row, expanded = full details + vertical status tracker + driver card + action buttons. Zero duplicate `loadOrders` calls. Deep links `/orders/:id` and `/orders/:id/track` now redirect to `/orders?expand=<id>` and auto-open the matching card. `OrderDetailScreen` deleted; `OrderTrackingScreen` was already deleted. |
+| **Notes** | `flutter analyze` passes with 0 errors, 0 warnings, 0 info. One source of truth for the order list, one `BlocBuilder`, one `CustomerOrdersCubit` subscription, one `OrderStatusTracker` per card (only in expanded body — the compact duplicate was removed). The rate screen (`/orders/:id/rate`) is a separate modal flow and stays as its own route. |
 
 ---
 
@@ -637,5 +637,8 @@ alter publication supabase_realtime add table business_profiles;
 - [✓] 28b.5 Cart item card — product icon placeholder, option pills, inline quantity controls, swipe-to-delete
 - [✓] 28b.6 Display product details (preparation time, calories, tags) on customer-facing screens (detail view, horizontal/vertical cards)
 - [✓] 28b.7 Implement showInBanner flag to allow admin to toggle which products appear in the home sliding carousel
+- [✓] 28b.8 Unify order status tracker — extract `OrderStatusTracker` widget with 3 variants (compact / horizontal / vertical) and use it in order_card, order_detail_screen, and order_tracking_screen; cancelled state handled uniformly; `flutter analyze` passes 0 issues
+- [✓] 28b.9 Merge `OrderDetailScreen` and `OrderTrackingScreen` into one screen with an in-page `SegmentedTabs` switcher (التفاصيل / التتبع); single canonical route `/orders/:id`; `/orders/:id/track` deep link still works (opens same screen with `startOnTracking: true`); `order_tracking_screen.dart` deleted; `flutter analyze` passes 0 issues
+- [✓] 28b.10 Full consolidation of all 3 customer-order screens into ONE inline-expandable surface. `OrderCard` rewritten as expandable widget with `AnimatedSize` (320ms / easeOutCubic). `OrdersScreen` simplified — one `BlocBuilder`, single-expansion state, no navigation. `order_detail_screen.dart` and its test deleted. Router redirects `/orders/:id` and `/orders/:id/track` → `/orders?expand=<id>`; `OrdersScreen` honors `expandOrderId` constructor param to auto-open the right card. Zero duplicate `loadOrders` calls. `flutter analyze` passes 0 issues
 - [✓] 28.26 Update DESIGN.md — document split strategy (auth=dark, customer=light)
 - [✓] 28.27 Run flutter analyze — must pass 0 errors
