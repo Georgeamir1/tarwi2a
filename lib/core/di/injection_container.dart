@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import '../../router/app_router.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/profile_repository.dart';
 import '../../domain/repositories/category_repository.dart';
@@ -18,6 +19,9 @@ import '../../infrastructure/datasources/remote/delivery_zone_remote_datasource.
 import '../../infrastructure/datasources/remote/business_profile_remote_datasource.dart';
 import '../../infrastructure/datasources/remote/report_remote_datasource.dart';
 import '../../infrastructure/datasources/remote/product_option_remote_datasource.dart';
+import '../../infrastructure/datasources/remote/notification_remote_datasource.dart';
+import '../../infrastructure/datasources/remote/device_token_remote_datasource.dart';
+import '../../infrastructure/datasources/remote/broadcast_remote_datasource.dart';
 import '../../infrastructure/repositories/admin_repository_impl.dart';
 import '../../infrastructure/repositories/address_repository_impl.dart';
 import '../../infrastructure/repositories/coupon_repository_impl.dart';
@@ -27,6 +31,9 @@ import '../../infrastructure/repositories/business_profile_repository_impl.dart'
 import '../../infrastructure/repositories/report_repository_impl.dart';
 import '../../infrastructure/repositories/product_option_repository_impl.dart';
 import '../../infrastructure/repositories/print_repository_impl.dart';
+import '../../infrastructure/repositories/notification_repository_impl.dart';
+import '../../infrastructure/repositories/device_token_repository_impl.dart';
+import '../../infrastructure/repositories/broadcast_repository_impl.dart';
 import '../../domain/repositories/admin_repository.dart';
 import '../../domain/repositories/address_repository.dart';
 import '../../domain/repositories/coupon_repository.dart';
@@ -36,6 +43,9 @@ import '../../domain/repositories/business_profile_repository.dart';
 import '../../domain/repositories/report_repository.dart';
 import '../../domain/repositories/product_option_repository.dart';
 import '../../domain/repositories/print_repository.dart';
+import '../../domain/repositories/notification_repository.dart';
+import '../../domain/repositories/device_token_repository.dart';
+import '../../domain/repositories/broadcast_repository.dart';
 import '../../infrastructure/repositories/auth_repository_impl.dart';
 import '../../infrastructure/repositories/profile_repository_impl.dart';
 import '../../infrastructure/repositories/category_repository_impl.dart';
@@ -58,7 +68,12 @@ import '../../application/admin/admin_delivery_zones_cubit.dart';
 import '../../application/admin/admin_business_profile_cubit.dart';
 import '../../application/admin/admin_reports_cubit.dart';
 import '../../application/admin/admin_product_options_cubit.dart';
+import '../../application/notifications/notifications_cubit.dart';
+import '../../application/notifications/notification_preferences_cubit.dart';
+import '../../application/admin/admin_broadcast_cubit.dart';
 import '../../core/services/thermal_printer_service.dart';
+import '../../core/services/device_token_service.dart';
+import '../../core/services/push_notification_service.dart';
 
 final sl = GetIt.instance;
 
@@ -90,6 +105,12 @@ Future<void> initDependencies() async {
       () => ReportRemoteDataSource());
   sl.registerLazySingleton<ProductOptionRemoteDataSource>(
       () => ProductOptionRemoteDataSource());
+  sl.registerLazySingleton<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSource());
+  sl.registerLazySingleton<DeviceTokenRemoteDataSource>(
+      () => DeviceTokenRemoteDataSource());
+  sl.registerLazySingleton<BroadcastRemoteDataSource>(
+      () => BroadcastRemoteDataSource());
 
   // Repositories (lazy singletons)
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -116,6 +137,18 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<ThermalPrinterService>(
       () => ThermalPrinterService());
   sl.registerLazySingleton<PrintRepository>(() => PrintRepositoryImpl(sl()));
+  sl.registerLazySingleton<NotificationRepository>(
+      () => NotificationRepositoryImpl(sl()));
+  sl.registerLazySingleton<DeviceTokenRepository>(
+      () => DeviceTokenRepositoryImpl(sl()));
+  sl.registerLazySingleton<BroadcastRepository>(
+      () => BroadcastRepositoryImpl(sl()));
+  sl.registerLazySingleton<DeviceTokenService>(() => DeviceTokenService(sl()));
+  sl.registerLazySingleton<PushNotificationService>(
+      () => PushNotificationService(
+            deviceTokenService: sl<DeviceTokenService>(),
+            routerProvider: () => appRouter,
+          ));
 
   // Cubits (factory - new instance per scope)
   sl.registerLazySingleton<AuthCubit>(
@@ -142,4 +175,9 @@ Future<void> initDependencies() async {
   sl.registerFactory<AdminReportsCubit>(() => AdminReportsCubit(sl()));
   sl.registerLazySingleton<AdminProductOptionsCubit>(
       () => AdminProductOptionsCubit(sl()));
+  sl.registerLazySingleton<NotificationsCubit>(() => NotificationsCubit(sl()));
+  sl.registerFactory<NotificationPreferencesCubit>(
+      () => NotificationPreferencesCubit(sl()));
+  sl.registerFactory<AdminBroadcastCubit>(
+      () => AdminBroadcastCubit(sl()));
 }

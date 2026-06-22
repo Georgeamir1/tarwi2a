@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS orders (
   delivery_fee DECIMAL(10,2) DEFAULT 0 CHECK (delivery_fee >= 0),
   delivery_zone_id UUID REFERENCES delivery_zones(id) ON DELETE SET NULL,
   delivery_zone_name TEXT,
-  order_type TEXT DEFAULT 'delivery' CHECK (order_type IN ('delivery', 'pickup')),
+  order_type TEXT DEFAULT 'delivery' CHECK (order_type IN ('delivery', 'pickup', 'dine_in')),
   address_id UUID,
   coupon_id UUID,
   scheduled_for TIMESTAMPTZ,
@@ -78,7 +78,8 @@ CREATE TABLE IF NOT EXISTS order_items (
   product_name TEXT NOT NULL,
   product_price DECIMAL(10,2) NOT NULL CHECK (product_price >= 0),
   quantity INT NOT NULL DEFAULT 1 CHECK (quantity > 0),
-  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0)
+  subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
+  selected_options JSONB DEFAULT '[]'::jsonb
 );
 
 -- =============================================
@@ -163,6 +164,56 @@ CREATE TABLE IF NOT EXISTS order_prints (
   print_count INT DEFAULT 1 CHECK (print_count > 0)
 );
 
+-- 12. NOTIFICATIONS — in-app + push history
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  title_ar TEXT NOT NULL,
+  body_ar TEXT NOT NULL,
+  type TEXT NOT NULL CHECK (type IN (
+    'order_confirmed',
+    'order_preparing',
+    'order_out_for_delivery',
+    'order_delivered',
+    'order_cancelled',
+    'new_order_admin',
+    'order_cancelled_admin',
+    'promotion',
+    'system'
+  )),
+  reference_type TEXT,
+  reference_id TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+  ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_unread
+  ON notifications(user_id, is_read) WHERE is_read = false;
+
+-- 13. NOTIFICATION_PREFERENCES — per-user toggles
+CREATE TABLE IF NOT EXISTS notification_preferences (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+  order_updates BOOLEAN DEFAULT true,
+  promotions BOOLEAN DEFAULT true,
+  push_enabled BOOLEAN DEFAULT true,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 14. DEVICE_TOKENS — FCM tokens per device
+CREATE TABLE IF NOT EXISTS device_tokens (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  token TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('android', 'ios')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, token)
+);
+
+CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id);
+
 -- =============================================
 -- ROW LEVEL SECURITY
 -- =============================================
@@ -178,6 +229,9 @@ ALTER TABLE business_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE product_options ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_prints ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE device_tokens ENABLE ROW LEVEL SECURITY;
 
 -- PROFILES policies
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
@@ -332,6 +386,55 @@ CREATE POLICY "Admin can manage order prints" ON order_prints
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
   );
 
+-- NOTIFICATIONS policies
+DROP POLICY IF EXISTS "Users can view own notifications" ON notifications;
+CREATE POLICY "Users can view own notifications" ON notifications
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own notifications" ON notifications;
+CREATE POLICY "Users can update own notifications" ON notifications
+  FOR UPDATE USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Admins can view all notifications" ON notifications;
+CREATE POLICY "Admins can view all notifications" ON notifications
+  FOR SELECT USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+  );
+
+-- Server-side writes (via service role) bypass RLS, so we do NOT need
+-- an INSERT policy for the client. If the client ever needs to insert
+-- directly, add:
+--   CREATE POLICY "Users can insert own notifications" ON notifications
+--     FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- NOTIFICATION_PREFERENCES policies
+DROP POLICY IF EXISTS "Users can view own notification preferences" ON notification_preferences;
+CREATE POLICY "Users can view own notification preferences" ON notification_preferences
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can update own notification preferences" ON notification_preferences;
+CREATE POLICY "Users can update own notification preferences" ON notification_preferences
+  FOR UPDATE USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own notification preferences" ON notification_preferences;
+CREATE POLICY "Users can insert own notification preferences" ON notification_preferences
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- DEVICE_TOKENS policies
+DROP POLICY IF EXISTS "Users can view own device tokens" ON device_tokens;
+CREATE POLICY "Users can view own device tokens" ON device_tokens
+  FOR SELECT USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can insert own device tokens" ON device_tokens;
+CREATE POLICY "Users can insert own device tokens" ON device_tokens
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS "Users can delete own device tokens" ON device_tokens;
+CREATE POLICY "Users can delete own device tokens" ON device_tokens
+  FOR DELETE USING (user_id = auth.uid());
+
 -- =============================================
 -- FUNCTIONS & TRIGGERS
 -- =============================================
@@ -375,6 +478,199 @@ CREATE TRIGGER business_profiles_updated_at
   BEFORE UPDATE ON business_profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- Auto-update notification_preferences.updated_at
+DROP TRIGGER IF EXISTS notification_preferences_updated_at ON notification_preferences;
+CREATE TRIGGER notification_preferences_updated_at
+  BEFORE UPDATE ON notification_preferences
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- Auto-create default notification_preferences on profile creation
+CREATE OR REPLACE FUNCTION handle_new_notification_preferences()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO notification_preferences (user_id)
+  VALUES (NEW.id)
+  ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_profile_created_notification_prefs ON profiles;
+CREATE TRIGGER on_profile_created_notification_prefs
+  AFTER INSERT ON profiles
+  FOR EACH ROW EXECUTE FUNCTION handle_new_notification_preferences();
+
+-- Auto-notify customer on order status change
+CREATE OR REPLACE FUNCTION notify_order_status_change()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_title text;
+  v_body text;
+BEGIN
+  IF OLD.status IS NOT DISTINCT FROM NEW.status THEN
+    RETURN NEW;
+  END IF;
+
+  CASE NEW.status
+    WHEN 'confirmed' THEN
+      v_title := 'تم تأكيد طلبك';
+      v_body := 'طلبك رقم #' || LEFT(NEW.id::text, 8) || ' تم تأكيده وجاري التجهيز';
+    WHEN 'preparing' THEN
+      v_title := 'جاري تجهيز طلبك';
+      v_body := 'المطبخ بيحضر طلبك رقم #' || LEFT(NEW.id::text, 8);
+    WHEN 'ready' THEN
+      v_title := 'طلبك جاهز';
+      IF NEW.order_type = 'pickup' THEN
+        v_body := 'طلبك رقم #' || LEFT(NEW.id::text, 8) || ' جاهز للاستلام في المطعم';
+      ELSE
+        v_body := 'طلبك رقم #' || LEFT(NEW.id::text, 8) || ' جاهز وجاري تسليمه للدليفري';
+      END IF;
+    WHEN 'out_for_delivery' THEN
+      v_title := 'طلبك في الطريق';
+      v_body := 'الدليفري في طريقه ليك بطلب رقم #' || LEFT(NEW.id::text, 8);
+    WHEN 'delivered' THEN
+      v_title := 'تم توصيل طلبك';
+      v_body := 'نتمنى تكون استمتعت بطلبك رقم #' || LEFT(NEW.id::text, 8);
+    WHEN 'cancelled' THEN
+      v_title := 'تم إلغاء الطلب';
+      v_body := 'تم إلغاء طلبك رقم #' || LEFT(NEW.id::text, 8);
+    ELSE
+      RETURN NEW;
+  END CASE;
+
+  INSERT INTO notifications (user_id, title_ar, body_ar, type, reference_type, reference_id)
+  VALUES (
+    NEW.customer_id,
+    v_title,
+    v_body,
+    'order_' || NEW.status,
+    'order',
+    NEW.id::text
+  );
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS orders_status_change_notify ON orders;
+CREATE TRIGGER orders_status_change_notify
+  AFTER UPDATE OF status ON orders
+  FOR EACH ROW EXECUTE FUNCTION notify_order_status_change();
+
+-- Auto-notify all admins on new order
+CREATE OR REPLACE FUNCTION notify_admins_new_order()
+RETURNS TRIGGER AS $$
+DECLARE
+  admin_record RECORD;
+  v_body text;
+BEGIN
+  v_body := COALESCE(NEW.customer_name, 'عميل') || ' — ' ||
+            NEW.total_amount::text || ' جنيه';
+
+  FOR admin_record IN
+    SELECT id FROM profiles WHERE role = 'admin'
+  LOOP
+    INSERT INTO notifications (user_id, title_ar, body_ar, type, reference_type, reference_id)
+    VALUES (
+      admin_record.id,
+      'طلب جديد! #' || LEFT(NEW.id::text, 8),
+      v_body,
+      'new_order_admin',
+      'order',
+      NEW.id::text
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS orders_new_notify_admins ON orders;
+CREATE TRIGGER orders_new_notify_admins
+  AFTER INSERT ON orders
+  FOR EACH ROW EXECUTE FUNCTION notify_admins_new_order();
+
+-- Auto-notify all admins on customer cancellation
+CREATE OR REPLACE FUNCTION notify_admins_order_cancelled()
+RETURNS TRIGGER AS $$
+DECLARE
+  admin_record RECORD;
+BEGIN
+  IF NEW.status <> 'cancelled' THEN
+    RETURN NEW;
+  END IF;
+  IF OLD.status IS NOT DISTINCT FROM NEW.status THEN
+    RETURN NEW;
+  END IF;
+
+  FOR admin_record IN
+    SELECT id FROM profiles WHERE role = 'admin'
+  LOOP
+    INSERT INTO notifications (user_id, title_ar, body_ar, type, reference_type, reference_id)
+    VALUES (
+      admin_record.id,
+      'تم إلغاء طلب',
+      'العميل ' || COALESCE(NEW.customer_name, '') ||
+        ' ألغى طلب رقم #' || LEFT(NEW.id::text, 8),
+      'order_cancelled_admin',
+      'order',
+      NEW.id::text
+    );
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS orders_cancelled_notify_admins ON orders;
+CREATE TRIGGER orders_cancelled_notify_admins
+  AFTER UPDATE OF status ON orders
+  FOR EACH ROW EXECUTE FUNCTION notify_admins_order_cancelled();
+
+-- Invoke send-notification Edge Function on every INSERT into notifications
+-- Requires pg_net (pre-installed in Supabase projects)
+CREATE EXTENSION IF NOT EXISTS pg_net;
+
+CREATE OR REPLACE FUNCTION invoke_send_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_url text;
+  v_request_id bigint;
+BEGIN
+  v_url := current_setting('app.settings.supabase_functions_url', true)
+           || '/send-notification';
+
+  IF v_url IS NULL OR v_url = '/send-notification' THEN
+    v_url := 'https://' ||
+             (SELECT setting FROM pg_settings WHERE name = 'cluster_name') ||
+             '.functions.supabase.co/send-notification';
+  END IF;
+
+  SELECT net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
+    ),
+    body := jsonb_build_object(
+      'type', 'INSERT',
+      'table', 'notifications',
+      'record', row_to_json(NEW)
+    )
+  ) INTO v_request_id;
+
+  RAISE LOG '[invoke_send_notification] dispatched request % for notification %',
+    v_request_id, NEW.id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS notifications_invoke_send ON notifications;
+CREATE TRIGGER notifications_invoke_send
+  AFTER INSERT ON notifications
+  FOR EACH ROW EXECUTE FUNCTION invoke_send_notification();
+
 -- =============================================
 -- SEED DATA (Sample Menu)
 -- =============================================
@@ -399,3 +695,5 @@ ALTER PUBLICATION supabase_realtime ADD TABLE products;
 ALTER PUBLICATION supabase_realtime ADD TABLE coupons;
 ALTER PUBLICATION supabase_realtime ADD TABLE delivery_zones;
 ALTER PUBLICATION supabase_realtime ADD TABLE business_profiles;
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
+ALTER PUBLICATION supabase_realtime ADD TABLE device_tokens;

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "936701897486",
+    "project_id": "tarwi2a-app",
+    "storage_bucket": "tarwi2a-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936701897486:android:aa285d4aca97d14feb855f",
+        "android_client_info": {
+          "package_name": "com.tarwi2a.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpdBphUKTweQEBnJMVO9EeZIpDIY96fk8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

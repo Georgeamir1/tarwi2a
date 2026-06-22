@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,9 @@ import '../application/admin/admin_coupons_cubit.dart';
 import '../application/admin/admin_customers_cubit.dart';
 import '../application/admin/admin_delivery_zones_cubit.dart';
 import '../application/admin/admin_business_profile_cubit.dart';
+import '../application/notifications/notifications_cubit.dart';
+import '../application/notifications/notification_preferences_cubit.dart';
+import '../core/services/push_notification_service.dart';
 import '../core/di/injection_container.dart';
 import '../domain/entities/product.dart';
 import '../domain/entities/address.dart';
@@ -64,6 +68,10 @@ import '../presentation/screens/admin/delivery_zone_form_screen.dart';
 import '../presentation/screens/admin/admin_business_profile_screen.dart';
 import '../presentation/screens/admin/printer_settings_screen.dart';
 import '../presentation/screens/admin/admin_notifications_screen.dart';
+import '../presentation/screens/admin/admin_broadcast_screen.dart';
+import '../presentation/screens/admin/admin_broadcast_history_screen.dart';
+import '../application/admin/admin_broadcast_cubit.dart';
+import '../presentation/screens/profile/notification_settings_screen.dart';
 
 CustomTransitionPage<void> _fadeTransition(
     BuildContext context, GoRouterState state, Widget child) {
@@ -101,13 +109,18 @@ Widget _adminWrap(Widget child) {
       BlocProvider.value(value: sl<AdminCustomersCubit>()..loadCustomers()),
       BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()..loadZones()),
       BlocProvider.value(value: sl<AdminBusinessProfileCubit>()..loadProfile()),
+      BlocProvider.value(value: sl<NotificationsCubit>()),
     ],
-    child: child,
+    child: RepositoryProvider<PushNotificationService>.value(
+      value: sl<PushNotificationService>(),
+      child: child,
+    ),
   );
 }
 
 final appRouter = GoRouter(
   initialLocation: '/splash',
+  refreshListenable: GoRouterRefreshStream(sl<AuthCubit>().stream),
   redirect: (context, state) {
     final authCubit = context.read<AuthCubit>();
     final authState = authCubit.state;
@@ -123,7 +136,12 @@ final appRouter = GoRouter(
 
     if (isSplash) return null;
     if (!isLoggedIn && !isAuthRoute) return '/login';
-    if (isLoggedIn && isAuthRoute) return '/home';
+    if (isLoggedIn && isAuthRoute) {
+      if (authState is Authenticated && authState.profile.role.isAdmin) {
+        return '/admin';
+      }
+      return '/home';
+    }
     return null;
   },
   routes: [
@@ -313,11 +331,36 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/profile/notifications',
-      pageBuilder: (c, s) => _fadeTransition(c, s, const NotificationsScreen()),
+      pageBuilder: (c, s) => _fadeTransition(
+        c,
+        s,
+        BlocProvider<NotificationsCubit>.value(
+          value: sl<NotificationsCubit>(),
+          child: const NotificationsScreen(),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/profile/notification-settings',
+      pageBuilder: (c, s) => _fadeTransition(
+        c,
+        s,
+        BlocProvider<NotificationPreferencesCubit>.value(
+          value: sl<NotificationPreferencesCubit>(),
+          child: const NotificationSettingsScreen(),
+        ),
+      ),
     ),
     GoRoute(
       path: '/profile/settings',
-      pageBuilder: (c, s) => _fadeTransition(c, s, const SettingsScreen()),
+      pageBuilder: (c, s) => _fadeTransition(
+        c,
+        s,
+        BlocProvider<NotificationPreferencesCubit>.value(
+          value: sl<NotificationPreferencesCubit>(),
+          child: const SettingsScreen(),
+        ),
+      ),
     ),
     GoRoute(
       path: '/info/about',
@@ -497,5 +540,51 @@ final appRouter = GoRouter(
       pageBuilder: (c, s) =>
           _fadeTransition(c, s, _adminWrap(const AdminNotificationsScreen())),
     ),
+    GoRoute(
+      path: '/admin/broadcast',
+      pageBuilder: (c, s) => _fadeTransition(
+        c,
+        s,
+        _adminWrap(
+          BlocProvider<AdminBroadcastCubit>.value(
+            value: sl<AdminBroadcastCubit>(),
+            child: const AdminBroadcastScreen(),
+          ),
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/admin/broadcast/history',
+      pageBuilder: (c, s) {
+        final cubit = s.extra as AdminBroadcastCubit?;
+        return _fadeTransition(
+          c,
+          s,
+          _adminWrap(
+            BlocProvider<AdminBroadcastCubit>.value(
+              value: cubit ?? sl<AdminBroadcastCubit>(),
+              child: const AdminBroadcastHistoryScreen(),
+            ),
+          ),
+        );
+      },
+    ),
   ],
 );
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  late final StreamSubscription<dynamic> _subscription;
+
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

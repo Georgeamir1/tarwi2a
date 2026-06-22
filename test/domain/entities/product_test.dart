@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matbakhy/domain/entities/product.dart';
+import 'package:tarwi2a/domain/entities/product.dart';
 
 import '../../helpers/test_helpers.dart';
 

@@ -3,11 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:matbakhy/presentation/widgets/product_card.dart';
-import 'package:matbakhy/domain/entities/product.dart';
-import 'package:matbakhy/app/theme/app_theme.dart';
-import 'package:matbakhy/application/cart/cart_cubit.dart';
-import 'package:matbakhy/infrastructure/datasources/local/cart_local_data_source.dart';
+import 'package:tarwi2a/presentation/widgets/product_card.dart';
+import 'package:tarwi2a/domain/entities/product.dart';
+import 'package:tarwi2a/app/theme/app_theme.dart';
+import 'package:tarwi2a/application/cart/cart_cubit.dart';
+import 'package:tarwi2a/infrastructure/datasources/local/cart_local_data_source.dart';
 import '../../helpers/test_helpers.dart';
 
 class MockCartLocalDataSource extends Mock implements CartLocalDataSource {}

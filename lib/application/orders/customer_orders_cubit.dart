@@ -1,11 +1,16 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/order_repository.dart';
 
 class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
   final OrderRepository _orderRepository;
+  StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
+  String? _watchedCustomerId;
+  final Map<String, String> _lastSeenStatus = {};
 
   CustomerOrdersCubit(this._orderRepository)
       : super(CustomerOrdersState.initial());
@@ -18,10 +23,69 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
         status: CustomerOrdersStatus.error,
         failure: failure,
       )),
-      (orders) => emit(state.copyWith(
-        status: CustomerOrdersStatus.loaded,
-        orders: orders,
-      )),
+      (orders) {
+        for (final order in orders) {
+          _lastSeenStatus[order.id] = order.status.value;
+        }
+        emit(state.copyWith(
+          status: CustomerOrdersStatus.loaded,
+          orders: orders,
+        ));
+      },
+    );
+    _watchOrders(customerId);
+  }
+
+  void _watchOrders(String customerId) {
+    if (_watchedCustomerId == customerId) return;
+    _ordersSubscription?.cancel();
+    _watchedCustomerId = customerId;
+    _ordersSubscription =
+        _orderRepository.watchCustomerOrders(customerId).listen(
+      (rows) {
+        if (isClosed) return;
+        _onCustomerOrdersChanged(rows);
+      },
+      onError: (Object e) {
+        appLogger.e('[CustomerOrdersCubit] watchCustomerOrders error',
+            error: e);
+      },
+    );
+  }
+
+  void _onCustomerOrdersChanged(List<Map<String, dynamic>> rows) {
+    for (final row in rows) {
+      final orderId = row['id'] as String;
+      final status = row['status'] as String? ?? 'pending';
+      final previousStatus = _lastSeenStatus[orderId];
+      _lastSeenStatus[orderId] = status;
+      if (previousStatus != null && previousStatus != status) {
+        appLogger.d(
+          '[CustomerOrdersCubit] order $orderId status changed '
+          '$previousStatus → $status (server-side trigger will handle push)',
+        );
+      }
+    }
+    _silentRefresh();
+  }
+
+  Future<void> _silentRefresh() async {
+    final id = _watchedCustomerId;
+    if (id == null) return;
+    final result = await _orderRepository.getCustomerOrders(id);
+    result.fold(
+      (failure) {
+        appLogger.e('[CustomerOrdersCubit] silent refresh failed',
+            error: failure);
+      },
+      (orders) {
+        if (!isClosed) {
+          emit(state.copyWith(
+            status: CustomerOrdersStatus.loaded,
+            orders: orders,
+          ));
+        }
+      },
     );
   }
 
@@ -69,6 +133,12 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
       )),
       (_) => emit(state.copyWith(status: CustomerOrdersStatus.placed)),
     );
+  }
+
+  @override
+  Future<void> close() {
+    _ordersSubscription?.cancel();
+    return super.close();
   }
 }
 

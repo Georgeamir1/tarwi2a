@@ -18,12 +18,15 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$AppNotification {
   String get id => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
-  String get title => throw _privateConstructorUsedError;
-  String get body => throw _privateConstructorUsedError;
-  String get type => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
+  String get titleAr => throw _privateConstructorUsedError;
+  String get bodyAr => throw _privateConstructorUsedError;
+  NotificationType get type => throw _privateConstructorUsedError;
+  String? get referenceType => throw _privateConstructorUsedError;
+  String? get referenceId => throw _privateConstructorUsedError;
   bool get isRead => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
+  DateTime? get deliveredAt => throw _privateConstructorUsedError;
+  DateTime? get openedAt => throw _privateConstructorUsedError;
 
   /// Create a copy of AppNotification
   /// with the given fields replaced by the non-null parameter values.
@@ -41,12 +44,15 @@ abstract class $AppNotificationCopyWith<$Res> {
   $Res call(
       {String id,
       String userId,
-      String title,
-      String body,
-      String type,
-      Map<String, dynamic>? data,
+      String titleAr,
+      String bodyAr,
+      NotificationType type,
+      String? referenceType,
+      String? referenceId,
       bool isRead,
-      DateTime createdAt});
+      DateTime createdAt,
+      DateTime? deliveredAt,
+      DateTime? openedAt});
 }
 
 /// @nodoc
@@ -66,12 +72,15 @@ class _$AppNotificationCopyWithImpl<$Res, $Val extends AppNotification>
   $Res call({
     Object? id = null,
     Object? userId = null,
-    Object? title = null,
-    Object? body = null,
+    Object? titleAr = null,
+    Object? bodyAr = null,
     Object? type = null,
-    Object? data = freezed,
+    Object? referenceType = freezed,
+    Object? referenceId = freezed,
     Object? isRead = null,
     Object? createdAt = null,
+    Object? deliveredAt = freezed,
+    Object? openedAt = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -82,22 +91,26 @@ class _$AppNotificationCopyWithImpl<$Res, $Val extends AppNotification>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
+      titleAr: null == titleAr
+          ? _value.titleAr
+          : titleAr // ignore: cast_nullable_to_non_nullable
               as String,
-      body: null == body
-          ? _value.body
-          : body // ignore: cast_nullable_to_non_nullable
+      bodyAr: null == bodyAr
+          ? _value.bodyAr
+          : bodyAr // ignore: cast_nullable_to_non_nullable
               as String,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      data: freezed == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as NotificationType,
+      referenceType: freezed == referenceType
+          ? _value.referenceType
+          : referenceType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referenceId: freezed == referenceId
+          ? _value.referenceId
+          : referenceId // ignore: cast_nullable_to_non_nullable
+              as String?,
       isRead: null == isRead
           ? _value.isRead
           : isRead // ignore: cast_nullable_to_non_nullable
@@ -106,6 +119,14 @@ class _$AppNotificationCopyWithImpl<$Res, $Val extends AppNotification>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      deliveredAt: freezed == deliveredAt
+          ? _value.deliveredAt
+          : deliveredAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      openedAt: freezed == openedAt
+          ? _value.openedAt
+          : openedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -121,12 +142,15 @@ abstract class _$$AppNotificationImplCopyWith<$Res>
   $Res call(
       {String id,
       String userId,
-      String title,
-      String body,
-      String type,
-      Map<String, dynamic>? data,
+      String titleAr,
+      String bodyAr,
+      NotificationType type,
+      String? referenceType,
+      String? referenceId,
       bool isRead,
-      DateTime createdAt});
+      DateTime createdAt,
+      DateTime? deliveredAt,
+      DateTime? openedAt});
 }
 
 /// @nodoc
@@ -144,12 +168,15 @@ class __$$AppNotificationImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? userId = null,
-    Object? title = null,
-    Object? body = null,
+    Object? titleAr = null,
+    Object? bodyAr = null,
     Object? type = null,
-    Object? data = freezed,
+    Object? referenceType = freezed,
+    Object? referenceId = freezed,
     Object? isRead = null,
     Object? createdAt = null,
+    Object? deliveredAt = freezed,
+    Object? openedAt = freezed,
   }) {
     return _then(_$AppNotificationImpl(
       id: null == id
@@ -160,22 +187,26 @@ class __$$AppNotificationImplCopyWithImpl<$Res>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
-      title: null == title
-          ? _value.title
-          : title // ignore: cast_nullable_to_non_nullable
+      titleAr: null == titleAr
+          ? _value.titleAr
+          : titleAr // ignore: cast_nullable_to_non_nullable
               as String,
-      body: null == body
-          ? _value.body
-          : body // ignore: cast_nullable_to_non_nullable
+      bodyAr: null == bodyAr
+          ? _value.bodyAr
+          : bodyAr // ignore: cast_nullable_to_non_nullable
               as String,
       type: null == type
           ? _value.type
           : type // ignore: cast_nullable_to_non_nullable
-              as String,
-      data: freezed == data
-          ? _value._data
-          : data // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as NotificationType,
+      referenceType: freezed == referenceType
+          ? _value.referenceType
+          : referenceType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referenceId: freezed == referenceId
+          ? _value.referenceId
+          : referenceId // ignore: cast_nullable_to_non_nullable
+              as String?,
       isRead: null == isRead
           ? _value.isRead
           : isRead // ignore: cast_nullable_to_non_nullable
@@ -184,6 +215,14 @@ class __$$AppNotificationImplCopyWithImpl<$Res>
           ? _value.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      deliveredAt: freezed == deliveredAt
+          ? _value.deliveredAt
+          : deliveredAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
+      openedAt: freezed == openedAt
+          ? _value.openedAt
+          : openedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime?,
     ));
   }
 }
@@ -194,43 +233,43 @@ class _$AppNotificationImpl implements _AppNotification {
   const _$AppNotificationImpl(
       {required this.id,
       required this.userId,
-      required this.title,
-      required this.body,
+      required this.titleAr,
+      required this.bodyAr,
       required this.type,
-      final Map<String, dynamic>? data,
+      this.referenceType,
+      this.referenceId,
       this.isRead = false,
-      required this.createdAt})
-      : _data = data;
+      required this.createdAt,
+      this.deliveredAt,
+      this.openedAt});
 
   @override
   final String id;
   @override
   final String userId;
   @override
-  final String title;
+  final String titleAr;
   @override
-  final String body;
+  final String bodyAr;
   @override
-  final String type;
-  final Map<String, dynamic>? _data;
+  final NotificationType type;
   @override
-  Map<String, dynamic>? get data {
-    final value = _data;
-    if (value == null) return null;
-    if (_data is EqualUnmodifiableMapView) return _data;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
+  final String? referenceType;
+  @override
+  final String? referenceId;
   @override
   @JsonKey()
   final bool isRead;
   @override
   final DateTime createdAt;
+  @override
+  final DateTime? deliveredAt;
+  @override
+  final DateTime? openedAt;
 
   @override
   String toString() {
-    return 'AppNotification(id: $id, userId: $userId, title: $title, body: $body, type: $type, data: $data, isRead: $isRead, createdAt: $createdAt)';
+    return 'AppNotification(id: $id, userId: $userId, titleAr: $titleAr, bodyAr: $bodyAr, type: $type, referenceType: $referenceType, referenceId: $referenceId, isRead: $isRead, createdAt: $createdAt, deliveredAt: $deliveredAt, openedAt: $openedAt)';
   }
 
   @override
@@ -240,18 +279,36 @@ class _$AppNotificationImpl implements _AppNotification {
             other is _$AppNotificationImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userId, userId) || other.userId == userId) &&
-            (identical(other.title, title) || other.title == title) &&
-            (identical(other.body, body) || other.body == body) &&
+            (identical(other.titleAr, titleAr) || other.titleAr == titleAr) &&
+            (identical(other.bodyAr, bodyAr) || other.bodyAr == bodyAr) &&
             (identical(other.type, type) || other.type == type) &&
-            const DeepCollectionEquality().equals(other._data, _data) &&
+            (identical(other.referenceType, referenceType) ||
+                other.referenceType == referenceType) &&
+            (identical(other.referenceId, referenceId) ||
+                other.referenceId == referenceId) &&
             (identical(other.isRead, isRead) || other.isRead == isRead) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.deliveredAt, deliveredAt) ||
+                other.deliveredAt == deliveredAt) &&
+            (identical(other.openedAt, openedAt) ||
+                other.openedAt == openedAt));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, userId, title, body, type,
-      const DeepCollectionEquality().hash(_data), isRead, createdAt);
+  int get hashCode => Object.hash(
+      runtimeType,
+      id,
+      userId,
+      titleAr,
+      bodyAr,
+      type,
+      referenceType,
+      referenceId,
+      isRead,
+      createdAt,
+      deliveredAt,
+      openedAt);
 
   /// Create a copy of AppNotification
   /// with the given fields replaced by the non-null parameter values.
@@ -267,29 +324,38 @@ abstract class _AppNotification implements AppNotification {
   const factory _AppNotification(
       {required final String id,
       required final String userId,
-      required final String title,
-      required final String body,
-      required final String type,
-      final Map<String, dynamic>? data,
+      required final String titleAr,
+      required final String bodyAr,
+      required final NotificationType type,
+      final String? referenceType,
+      final String? referenceId,
       final bool isRead,
-      required final DateTime createdAt}) = _$AppNotificationImpl;
+      required final DateTime createdAt,
+      final DateTime? deliveredAt,
+      final DateTime? openedAt}) = _$AppNotificationImpl;
 
   @override
   String get id;
   @override
   String get userId;
   @override
-  String get title;
+  String get titleAr;
   @override
-  String get body;
+  String get bodyAr;
   @override
-  String get type;
+  NotificationType get type;
   @override
-  Map<String, dynamic>? get data;
+  String? get referenceType;
+  @override
+  String? get referenceId;
   @override
   bool get isRead;
   @override
   DateTime get createdAt;
+  @override
+  DateTime? get deliveredAt;
+  @override
+  DateTime? get openedAt;
 
   /// Create a copy of AppNotification
   /// with the given fields replaced by the non-null parameter values.

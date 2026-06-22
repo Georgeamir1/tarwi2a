@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/logger/app_logger.dart';
 import '../../dtos/order_dto.dart';
 
 class OrderRemoteDataSource {
@@ -8,16 +9,28 @@ class OrderRemoteDataSource {
     required Map<String, dynamic> orderData,
     required List<Map<String, dynamic>> itemsData,
   }) async {
-    final result =
-        await _client.from('orders').insert(orderData).select().single();
+    appLogger.d(
+        '[OrderRemoteDS] createOrder — keys: ${orderData.keys.toList()}, items: ${itemsData.length}');
+    try {
+      final orderId = await _client.rpc('create_order_with_items', params: {
+        'p_order': orderData,
+        'p_items': itemsData,
+      });
 
-    final orderId = result['id'] as String;
-    final orderItems =
-        itemsData.map((item) => {...item, 'order_id': orderId}).toList();
+      appLogger.d('[OrderRemoteDS] order created via RPC, id: $orderId');
 
-    await _client.from('order_items').insert(orderItems);
+      final orderResult = await _client
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('id', orderId as String)
+          .single();
 
-    return OrderDTO.fromJson({...result, 'order_items': []});
+      return OrderDTO.fromJson(orderResult);
+    } catch (e, st) {
+      appLogger.e('[OrderRemoteDS] createOrder FAILED',
+          error: e, stackTrace: st);
+      rethrow;
+    }
   }
 
   Future<List<OrderDTO>> getCustomerOrders(String customerId) async {
@@ -54,5 +67,15 @@ class OrderRemoteDataSource {
     return _client
         .from('orders')
         .stream(primaryKey: ['id']).order('created_at', ascending: false);
+  }
+
+  Stream<List<Map<String, dynamic>>> watchCustomerOrders(String customerId) {
+    return _client
+        .from('orders')
+        .stream(primaryKey: ['id'])
+        .eq('customer_id', customerId)
+        .order('created_at', ascending: false)
+        .map((rows) =>
+            rows.where((row) => row['customer_id'] == customerId).toList());
   }
 }

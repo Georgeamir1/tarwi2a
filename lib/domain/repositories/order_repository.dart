@@ -31,4 +31,5 @@ abstract class OrderRepository {
     String? paymentProofUrl,
   });
   Stream<List<Map<String, dynamic>>> watchOrders();
+  Stream<List<Map<String, dynamic>>> watchCustomerOrders(String customerId);
 }

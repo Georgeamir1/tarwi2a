@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../domain/entities/product.dart';
+import '../extensions/price_x.dart';
 import 'cart_add_button.dart';
 import 'product_image.dart';
 import 'tag_selector.dart';
@@ -76,7 +77,7 @@ class HorizontalProductCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              '${product.price.toStringAsFixed(0)} ج',
+                              product.price.formatted,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 fontSize: compact ? 13 : 14,

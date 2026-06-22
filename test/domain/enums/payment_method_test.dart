@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matbakhy/domain/enums/payment_method.dart';
+import 'package:tarwi2a/domain/enums/payment_method.dart';
 
 void main() {
   group('PaymentMethod', () {

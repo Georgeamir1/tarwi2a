@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../core/logger/app_logger.dart';
-import '../../../core/services/notification_service.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/order_repository.dart';
@@ -55,13 +54,11 @@ class AdminOrdersCubit extends Cubit<AdminOrdersState> {
     final oldIds = state.orders.map((o) => o.id).toSet();
     for (final order in newOrders) {
       if (!oldIds.contains(order.id) && order.status.value == 'pending') {
-        NotificationService.showNewOrderNotification(
-          orderId: order.id,
-          customerName: order.customerName,
-          total: order.totalAmount,
-        );
         appLogger.d('[AdminOrdersCubit] new order detected: ${order.id}');
-        break; // notify only once per refresh
+        appLogger.d(
+          '[AdminOrdersCubit] push handled server-side via DB trigger → Edge Function → FCM',
+        );
+        break;
       }
     }
   }

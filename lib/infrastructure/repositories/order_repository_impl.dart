@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart' hide Order;
 import '../../../domain/entities/order.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/order_repository.dart';
+import '../../../core/logger/app_logger.dart';
 import '../datasources/remote/order_remote_data_source.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
@@ -48,12 +49,15 @@ class OrderRepositoryImpl implements OrderRepository {
         if (deliveryZoneId != null) 'delivery_zone_id': deliveryZoneId,
         if (deliveryZoneName != null) 'delivery_zone_name': deliveryZoneName,
       };
+      appLogger.d('[OrderRepo] createOrder — calling datasource...');
       final dto = await _remoteDataSource.createOrder(
         orderData: orderData,
         itemsData: items,
       );
+      appLogger.d('[OrderRepo] createOrder — success, id: ${dto.id}');
       return right(dto.toDomain());
-    } catch (e) {
+    } catch (e, st) {
+      appLogger.e('[OrderRepo] createOrder FAILED', error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
@@ -111,5 +115,10 @@ class OrderRepositoryImpl implements OrderRepository {
   @override
   Stream<List<Map<String, dynamic>>> watchOrders() {
     return _remoteDataSource.watchOrders();
+  }
+
+  @override
+  Stream<List<Map<String, dynamic>>> watchCustomerOrders(String customerId) {
+    return _remoteDataSource.watchCustomerOrders(customerId);
   }
 }

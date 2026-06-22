@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../domain/entities/product.dart';
+import '../extensions/price_x.dart';
 import 'cart_add_button.dart';
 import 'product_image.dart';
 import 'tag_selector.dart';
@@ -128,7 +129,7 @@ class ProductCard extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '${product.price.toStringAsFixed(0)} ج',
+                                product.price.formatted,
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.primary,

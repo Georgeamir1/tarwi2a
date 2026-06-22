@@ -47,18 +47,6 @@ class CartAddButton extends StatelessWidget {
               context
                   .read<CartCubit>()
                   .addItem(product, selectedOptions: selectedOptions);
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('تمت إضافة ${product.nameAr}'),
-                  backgroundColor: AppColors.success,
-                  duration: const Duration(milliseconds: 800),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: AppRadius.smAll),
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                ),
-              );
             },
           );
         }

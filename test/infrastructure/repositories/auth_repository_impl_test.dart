@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     show AuthException;
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/infrastructure/repositories/auth_repository_impl.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/infrastructure/repositories/auth_repository_impl.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../enums/notification_type.dart';
 
 part 'app_notification.freezed.dart';
 
@@ -7,11 +8,14 @@ class AppNotification with _$AppNotification {
   const factory AppNotification({
     required String id,
     required String userId,
-    required String title,
-    required String body,
-    required String type,
-    Map<String, dynamic>? data,
+    required String titleAr,
+    required String bodyAr,
+    required NotificationType type,
+    String? referenceType,
+    String? referenceId,
     @Default(false) bool isRead,
     required DateTime createdAt,
+    DateTime? deliveredAt,
+    DateTime? openedAt,
   }) = _AppNotification;
 }

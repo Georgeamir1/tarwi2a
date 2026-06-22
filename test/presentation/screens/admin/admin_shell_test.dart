@@ -4,8 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/admin/admin_shell.dart';
-import 'package:matbakhy/application/admin/admin_orders_cubit.dart';
+import 'package:tarwi2a/presentation/screens/admin/admin_shell.dart';
+import 'package:tarwi2a/application/admin/admin_orders_cubit.dart';
 import '../../../helpers/test_helpers.dart';
 
 Widget _buildTestWidget({

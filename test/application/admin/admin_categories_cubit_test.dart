@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/application/admin/admin_categories_cubit.dart';
-import 'package:matbakhy/domain/entities/category.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
+import 'package:tarwi2a/application/admin/admin_categories_cubit.dart';
+import 'package:tarwi2a/domain/entities/category.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

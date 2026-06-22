@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/application/admin/admin_delivery_zones_cubit.dart';
-import 'package:matbakhy/domain/entities/delivery_zone.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
+import 'package:tarwi2a/application/admin/admin_delivery_zones_cubit.dart';
+import 'package:tarwi2a/domain/entities/delivery_zone.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

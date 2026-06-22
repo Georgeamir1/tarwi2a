@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-10 |
-| **Phase** | 28b (UX Redesign) |
-| **Task** | Consolidated 3 customer-order screens (`OrdersScreen` list, `OrderDetailScreen`, `OrderTrackingScreen`) into ONE inline-expandable surface. `OrderCard` is now an expandable widget — collapsed = summary row, expanded = full details + vertical status tracker + driver card + action buttons. Zero duplicate `loadOrders` calls. Deep links `/orders/:id` and `/orders/:id/track` now redirect to `/orders?expand=<id>` and auto-open the matching card. `OrderDetailScreen` deleted; `OrderTrackingScreen` was already deleted. |
-| **Notes** | `flutter analyze` passes with 0 errors, 0 warnings, 0 info. One source of truth for the order list, one `BlocBuilder`, one `CustomerOrdersCubit` subscription, one `OrderStatusTracker` per card (only in expanded body — the compact duplicate was removed). The rate screen (`/orders/:id/rate`) is a separate modal flow and stays as its own route. |
+| **Last session** | 2026-06-22 |
+| **Phase** | 28b (UX Redesign) / Bug Fixes |
+| **Task** | Implemented GoRouter reactive redirect using GoRouterRefreshStream linked to AuthCubit. |
+| **Notes** | `flutter analyze` passes with 0 errors, 0 warnings, 0 info. Fixed a bug where logging out left the profile screen stuck in a loading state until user interaction; GoRouter now instantly detects sign-out and redirects to `/login`. |
 
 ---
 
@@ -588,6 +588,105 @@ alter publication supabase_realtime add table business_profiles;
 | | Tasks | Done | Progress |
 |---|-------|------|----------|
 | **All Phases** | **267** | **266** | **99%** |
+
+---
+
+## 🔷 Phase N: Full Notifications System
+
+### Phase N0 — Supabase Edge Function (Server-Side Push)
+
+- [✓] N0.1 Create `supabase/functions/send-notification/index.ts` — FCM sender, reads `notifications` row, looks up user prefs, fetches device tokens, sends push via firebase-admin
+- [✓] N0.2 Create `supabase/migrations/2026_06_11_notification_push_triggers.sql` — full schema (`notifications`, `notification_preferences`, `device_tokens`) with RLS, auto-notify triggers on orders (customer + admin), pg_net trigger to invoke Edge Function, realtime enable
+- [✓] N0.3 Create `supabase/functions/send-notification/test.ts` — Deno test scaffold
+- [✓] N0.4 Create `supabase/functions/send-notification/deno.json` — import map
+- [✓] N0.5 Create `supabase/functions/send-notification/README.md` — deploy + env setup docs
+
+### Phase N1 — Schema Sync (canonical schema.sql)
+
+- [✓] N1.1 Add `notifications`, `notification_preferences`, `device_tokens` table definitions to `supabase/schema.sql` (with CHECK constraints, indexes)
+- [✓] N1.2 Add RLS policies for all 3 new tables (user-scoped reads/writes, admin all-access on `notifications`)
+- [✓] N1.3 Add auto-notify triggers: `notify_order_status_change`, `notify_admins_new_order`, `notify_admins_order_cancelled`, `handle_new_notification_preferences`
+- [✓] N1.4 Add `invoke_send_notification` (pg_net → Edge Function) trigger
+- [✓] N1.5 Add `notification_preferences_updated_at` trigger
+- [✓] N1.6 Add ALTER PUBLICATION supabase_realtime for `notifications` + `device_tokens`
+- [✓] N1.7 `flutter analyze` passes — 0 issues
+
+### Phase N2 — Domain Layer
+
+- [✓] N2.1 Create `lib/domain/enums/notification_type.dart` — sealed enum with 9 types + helper predicates (`isOrderUpdate`, `isAdminNotification`, etc.)
+- [✓] N2.2 Create `lib/domain/entities/notification_preference.dart` — @freezed with `id`, `userId`, `orderUpdates`, `promotions`, `pushEnabled`, `updatedAt`
+- [✓] N2.3 Modify `lib/domain/entities/app_notification.dart` — fields renamed `title`→`titleAr`, `body`→`bodyAr`; `type: String`→`type: NotificationType`; added `referenceType`, `referenceId`
+- [✓] N2.4 Create `lib/domain/repositories/notification_repository.dart` — 8 methods: get/mark-read/create + prefs + watch stream
+- [✓] N2.5 Create `lib/domain/repositories/device_token_repository.dart` — register/unregister/getTokensForUser
+- [✓] N2.6 `dart run build_runner build --delete-conflicting-outputs` — wrote 2 outputs
+- [✓] N2.7 `flutter analyze` — 0 issues
+
+### Phase N3 — Infrastructure Layer
+
+- [✓] N3.1 Create `lib/infrastructure/dtos/notification_dto.dart` — manual fromJson/toJson (enum mapping), toInsertJson, toDomain
+- [✓] N3.2 Create `lib/infrastructure/dtos/notification_preference_dto.dart` — manual fromJson, toUpdateJson, defaultsFor factory
+- [✓] N3.3 Create `lib/infrastructure/dtos/device_token_dto.dart` — manual fromJson, toInsertJson
+- [✓] N3.4 Create `lib/infrastructure/datasources/remote/notification_remote_datasource.dart` — 7 methods + `watchNotifications()` realtime stream (user-scoped filter)
+- [✓] N3.5 Create `lib/infrastructure/datasources/remote/device_token_remote_datasource.dart` — register (upsert on user+token), unregister, getTokensForUser
+- [✓] N3.6 Create `lib/infrastructure/repositories/notification_repository_impl.dart` — 8 methods, Either<Failure, T>, stream mapping
+- [✓] N3.7 Create `lib/infrastructure/repositories/device_token_repository_impl.dart` — 3 methods, Either<Failure, T>
+- [✓] N3.8 `flutter analyze` — 0 issues
+
+### Phase N4 — FCM Push Notification Service
+
+- [✓] N4.1 Add `firebase_core: ^3.6.0` + `firebase_messaging: ^15.1.3` to `pubspec.yaml`
+- [✓] N4.2 Create `lib/core/services/push_notification_service.dart` — full FCM lifecycle: init, permission priming dialog, foreground/background/terminated handlers, token register/unregister, badge clearing, deep link routing via router
+- [✓] N4.3 Create `lib/core/services/device_token_service.dart` — thin wrapper combining repository + DI-friendly interface
+- [✓] N4.4 Android notification channels created: `order_updates` (high importance + sound), `promotions` (default), `general` (default)
+- [✓] N4.5 Local notification display (foreground FCM → local popup) with payload-encoded deep link
+- [✓] N4.6 `flutter pub get` + `flutter analyze` — 0 issues
+
+### Phase N5 — Application Layer (Cubits + Triggers)
+
+- [✓] N5.1 Create `lib/application/notifications/notifications_cubit.dart` — load + realtime stream + markAsRead/markAllAsRead + unreadCount + switchUser + close() cancellation
+- [✓] N5.2 Create `lib/application/notifications/notification_preferences_cubit.dart` — load + optimistic update + save + rollback on error
+- [✓] N5.3 Add `OrderRepository.watchCustomerOrders(customerId)` to domain interface + infra (datasource + impl)
+- [✓] N5.4 Modify `lib/application/orders/customer_orders_cubit.dart` — listen to order stream, detect status changes, log for awareness (DB trigger handles push), silent refresh on stream event, cancel in close()
+- [✓] N5.5 Document `admin_orders_cubit.dart` server-side persistence path (DB trigger → Edge Function → FCM)
+- [✓] N5.6 Modify `lib/main.dart` — init Firebase, init PushNotificationService, handle initial message
+- [✓] N5.7 Register new dependencies in `lib/core/di/injection_container.dart`: `NotificationRemoteDataSource`, `DeviceTokenRemoteDataSource`, `NotificationRepository`, `DeviceTokenRepository`, `DeviceTokenService`, `PushNotificationService`, `NotificationsCubit`, `NotificationPreferencesCubit`
+- [✓] N5.8 `flutter analyze` — 0 issues
+
+### Phase N6 — Presentation Layer
+
+- [✓] N6.1 Create `lib/presentation/extensions/notification_type_x.dart` — `icon`, `color`, `categoryLabel` per notification type (admin gets red, customer gets saffron/green/blue)
+- [✓] N6.2 Rewrite `lib/presentation/widgets/notification_tile.dart` — uses `AppNotification` entity, shows relative time (منذ X دقيقة), category label badge, type-colored icon container
+- [✓] N6.3 Rewrite `lib/presentation/screens/profile/notifications_screen.dart` — BlocBuilder, 3-state machine (loading/loaded/error), empty state, pull-to-refresh, "Mark all as read" button in top bar, deep link on tap, badge cleared on open
+- [✓] N6.4 Rewrite `lib/presentation/screens/admin/admin_notifications_screen.dart` — same pattern, filtered to admin-relevant notifications (isAdminNotification || isOrderUpdate), navigates to `/admin/orders/<id>` on tap
+- [✓] N6.5 Update `lib/presentation/screens/profile/settings_screen.dart` — wire toggles to `NotificationPreferencesCubit` with persistence; push toggle triggers permission priming + token registration
+- [✓] N6.6 Update `lib/router/app_router.dart` — wrap `/profile/notifications` with `NotificationsCubit` provider; wrap `/profile/settings` with `NotificationPreferencesCubit`; add `NotificationsCubit` + `RepositoryProvider<PushNotificationService>` to `_adminWrap`
+- [✓] N6.7 `flutter analyze` — 0 issues
+
+### Phase N7 — Notification Fixes & Live Data (2026-06-15)
+
+#### Critical Bug Fixes
+- [✓] N7.1 Remove legacy `NotificationService` from `AdminOrdersCubit` — eliminated double notification (DB trigger → Edge Function → FCM is sole source of truth)
+- [✓] N7.2 Delete dead `lib/core/services/notification_service.dart` — was replaced by `PushNotificationService`
+- [✓] N7.3 Proactive notification loading on auth — `_TarwikaAppState` listens to `AuthCubit` stream, calls `NotificationsCubit.loadNotifications()` on sign-in, resets on sign-out
+- [✓] N7.4 Add `NotificationBadge` to customer home screen top bar — live unread count visible without visiting notifications screen
+- [✓] N7.5 Fix `markAllAsRead` on admin screen — added `markIdsAsRead(List<String>)` method, admin screen now marks only admin-relevant notification IDs (not all user notifications)
+- [✓] N7.6 Fix `isOrderAdminNew`/`isOrderAdminCancelled` enum comparison — changed from `.value ==` string compare to direct `this ==` enum compare
+- [✓] N7.7 Fix `_isAndroid13OrHigher()` — removed broken method that always returned true; `requestNotificationsPermission()` now called on all Android (safe no-op on <13)
+- [✓] N7.8 Add `deliveredAt`/`openedAt` fields to `AppNotification` entity + DTO — supports DB analytics columns
+- [✓] N7.9 Restore `AuthCubit` in `AdminNotificationsScreen._load()` — ensures notifications reload on screen visit
+- [✓] N7.10 Fix duplicate body field in `AdminBroadcastScreen` form
+- [✓] N7.11 Fix `NotificationsCubit.switchUser()` — accepts nullable userId, skips load when null (no more failed query on sign-out)
+
+#### Broadcast Pipeline Fix
+- [✓] N7.12 Rewrite `BroadcastRemoteDataSource.sendBroadcast()` — direct client INSERT into `notifications` + `broadcast_logs` instead of calling Edge Function (which was failing silently)
+- [✓] N7.13 Fix column names in `notification_dto.dart` — `fromJson` falls back to `title`/`body` when `title_ar`/`body_ar` missing; `toInsertJson` uses `title`/`body` (matching real schema)
+- [✓] N7.14 Fix `BroadcastRemoteDataSource` batch insert row — uses `title`/`body` columns (not `title_ar`/`body_ar`) to match `notifications` table schema
+- [✓] N7.15 Supabase migration repair + push — linked project `tfchunxrymewqfbafhnb`, repaired migration history, pushed local migrations with unique version names
+- [✓] N7.16 Verify Realtime enabled on all notification tables (`notifications`, `device_tokens`, `broadcast_logs`)
+- [✓] N7.17 Verify Edge Functions deployed and active (`send-notification`, `send-push-notification`)
+- [✓] N7.18 Verify Firebase secrets set (`FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`)
+- [✓] N7.19 Set `admin@admin.com` as admin in `profiles` table
+- [✓] N7.20 `flutter analyze` — 0 issues
 
 ---
 

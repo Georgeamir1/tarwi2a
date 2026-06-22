@@ -1,15 +1,20 @@
+import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'core/constants/app_constants.dart';
 import 'core/di/injection_container.dart';
+import 'core/services/push_notification_service.dart';
 import 'app/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'application/auth/auth_cubit.dart';
 import 'application/cart/cart_cubit.dart';
 import 'application/theme/theme_cubit.dart';
 import 'application/orders/customer_orders_cubit.dart';
+import 'application/notifications/notifications_cubit.dart';
 import 'core/logger/app_logger.dart';
 
 class DebugBlocObserver extends BlocObserver {
@@ -64,11 +69,21 @@ void main() async {
     );
   }
 
+  if (!kIsWeb) {
+    await Firebase.initializeApp();
+  }
+
   await Supabase.initialize(
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
   );
   await initDependencies();
+
+  final pushService = sl<PushNotificationService>();
+  if (!kIsWeb) {
+    await pushService.init();
+    await pushService.handleInitialMessageIfAny();
+  }
 
   Bloc.observer = DebugBlocObserver();
 
@@ -84,11 +99,34 @@ class TarwikaApp extends StatefulWidget {
 
 class _TarwikaAppState extends State<TarwikaApp> {
   late final ThemeCubit _themeCubit;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _themeCubit = sl<ThemeCubit>();
+    _authSub = sl<AuthCubit>().stream.listen(_onAuthChanged);
+  }
+
+  void _onAuthChanged(AuthState authState) {
+    if (authState is Authenticated) {
+      final userId = authState.profile.id;
+      sl<NotificationsCubit>().loadNotifications(userId);
+      sl<PushNotificationService>().setCurrentUser(userId);
+      sl<PushNotificationService>().registerTokenForCurrentUser(
+        userIdOverride: userId,
+      );
+    } else if (authState is Unauthenticated) {
+      sl<NotificationsCubit>().switchUser(null);
+      sl<PushNotificationService>().setCurrentUser(null);
+      unawaited(sl<PushNotificationService>().unregisterCurrentToken());
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 
   @override
@@ -98,6 +136,7 @@ class _TarwikaAppState extends State<TarwikaApp> {
         BlocProvider(create: (_) => sl<AuthCubit>()..checkAuthStatus()),
         BlocProvider(create: (_) => sl<CartCubit>()..loadCart()),
         BlocProvider.value(value: sl<CustomerOrdersCubit>()),
+        BlocProvider.value(value: sl<NotificationsCubit>()),
         BlocProvider.value(value: _themeCubit),
       ],
       child: BlocBuilder<ThemeCubit, ThemeMode>(

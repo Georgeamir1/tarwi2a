@@ -9,6 +9,7 @@ import '../../../domain/entities/selected_option.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../application/admin/admin_product_options_cubit.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../extensions/price_x.dart';
 import '../../widgets/product_image.dart';
 import '../../widgets/tag_selector.dart';
 
@@ -164,7 +165,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           borderRadius: BorderRadius.circular(AppRadius.xl),
                         ),
                         child: Text(
-                          '${product.price.toStringAsFixed(0)} \u062c.\u0645',
+                          product.price.formatted,
                           style: const TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 16,
@@ -486,26 +487,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             context.read<CartCubit>().addItem(product,
                                 selectedOptions: _selectedOptions);
                           }
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                '\u062a\u0645\u062a \u0625\u0636\u0627\u0641\u0629 $_quantity \u00d7 ${product.nameAr}',
-                                style: const TextStyle(
-                                  fontFamily: 'Cairo',
-                                  color: AppColors.onPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: AppColors.primary,
-                              duration: const Duration(seconds: 1),
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.md)),
-                              margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                            ),
-                          );
                           setState(() => _quantity = 1);
                         },
                         style: ElevatedButton.styleFrom(
@@ -687,7 +668,7 @@ class _OptionGroups extends StatelessWidget {
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Text(
-                          '+${option.priceDelta.toInt()} \u062c',
+                          '+${option.priceDelta.formatted}',
                           style: const TextStyle(
                             fontFamily: 'Cairo',
                             fontSize: 12,

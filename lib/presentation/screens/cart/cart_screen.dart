@@ -7,6 +7,7 @@ import '../../../domain/entities/cart_item.dart';
 import '../../../domain/entities/product.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../extensions/price_x.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -336,30 +337,15 @@ class _CheckoutBar extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
-                Row(
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    Text(
-                      total.toStringAsFixed(0),
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
-                        height: 1,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '\u062c.\u0645',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                Text(
+                  total.formatted,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.primary,
+                    height: 1,
+                  ),
                 ),
               ],
             ),
@@ -522,7 +508,7 @@ class _CartItemCard extends StatelessWidget {
                       onRemove: onRemove,
                     ),
                     Text(
-                      '${item.subtotal.toStringAsFixed(0)} \u062c.\u0645',
+                      item.subtotal.formatted,
                       style: const TextStyle(
                         fontFamily: 'Cairo',
                         fontSize: 16,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../app/theme/app_theme.dart';
+import '../extensions/price_x.dart';
 
 class PriceSummary extends StatelessWidget {
   final double subtotal;
@@ -40,21 +41,21 @@ class PriceSummary extends StatelessWidget {
         children: [
           _RowItem(
             label: 'المجموع الفرعي',
-            value: '$subtotal ج',
+            value: subtotal.formatted,
             textColor: secondaryColor,
           ),
           AppSpacing.gapH8,
           if (deliveryFee > 0)
             _RowItem(
               label: 'التوصيل',
-              value: '$deliveryFee ج',
+              value: deliveryFee.formatted,
               textColor: secondaryColor,
             ),
           if (deliveryFee > 0) AppSpacing.gapH8,
           if (discount != null && discount! > 0) ...[
             _RowItem(
               label: 'الخصم',
-              value: '-${discount!} ج',
+              value: '-${discount!.formatted}',
               textColor: AppColors.statusReady,
             ),
             AppSpacing.gapH8,
@@ -62,7 +63,7 @@ class PriceSummary extends StatelessWidget {
           if (tax != null && tax! > 0) ...[
             _RowItem(
               label: 'الضريبة',
-              value: '$tax ج',
+              value: tax!.formatted,
               textColor: secondaryColor,
             ),
             AppSpacing.gapH8,
@@ -71,7 +72,7 @@ class PriceSummary extends StatelessWidget {
           AppSpacing.gapH8,
           _RowItem(
             label: 'الإجمالي',
-            value: '${total.toStringAsFixed(2)} ج',
+            value: total.formatted,
             textColor: textColor,
             isBold: true,
           ),

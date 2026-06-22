@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/infrastructure/dtos/product_dto.dart';
-import 'package:matbakhy/infrastructure/repositories/product_repository_impl.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/infrastructure/dtos/product_dto.dart';
+import 'package:tarwi2a/infrastructure/repositories/product_repository_impl.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

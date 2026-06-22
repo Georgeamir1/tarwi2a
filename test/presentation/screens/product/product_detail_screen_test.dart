@@ -4,12 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/product/product_detail_screen.dart';
-import 'package:matbakhy/application/cart/cart_cubit.dart';
-import 'package:matbakhy/application/admin/admin_product_options_cubit.dart';
-import 'package:matbakhy/domain/entities/product.dart';
-import 'package:matbakhy/domain/entities/selected_option.dart';
-import 'package:matbakhy/app/theme/app_theme.dart';
+import 'package:tarwi2a/presentation/screens/product/product_detail_screen.dart';
+import 'package:tarwi2a/application/cart/cart_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_product_options_cubit.dart';
+import 'package:tarwi2a/domain/entities/product.dart';
+import 'package:tarwi2a/domain/entities/selected_option.dart';
+import 'package:tarwi2a/app/theme/app_theme.dart';
 import '../../../helpers/test_helpers.dart';
 
 class MockAdminProductOptionsCubit extends Mock implements AdminProductOptionsCubit {}

@@ -27,6 +27,7 @@ class ProductsCubit extends Cubit<ProductsState> {
           status: ProductsStatus.loaded,
           allProducts: products,
           products: _filterByCategory(products, filterId),
+          selectedCategoryId: filterId,
         ));
       },
     );

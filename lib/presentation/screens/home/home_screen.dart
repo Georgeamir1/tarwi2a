@@ -1,19 +1,22 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../application/menu/categories_cubit.dart';
 import '../../../application/menu/products_cubit.dart';
 import '../../../application/cart/cart_cubit.dart';
+import '../../../application/notifications/notifications_cubit.dart';
 import '../../../domain/entities/product.dart';
 import '../../widgets/product_image.dart';
-import '../../widgets/skeleton_card.dart';
-import '../../widgets/animated_cart_button.dart';
 import '../../widgets/cart_add_button.dart';
+import '../../widgets/notification_badge.dart';
+import '../../widgets/product_compact_tile.dart';
+import '../../widgets/tag_selector.dart';
+import '../../extensions/price_x.dart';
 import '../../../app/theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -49,7 +52,7 @@ class _HomeBodyState extends State<_HomeBody>
     _scrollController = ScrollController();
     _staggerCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 450),
     )..forward();
   }
 
@@ -99,35 +102,23 @@ class _HomeBodyState extends State<_HomeBody>
               ),
               SliverToBoxAdapter(
                 child: _FadeSlide(
-                  animation: _stagger(0.15, 0.65),
+                  animation: _stagger(0.1, 0.55),
                   child: const _HomeSearchBar(),
                 ),
               ),
               SliverToBoxAdapter(
                 child: _FadeSlide(
-                  animation: _stagger(0.25, 0.75),
-                  child: const _HomeCategoriesChips(),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: _FadeSlide(
-                  animation: _stagger(0.3, 0.8),
+                  animation: _stagger(0.2, 0.65),
                   child: const _HomeHeroCarousel(),
                 ),
               ),
               SliverToBoxAdapter(
                 child: _FadeSlide(
-                  animation: _stagger(0.4, 0.9),
+                  animation: _stagger(0.3, 0.75),
                   child: const _HomePopularSection(),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: _FadeSlide(
-                  animation: _stagger(0.45, 1.0),
-                  child: const _HomeMenuHeader(),
-                ),
-              ),
-              _HomeProductList(stagger: _stagger(0.5, 1.0)),
+              _HomeCategoryPreviews(stagger: _stagger(0.4, 1.0)),
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           ),
@@ -152,7 +143,7 @@ class _FadeSlide extends StatelessWidget {
         return Opacity(
           opacity: v.clamp(0.0, 1.0),
           child: Transform.translate(
-            offset: Offset(0, (1 - v) * 20),
+            offset: Offset(0, (1 - v) * 24),
             child: child,
           ),
         );
@@ -194,7 +185,7 @@ class _HomeTopBar extends StatelessWidget {
                               : '\u0623\u0647\u0644\u0627\u064b \u0628\u0643',
                           style: const TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.w800,
                             color: AppColors.textPrimary,
                             height: 1.3,
@@ -205,7 +196,7 @@ class _HomeTopBar extends StatelessWidget {
                         const Icon(
                           Icons.waving_hand_rounded,
                           color: AppColors.tertiary,
-                          size: 22,
+                          size: 24,
                         ),
                       ],
                     ),
@@ -214,7 +205,7 @@ class _HomeTopBar extends StatelessWidget {
                       '\u0645\u0627\u0630\u0627 \u062a\u0634\u062a\u0647\u064a \u0627\u0644\u064a\u0648\u0645\u061f',
                       style: TextStyle(
                         fontFamily: 'Cairo',
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
                         color: AppColors.textSecondary,
                         height: 1.4,
@@ -227,6 +218,20 @@ class _HomeTopBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          BlocBuilder<NotificationsCubit, NotificationsState>(
+            buildWhen: (prev, curr) => prev.unreadCount != curr.unreadCount,
+            builder: (context, notifState) {
+              return NotificationBadge(
+                icon: Icons.notifications_none_rounded,
+                count: notifState.unreadCount,
+                color: AppColors.textPrimary,
+                iconSize: 22,
+                tooltip: 'الإشعارات',
+                onTap: () => context.push('/profile/notifications'),
+              );
+            },
+          ),
+          const SizedBox(width: 12),
           BlocBuilder<CartCubit, CartState>(
             builder: (context, cartState) {
               final count = cartState.totalItems;
@@ -235,67 +240,78 @@ class _HomeTopBar extends StatelessWidget {
                   appLogger.d('[HomeScreen] cart tapped');
                   context.push('/cart');
                 },
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.shopping_bag_outlined,
-                          size: 22,
-                          color: AppColors.textPrimary,
-                        ),
-                        onPressed: () {
-                          appLogger.d('[HomeScreen] cart tapped');
-                          context.push('/cart');
-                        },
-                      ),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.outlineVariant,
+                      width: 1,
                     ),
-                    if (count > 0)
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: Container(
-                          constraints: const BoxConstraints(
-                            minWidth: 18,
-                            minHeight: 18,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.background,
-                              width: 2,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary
+                            .withValues(alpha: count > 0 ? 0.15 : 0.0),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 22,
+                        color: AppColors.textPrimary,
+                      ),
+                      if (count > 0)
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: Container(
+                            constraints: const BoxConstraints(
+                              minWidth: 18,
+                              minHeight: 18,
                             ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              count > 99 ? '99+' : '$count',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                height: 1,
-                                fontFamily: 'Cairo',
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.surface,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.4),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                count > 99 ? '99+' : '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1,
+                                  fontFamily: 'Cairo',
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
@@ -345,7 +361,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
       ),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 48,
+        height: 52,
         decoration: BoxDecoration(
           color: _isFocused ? AppColors.surface : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.full),
@@ -356,29 +372,39 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
           boxShadow: _isFocused
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.12),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
                 ]
-              : null,
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Row(
           textDirection: TextDirection.rtl,
           children: [
-            const SizedBox(width: 16),
-            Icon(
-              Icons.search,
-              color: _isFocused ? AppColors.primary : AppColors.textSecondary,
-              size: 20,
+            const SizedBox(width: 18),
+            AnimatedScale(
+              scale: _isFocused ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.search_rounded,
+                color: _isFocused ? AppColors.primary : AppColors.textSecondary,
+                size: 22,
+              ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 12),
             Expanded(
               child: TextField(
                 focusNode: _focusNode,
                 textDirection: TextDirection.rtl,
                 style: AppTypography.body.copyWith(
-                  fontSize: 14,
+                  fontSize: 15,
                   color: AppColors.textPrimary,
                 ),
                 cursorColor: AppColors.primary,
@@ -387,7 +413,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
                       '\u0627\u0628\u062d\u062b \u0639\u0646 \u0637\u0628\u0642\u2026',
                   hintStyle: TextStyle(
                     fontFamily: 'Cairo',
-                    fontSize: 14,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
                   border: InputBorder.none,
@@ -400,184 +426,20 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 6),
+              child: Icon(
+                Icons.tune_rounded,
+                size: 20,
+                color: _isFocused ? AppColors.primary : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 8),
           ],
         ),
       ),
     );
   }
-}
-
-class _HomeCategoriesChips extends StatelessWidget {
-  const _HomeCategoriesChips();
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<CategoriesCubit, CategoriesState>(
-      builder: (context, catState) {
-        if (catState.status != CategoriesStatus.loaded) {
-          return const SizedBox(height: 48);
-        }
-        return BlocBuilder<ProductsCubit, ProductsState>(
-          buildWhen: (prev, next) =>
-              prev.selectedCategoryId != next.selectedCategoryId ||
-              prev.allProducts != next.allProducts,
-          builder: (context, prodState) {
-            final activeCategoryIds =
-                prodState.allProducts.map((p) => p.categoryId).toSet();
-
-            final filterCategories = catState.categories
-                .where((c) => c.isActive && activeCategoryIds.contains(c.id))
-                .toList()
-              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-            if (filterCategories.isEmpty && prodState.allProducts.isEmpty) {
-              return const SizedBox.shrink();
-            }
-
-            final allChips = [
-              const _ChipOption(
-                  label: '\u0627\u0644\u0643\u0644', categoryId: null),
-              ...filterCategories.map(
-                (c) => _ChipOption(label: c.nameAr, categoryId: c.id),
-              ),
-            ];
-
-            return SizedBox(
-              height: 48,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                itemCount: allChips.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(width: AppSpacing.sm),
-                itemBuilder: (context, index) {
-                  final option = allChips[index];
-                  final isSelected =
-                      prodState.selectedCategoryId == option.categoryId;
-                  return _CategoryChip(
-                    label: option.label,
-                    isSelected: isSelected,
-                    onTap: () {
-                      appLogger.d(
-                        '[HomeScreen] category: ${option.categoryId ?? "all"}',
-                      );
-                      context.read<ProductsCubit>().selectCategory(
-                            isSelected ? null : option.categoryId,
-                          );
-                    },
-                  );
-                },
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _CategoryChip extends StatefulWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CategoryChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  State<_CategoryChip> createState() => _CategoryChipState();
-}
-
-class _CategoryChipState extends State<_CategoryChip>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isSelected = widget.isSelected;
-
-    return Semantics(
-      button: true,
-      selected: isSelected,
-      label: widget.label,
-      child: GestureDetector(
-        onTapDown: (_) => _controller.forward(),
-        onTapUp: (_) => _controller.reverse(),
-        onTapCancel: () => _controller.reverse(),
-        onTap: () {
-          HapticFeedback.lightImpact();
-          widget.onTap();
-        },
-        child: ScaleTransition(
-          scale: _scaleAnimation,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            constraints: const BoxConstraints(minHeight: 44),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.sm,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary
-                  : AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              widget.label,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color:
-                    isSelected ? AppColors.onPrimary : AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChipOption {
-  final String label;
-  final String? categoryId;
-  const _ChipOption({required this.label, this.categoryId});
 }
 
 class _HomeHeroCarousel extends StatefulWidget {
@@ -586,7 +448,6 @@ class _HomeHeroCarousel extends StatefulWidget {
   @override
   State<_HomeHeroCarousel> createState() => _HomeHeroCarouselState();
 }
-
 class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
   int _current = 0;
   Timer? _timer;
@@ -596,7 +457,7 @@ class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
   @override
   void initState() {
     super.initState();
-    _pageCtrl = PageController();
+    _pageCtrl = PageController(viewportFraction: 0.92);
     _startTimer();
   }
 
@@ -604,13 +465,13 @@ class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (!mounted || _userInteracting) return;
-      final products = context.read<ProductsCubit>().state.products;
+      final products = context.read<ProductsCubit>().state.allProducts;
       final heroes = products.where((p) => p.showInBanner).toList();
       if (heroes.length < 2) return;
       final next = (_current + 1) % heroes.length;
       _pageCtrl.animateToPage(
         next,
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 600),
         curve: Curves.easeInOutCubic,
       );
     });
@@ -640,257 +501,328 @@ class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
           return const _HeroSkeleton();
         }
 
-        final heroes = prodState.products.where((p) => p.showInBanner).toList();
+        final heroes = prodState.allProducts.where((p) => p.showInBanner).toList();
         if (heroes.isEmpty) {
           return const SizedBox.shrink();
         }
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.lg,
-            AppSpacing.md,
-            AppSpacing.lg,
-            0,
-          ),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 180,
-                child: NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    if (notification is ScrollStartNotification) {
-                      _onUserInteractionStart();
-                    } else if (notification is ScrollEndNotification) {
-                      _onUserInteractionEnd();
-                    }
-                    return false;
+        return Column(
+          children: [
+            SizedBox(
+              height: 220,
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollStartNotification) {
+                    _onUserInteractionStart();
+                  } else if (notification is ScrollEndNotification) {
+                    _onUserInteractionEnd();
+                  }
+                  return false;
+                },
+                child: PageView.builder(
+                  controller: _pageCtrl,
+                  itemCount: heroes.length,
+                  onPageChanged: (i) => setState(() => _current = i),
+                  itemBuilder: (context, index) {
+                    final hero = heroes[index];
+                    return _HeroCard(
+                      product: hero,
+                      isActive: index == _current,
+                      onTap: () {
+                        appLogger.d('[HomeScreen] hero tapped: ${hero.nameAr}');
+                        context.push('/product/${hero.id}', extra: hero);
+                      },
+                    );
                   },
-                  child: PageView.builder(
-                    controller: _pageCtrl,
-                    itemCount: heroes.length,
-                    onPageChanged: (i) => setState(() => _current = i),
-                    itemBuilder: (context, index) {
-                      final hero = heroes[index];
-                      return _HeroCard(
-                        product: hero,
-                        onTap: () {
-                          appLogger
-                              .d('[HomeScreen] hero tapped: ${hero.nameAr}');
-                          context.push('/product/${hero.id}', extra: hero);
-                        },
-                      );
-                    },
-                  ),
                 ),
               ),
-              if (heroes.length > 1) ...[
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    heroes.length,
-                    (i) => AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeOutCubic,
-                      width: i == _current ? 24 : 6,
-                      height: 6,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        color: i == _current
-                            ? AppColors.primary
-                            : AppColors.outlineVariant,
-                        borderRadius: BorderRadius.circular(999),
-                        boxShadow: i == _current
-                            ? [
-                                BoxShadow(
-                                  color:
-                                      AppColors.primary.withValues(alpha: 0.3),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 1),
-                                ),
-                              ]
-                            : null,
-                      ),
+            ),
+            if (heroes.length > 1) ...[
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  heroes.length,
+                  (i) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOutCubic,
+                    width: i == _current ? 28 : 6,
+                    height: 6,
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: i == _current
+                          ? AppColors.primary
+                          : AppColors.outlineVariant,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: i == _current
+                          ? [
+                              BoxShadow(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.35),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         );
       },
     );
   }
 }
-
-class _HeroCard extends StatelessWidget {
+class _HeroCard extends StatefulWidget {
   final Product product;
+  final bool isActive;
   final VoidCallback onTap;
 
-  const _HeroCard({required this.product, required this.onTap});
+  const _HeroCard({
+    required this.product,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  State<_HeroCard> createState() => _HeroCardState();
+}
+class _HeroCardState extends State<_HeroCard> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          height: 180,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [AppShadows.elevated],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: SizedBox(
-              height: 180,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  ProductImage(
-                    imageUrl: product.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder:
-                        Container(color: AppColors.surfaceContainerLow),
-                    errorWidget: Container(
-                      color: AppColors.surfaceContainerLow,
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        color: AppColors.textSecondary,
-                        size: 48,
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.97 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeInOut,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            margin: EdgeInsets.symmetric(horizontal: widget.isActive ? 0 : 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 24,
+                  offset: const Offset(0, 8),
+                ),
+                if (widget.isActive)
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: SizedBox(
+                height: 220,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ProductImage(
+                      imageUrl: widget.product.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder:
+                          Container(color: AppColors.surfaceContainerLow),
+                      errorWidget: Container(
+                        color: AppColors.surfaceContainerLow,
+                        child: const Icon(
+                          Icons.restaurant_menu,
+                          color: AppColors.textSecondary,
+                          size: 48,
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0.35, 1.0],
-                        colors: [Colors.transparent, Color(0xE6000000)],
+                    Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [0.2, 0.55, 1.0],
+                          colors: [
+                            Colors.transparent,
+                            Color(0x40000000),
+                            Color(0xDD000000),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.local_fire_department_rounded,
-                              size: 13, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text(
-                            '\u0639\u0631\u0636 \u0627\u0644\u064a\u0648\u0645',
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(999),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.local_fire_department_rounded,
+                                size: 14, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              '\u0639\u0631\u0636 \u0627\u0644\u064a\u0648\u0645',
+                              style: TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      child: Row(
-                        textDirection: TextDirection.rtl,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  product.nameAr,
-                                  style: const TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    height: 1.2,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textDirection: TextDirection.rtl,
-                                ),
-                                if (product.descriptionAr != null) ...[
-                                  const SizedBox(height: 3),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                        child: Row(
+                          textDirection: TextDirection.rtl,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
                                   Text(
-                                    product.descriptionAr!,
-                                    style: TextStyle(
+                                    widget.product.nameAr,
+                                    style: const TextStyle(
                                       fontFamily: 'Cairo',
-                                      fontSize: 12,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.75),
-                                      height: 1.3,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                      shadows: [
+                                        Shadow(
+                                          color: Color(0x40000000),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textDirection: TextDirection.rtl,
                                   ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    textDirection: TextDirection.rtl,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withValues(alpha: 0.2),
+                                          borderRadius: BorderRadius.circular(999),
+                                          border: Border.all(
+                                            color:
+                                                Colors.white.withValues(alpha: 0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          widget.product.price.formatted,
+                                          style: const TextStyle(
+                                            fontFamily: 'Cairo',
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      if (widget.product.descriptionAr != null) ...[
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            widget.product.descriptionAr!,
+                                            style: TextStyle(
+                                              fontFamily: 'Cairo',
+                                              fontSize: 12,
+                                              color:
+                                                  Colors.white.withValues(alpha: 0.85),
+                                              height: 1.3,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            textDirection: TextDirection.rtl,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ],
-                              ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${product.price.toStringAsFixed(0)} \u062c.\u0645',
-                                style: const TextStyle(
+                            const SizedBox(width: 16),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 9,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primaryDark,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(999),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.5),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646',
+                                style: TextStyle(
                                   fontFamily: 'Cairo',
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
                               ),
-                              const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 7,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646',
-                                  style: TextStyle(
-                                    fontFamily: 'Cairo',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -899,25 +831,23 @@ class _HeroCard extends StatelessWidget {
     );
   }
 }
-
 class _HeroSkeleton extends StatelessWidget {
   const _HeroSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        height: 180,
+        height: 220,
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
     );
   }
 }
-
 class _HomePopularSection extends StatelessWidget {
   const _HomePopularSection();
 
@@ -926,11 +856,11 @@ class _HomePopularSection extends StatelessWidget {
     return BlocBuilder<ProductsCubit, ProductsState>(
       builder: (context, prodState) {
         if (prodState.status == ProductsStatus.loading ||
-            prodState.products.length < 2) {
+            prodState.allProducts.length < 2) {
           return const SizedBox.shrink();
         }
 
-        final popular = prodState.products.skip(1).take(5).toList();
+        final popular = prodState.allProducts.skip(1).take(5).toList();
         if (popular.isEmpty) return const SizedBox.shrink();
 
         return Column(
@@ -950,14 +880,14 @@ class _HomePopularSection extends StatelessWidget {
                     '\u0627\u0644\u0623\u0643\u062b\u0631 \u0637\u0644\u0628\u0627\u064b',
                     style: TextStyle(
                       fontFamily: 'Cairo',
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 8),
                   const Icon(Icons.local_fire_department_rounded,
-                      size: 18, color: AppColors.primary),
+                      size: 20, color: AppColors.primary),
                   const Spacer(),
                   Text(
                     '\u0639\u0631\u0636 \u0627\u0644\u0643\u0644',
@@ -972,7 +902,7 @@ class _HomePopularSection extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: 220,
+              height: 235,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -998,7 +928,6 @@ class _HomePopularSection extends StatelessWidget {
     );
   }
 }
-
 class _PopularCard extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
@@ -1008,28 +937,63 @@ class _PopularCard extends StatefulWidget {
   @override
   State<_PopularCard> createState() => _PopularCardState();
 }
-
 class _PopularCardState extends State<_PopularCard> {
   bool _pressed = false;
+
+  Widget _buildTagBadge(Product p) {
+    final String tagId = p.tags.isNotEmpty
+        ? p.tags.first
+        : p.id.hashCode % 3 == 0
+            ? 'chef_pick'
+            : p.id.hashCode % 3 == 1
+                ? 'spicy'
+                : 'popular';
+
+    final tag = ProductTags.all.firstWhere(
+      (t) => t.id == tagId,
+      orElse: () => ProductTag(
+        id: tagId,
+        label: tagId,
+        icon: Icons.label_rounded,
+        color: AppColors.primary,
+      ),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: tag.color,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(tag.icon, size: 10, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            tag.label,
+            style: const TextStyle(
+              fontFamily: 'Cairo',
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final p = widget.product;
-    final tagText = p.id.hashCode % 3 == 0
-        ? '\u0645\u0645\u064a\u0632'
-        : p.id.hashCode % 3 == 1
-            ? '\u062d\u0627\u0631'
-            : '\u0637\u0627\u0632\u062c';
-    final tagBg = p.id.hashCode % 3 == 0
-        ? AppColors.tertiaryContainer
-        : p.id.hashCode % 3 == 1
-            ? AppColors.primaryContainer
-            : AppColors.infoContainer;
-    final tagFg = p.id.hashCode % 3 == 0
-        ? AppColors.onTertiaryContainer
-        : p.id.hashCode % 3 == 1
-            ? AppColors.onPrimaryContainer
-            : AppColors.infoOnContainer;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -1041,20 +1005,16 @@ class _PopularCardState extends State<_PopularCard> {
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeInOut,
         child: SizedBox(
-          width: 152,
+          width: 158,
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: AppColors.outlineVariant.withValues(alpha: 0.6),
-                width: 1,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -1086,35 +1046,25 @@ class _PopularCardState extends State<_PopularCard> {
                           ),
                         ),
                       ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                      Container(
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
                           ),
-                          decoration: BoxDecoration(
-                            color: tagBg,
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.06),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.center,
+                            colors: [
+                              Colors.transparent,
+                              Colors.transparent,
                             ],
                           ),
-                          child: Text(
-                            tagText,
-                            style: TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: tagFg,
-                            ),
-                          ),
                         ),
+                      ),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _buildTagBadge(p),
                       ),
                     ],
                   ),
@@ -1122,7 +1072,7 @@ class _PopularCardState extends State<_PopularCard> {
                 Expanded(
                   flex: 42,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1131,7 +1081,7 @@ class _PopularCardState extends State<_PopularCard> {
                           p.nameAr,
                           style: const TextStyle(
                             fontFamily: 'Cairo',
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.textPrimary,
                             height: 1.2,
@@ -1144,25 +1094,15 @@ class _PopularCardState extends State<_PopularCard> {
                           textDirection: TextDirection.rtl,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
+                            Text(
+                              p.price.formatted,
+                              style: const TextStyle(
+                                fontFamily: 'Cairo',
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.primary,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryContainer,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.sm),
-                              ),
-                              child: Text(
-                                '${p.price.toStringAsFixed(0)} \u062c',
-                                style: const TextStyle(
-                                  fontFamily: 'Cairo',
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                              textDirection: TextDirection.rtl,
                             ),
                             CartAddButton(
                               product: p,
@@ -1179,348 +1119,143 @@ class _PopularCardState extends State<_PopularCard> {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _HomeMenuHeader extends StatelessWidget {
-  const _HomeMenuHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.xxl,
-        AppSpacing.lg,
-        AppSpacing.sm,
-      ),
-      child: Row(
-        textDirection: TextDirection.rtl,
-        children: [
-          const Text(
-            '\u0642\u0627\u0626\u0645\u0629 \u0627\u0644\u0637\u0639\u0627\u0645',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Container(
-            width: 4,
-            height: 18,
-            decoration: BoxDecoration(
-              color: AppColors.tertiary,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const Spacer(),
-          Text(
-            '\u0639\u0631\u0636 \u0627\u0644\u0643\u0644',
-            style: TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HomeProductList extends StatelessWidget {
+      ));
+}}
+class _HomeCategoryPreviews extends StatelessWidget {
   final Animation<double> stagger;
 
-  const _HomeProductList({required this.stagger});
+  const _HomeCategoryPreviews({required this.stagger});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ProductsCubit, ProductsState>(
-      builder: (context, state) {
-        if (state.status == ProductsStatus.loading ||
-            state.status == ProductsStatus.initial) {
-          return SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            sliver: SliverList.separated(
-              itemCount: 4,
-              itemBuilder: (context, index) => const SkeletonListTile(),
-              separatorBuilder: (_, __) =>
-                  const SizedBox(height: AppSpacing.md),
-            ),
-          );
+    return BlocBuilder<CategoriesCubit, CategoriesState>(
+      builder: (context, catState) {
+        if (catState.status != CategoriesStatus.loaded) {
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
         }
 
-        if (state.status == ProductsStatus.error) {
-          return SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.cloud_off_rounded,
-                    size: 48,
-                    color: AppColors.textSecondary,
-                  ),
-                  AppSpacing.gapH16,
-                  const Text(
-                    '\u062d\u0635\u0644 \u062e\u0637\u0623 \u0641\u064a \u0627\u0644\u062a\u062d\u0645\u064a\u0644',
-                    style: TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                    textDirection: TextDirection.rtl,
-                  ),
-                  AppSpacing.gapH12,
-                  TextButton(
-                    onPressed: () {
-                      context.read<ProductsCubit>().loadProducts();
-                    },
-                    child: const Text(
-                      '\u062d\u0627\u0648\u0644 \u0645\u0631\u0629 \u0623\u062e\u0631\u0649',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+        return BlocBuilder<ProductsCubit, ProductsState>(
+          builder: (context, prodState) {
+            if (prodState.status != ProductsStatus.loaded) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
 
-        final products = state.products;
+            final activeCategories = catState.categories
+                .where((c) => c.isActive)
+                .toList()
+              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-        if (products.isEmpty) {
-          return SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-                vertical: AppSpacing.xxxl,
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.restaurant_menu_outlined,
-                    size: 48,
-                    color: AppColors.textSecondary,
-                  ),
-                  AppSpacing.gapH16,
-                  Text(
-                    state.selectedCategoryId != null
-                        ? '\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u0635\u0646\u0627\u0641 \u0641\u064a \u0647\u0630\u0627 \u0627\u0644\u0642\u0633\u0645'
-                        : '\u0644\u0627 \u062a\u0648\u062c\u062f \u0623\u0635\u0646\u0627\u0641 \u062d\u0627\u0644\u064a\u0627\u064b',
-                    style: const TextStyle(
-                      fontFamily: 'Cairo',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                    textDirection: TextDirection.rtl,
-                  ),
-                  if (state.selectedCategoryId != null) ...[
-                    AppSpacing.gapH12,
-                    TextButton(
-                      onPressed: () =>
-                          context.read<ProductsCubit>().selectCategory(null),
-                      child: const Text(
-                        '\u0639\u0631\u0636 \u0627\u0644\u0643\u0644',
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          );
-        }
+            // Select 2-3 categories max
+            final previewCategories = activeCategories.take(3).toList();
 
-        return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          sliver: SliverList.separated(
-            itemCount: products.length,
-            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-            itemBuilder: (context, index) {
-              final product = products[index];
-              return AnimatedBuilder(
-                animation: stagger,
-                builder: (context, _) {
-                  final delay = (index * 0.04).clamp(0.0, 0.5);
-                  final itemAnim = Interval(
-                    delay,
-                    (delay + 0.4).clamp(0.0, 1.0),
-                    curve: Curves.easeOutCubic,
-                  ).transform(stagger.value);
-                  return Opacity(
-                    opacity: itemAnim.clamp(0.0, 1.0),
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - itemAnim) * 12),
-                      child: _MenuCompactTile(
-                        product: product,
-                        onTap: () {
-                          appLogger.d(
-                            '[HomeScreen] product tapped: ${product.nameAr}',
-                          );
-                          context.push('/product/${product.id}',
-                              extra: product);
-                        },
-                      ),
+            if (previewCategories.isEmpty) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
+
+            return SliverList(
+              delegate: SliverChildBuilderDelegate(
+                    (context, catIndex) {
+                  final category = previewCategories[catIndex];
+                  final catProducts = prodState.allProducts
+                      .where((p) => p.categoryId == category.id)
+                      .take(5) // max 4-6 items
+                      .toList();
+
+                  if (catProducts.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Category Header (Name + "View All")
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.md,
+                          ),
+                          child: Row(
+                            textDirection: TextDirection.rtl,
+                            children: [
+                              Text(
+                                category.nameAr,
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  context.go('/menu?category=${category.id}');
+                                },
+                                child: const Text(
+                                  '\u0639\u0631\u0636 \u0627\u0644\u0643\u0644', // عرض الكل
+                                  style: TextStyle(
+                                    fontFamily: 'Cairo',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // List of items in this category
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
+                          itemCount: catProducts.length,
+                          separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
+                          itemBuilder: (context, index) {
+                            final product = catProducts[index];
+                            return AnimatedBuilder(
+                              animation: stagger,
+                              builder: (context, _) {
+                                final delay = (index * 0.04).clamp(0.0, 0.5);
+                                final itemAnim = Interval(
+                                  delay,
+                                  (delay + 0.4).clamp(0.0, 1.0),
+                                  curve: Curves.easeOutCubic,
+                                ).transform(stagger.value);
+                                return Opacity(
+                                  opacity: itemAnim.clamp(0.0, 1.0),
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1 - itemAnim) * 16),
+                                    child: ProductCompactTile(
+                                      product: product,
+                                      onTap: () {
+                                        context.push('/product/${product.id}',
+                                            extra: product);
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },
-              );
-            },
-          ),
+                childCount: previewCategories.length,
+              ),
+            );
+          },
         );
       },
     );
   }
 }
 
-class _MenuCompactTile extends StatefulWidget {
-  final Product product;
-  final VoidCallback onTap;
 
-  const _MenuCompactTile({required this.product, required this.onTap});
-
-  @override
-  State<_MenuCompactTile> createState() => _MenuCompactTileState();
-}
-
-class _MenuCompactTileState extends State<_MenuCompactTile> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.product;
-    final tags = p.options.isNotEmpty
-        ? p.options.map((o) => o.nameAr ?? o.name).take(3).join(' \u2022 ')
-        : p.descriptionAr ??
-            '\u0645\u0643\u0648\u0646\u0627\u062a \u0637\u0627\u0632\u062c\u0629';
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeInOut,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: AppColors.outlineVariant.withValues(alpha: 0.6),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 12,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            textDirection: TextDirection.rtl,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                child: SizedBox(
-                  width: 92,
-                  height: 92,
-                  child: ProductImage(
-                    imageUrl: p.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: Container(
-                      color: AppColors.surfaceContainerLow,
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        color: AppColors.textSecondary,
-                        size: 26,
-                      ),
-                    ),
-                    errorWidget: Container(
-                      color: AppColors.surfaceContainerLow,
-                      child: const Icon(
-                        Icons.restaurant_menu,
-                        color: AppColors.textSecondary,
-                        size: 26,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      p.nameAr,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        height: 1.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      tags,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        height: 1.4,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      textDirection: TextDirection.rtl,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryContainer,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                          child: Text(
-                            '${p.price.toStringAsFixed(0)} \u062c.\u0645',
-                            style: const TextStyle(
-                              fontFamily: 'Cairo',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        AnimatedCartButton(product: p),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

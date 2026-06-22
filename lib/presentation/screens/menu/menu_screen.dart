@@ -1,23 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../app/theme/app_theme.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../application/menu/categories_cubit.dart';
 import '../../../application/menu/products_cubit.dart';
-import '../../../domain/entities/product.dart';
-import '../../widgets/product_image.dart';
-import '../../widgets/animated_cart_button.dart';
-
-// Design tokens local to this screen
-const _kBrand = Color(0xFFE02B2B);
-const _kBg = Color(0xFFFDF8F7);
-const _kSurface = Color(0xFFFFFFFF);
-const _kSurface2 = Color(0xFFFCF5F4);
-const _kBorder = Color(0xFFE0D2D0);
-const _kTextPrimary = Color(0xFF2C2120);
-const _kTextSecondary = Color(0xFF7A6B69);
-const _kTextMuted = Color(0xFF8C7B79);
+import '../../widgets/product_compact_tile.dart';
 
 class MenuScreen extends StatelessWidget {
   const MenuScreen({super.key});
@@ -44,6 +33,7 @@ class _MenuBody extends StatefulWidget {
 class _MenuBodyState extends State<_MenuBody>
     with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
+  String? _lastCategoryQuery;
 
   @override
   void initState() {
@@ -52,6 +42,21 @@ class _MenuBodyState extends State<_MenuBody>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final routerState = GoRouterState.of(context);
+    final categoryQuery = routerState.uri.queryParameters['category'];
+    if (categoryQuery != _lastCategoryQuery) {
+      _lastCategoryQuery = categoryQuery;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<ProductsCubit>().selectCategory(categoryQuery);
+        }
+      });
+    }
   }
 
   @override
@@ -70,7 +75,7 @@ class _MenuBodyState extends State<_MenuBody>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -81,9 +86,9 @@ class _MenuBodyState extends State<_MenuBody>
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _refresh,
-                color: _kBrand,
-                backgroundColor: _kSurface,
-                child: _ProductGrid(animCtrl: _animCtrl),
+                color: AppColors.primary,
+                backgroundColor: AppColors.surface,
+                child: _ProductList(animCtrl: _animCtrl),
               ),
             ),
           ],
@@ -111,7 +116,7 @@ class _MenuHeader extends StatelessWidget {
               fontFamily: 'Cairo',
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: _kTextPrimary,
+              color: AppColors.onSurface,
             ),
           ),
         ],
@@ -202,10 +207,10 @@ class _TabItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isSelected ? _kBrand : Colors.transparent,
+          color: isSelected ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? _kBrand : _kBorder,
+            color: isSelected ? AppColors.primary : AppColors.outlineVariant,
             width: 1,
           ),
         ),
@@ -215,7 +220,7 @@ class _TabItem extends StatelessWidget {
             fontFamily: 'Cairo',
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? Colors.white : _kTextSecondary,
+            color: isSelected ? AppColors.onPrimary : AppColors.textSecondary,
           ),
         ),
       ),
@@ -223,11 +228,11 @@ class _TabItem extends StatelessWidget {
   }
 }
 
-// ─── Product Grid ─────────────────────────────────────────────────────────────
+// ─── Product List ─────────────────────────────────────────────────────────────
 
-class _ProductGrid extends StatelessWidget {
+class _ProductList extends StatelessWidget {
   final AnimationController animCtrl;
-  const _ProductGrid({required this.animCtrl});
+  const _ProductList({required this.animCtrl});
 
   @override
   Widget build(BuildContext context) {
@@ -235,15 +240,10 @@ class _ProductGrid extends StatelessWidget {
       builder: (context, state) {
         if (state.status == ProductsStatus.loading ||
             state.status == ProductsStatus.initial) {
-          return GridView.builder(
-            padding: const EdgeInsets.all(20),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.65,
-            ),
+          return ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             itemCount: 6,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, __) => _buildSkeleton(),
           );
         }
@@ -253,18 +253,18 @@ class _ProductGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: _kBrand),
+                const Icon(Icons.error_outline, size: 48, color: AppColors.primary),
                 const SizedBox(height: 16),
                 const Text(
-                  '\u062d\u0635\u0644 \u062e\u0637\u0623',
+                  '\u062d\u0635\u0644 \u062e\u0637\u0623', // حصل خطأ
                   style: TextStyle(
-                      fontFamily: 'Cairo', fontSize: 18, color: _kTextPrimary),
+                      fontFamily: 'Cairo', fontSize: 18, color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   state.failure?.message ?? '',
                   style: const TextStyle(
-                      fontFamily: 'Cairo', fontSize: 14, color: _kTextMuted),
+                      fontFamily: 'Cairo', fontSize: 14, color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -276,28 +276,23 @@ class _ProductGrid extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.restaurant_menu_outlined, size: 64, color: _kBorder),
+                Icon(Icons.restaurant_menu_outlined, size: 64, color: AppColors.outlineVariant),
                 SizedBox(height: 16),
                 Text(
-                  '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a',
+                  '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a', // لا توجد منتجات
                   style: TextStyle(
-                      fontFamily: 'Cairo', fontSize: 18, color: _kTextSecondary),
+                      fontFamily: 'Cairo', fontSize: 18, color: AppColors.textSecondary),
                 ),
               ],
             ),
           );
         }
 
-        return GridView.builder(
+        return ListView.separated(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 0.62,
-          ),
           itemCount: state.products.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final product = state.products[index];
             final delay = (index * 0.05).clamp(0.0, 0.5);
@@ -316,12 +311,12 @@ class _ProductGrid extends StatelessWidget {
                 return Opacity(
                   opacity: animation.value,
                   child: Transform.translate(
-                    offset: Offset(0, (1 - animation.value) * 20),
+                    offset: Offset(0, (1 - animation.value) * 15),
                     child: child,
                   ),
                 );
               },
-              child: _MenuGridCard(
+              child: ProductCompactTile(
                 product: product,
                 onTap: () {
                   appLogger.d('[MenuScreen] tapped: ${product.nameAr}');
@@ -337,138 +332,11 @@ class _ProductGrid extends StatelessWidget {
 
   Widget _buildSkeleton() {
     return Container(
+      height: 104,
       decoration: BoxDecoration(
-        color: _kSurface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
-      ),
-    );
-  }
-}
-
-// ─── Grid Card ────────────────────────────────────────────────────────────────
-
-class _MenuGridCard extends StatefulWidget {
-  final Product product;
-  final VoidCallback onTap;
-
-  const _MenuGridCard({required this.product, required this.onTap});
-
-  @override
-  State<_MenuGridCard> createState() => _MenuGridCardState();
-}
-
-class _MenuGridCardState extends State<_MenuGridCard> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          decoration: BoxDecoration(
-            color: _kSurface,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: _kBorder, width: 1),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Image 60%
-              Expanded(
-                flex: 60,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  child: ProductImage(
-                    imageUrl: widget.product.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: Container(color: _kSurface2),
-                    errorWidget: Container(
-                      color: _kSurface2,
-                      child: const Icon(Icons.restaurant_menu,
-                          color: _kTextMuted, size: 32),
-                    ),
-                  ),
-                ),
-              ),
-              // Content 40%
-              Expanded(
-                flex: 40,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // [Name + Price row]
-                      Row(
-                        textDirection: TextDirection.rtl,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.product.nameAr,
-                              style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w800,
-                                color: _kTextPrimary,
-                                height: 1.2,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textDirection: TextDirection.rtl,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          // Price Badge with white text and charcoal background
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2C2120), // Premium Dark Charcoal
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${widget.product.price.toStringAsFixed(0)} \u062c.\u0645',
-                              style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white, // #FFFFFF
-                              ),
-                              textDirection: TextDirection.rtl,
-                            ),
-                          ),
-                        ],
-                      ),
-                      // [Stepper or AddButton]
-                      SizedBox(
-                        height: 40,
-                        child: Center(
-                          child: AnimatedCartButton(
-                            product: widget.product,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        border: Border.all(color: AppColors.outlineVariant, width: 1),
       ),
     );
   }

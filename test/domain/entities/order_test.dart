@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matbakhy/domain/entities/order.dart';
-import 'package:matbakhy/domain/entities/order_item.dart';
-import 'package:matbakhy/domain/enums/order_status.dart';
-import 'package:matbakhy/domain/enums/payment_method.dart';
+import 'package:tarwi2a/domain/entities/order.dart';
+import 'package:tarwi2a/domain/entities/order_item.dart';
+import 'package:tarwi2a/domain/enums/order_status.dart';
+import 'package:tarwi2a/domain/enums/payment_method.dart';
 
 import '../../helpers/test_helpers.dart';
 

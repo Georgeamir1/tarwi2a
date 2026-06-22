@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../domain/entities/product.dart';
+import '../extensions/price_x.dart';
 import 'product_image.dart';
 
 class HeroCard extends StatelessWidget {
@@ -105,7 +106,7 @@ class HeroCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${product.price.toStringAsFixed(0)} ج',
+                    product.price.formatted,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: AppColors.grey300,
                       fontWeight: FontWeight.w700,

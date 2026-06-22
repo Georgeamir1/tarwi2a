@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -138,11 +139,20 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  Future<void> signOut() async {
+  Future<Either<Failure, void>> signOut() async {
     appLogger.d('[AuthCubit] signOut called');
-    await _authRepository.signOut();
-    appLogger.d(
-        '[AuthCubit] signOut ✅ — authStateChanges stream should emit signedOut');
+    final result = await _authRepository.signOut();
+    result.fold(
+      (failure) {
+        appLogger.e(
+            '[AuthCubit] signOut ❌ — ${failure.map(server: (f) => f.message, network: (f) => f.message, validation: (f) => f.message, unexpected: (f) => f.message)}');
+      },
+      (_) {
+        appLogger.d(
+            '[AuthCubit] signOut ✅ — authStateChanges stream should emit signedOut');
+      },
+    );
+    return result;
   }
 
   @override

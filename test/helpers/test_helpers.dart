@@ -2,48 +2,48 @@ import 'package:flutter/widgets.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
-import 'package:matbakhy/domain/repositories/auth_repository.dart';
-import 'package:matbakhy/domain/repositories/profile_repository.dart';
-import 'package:matbakhy/domain/repositories/category_repository.dart';
-import 'package:matbakhy/domain/repositories/product_repository.dart';
-import 'package:matbakhy/domain/repositories/order_repository.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
-import 'package:matbakhy/domain/entities/category.dart';
-import 'package:matbakhy/domain/entities/product.dart';
-import 'package:matbakhy/domain/entities/cart_item.dart';
-import 'package:matbakhy/domain/entities/order.dart';
-import 'package:matbakhy/domain/entities/order_item.dart';
-import 'package:matbakhy/domain/entities/coupon.dart';
-import 'package:matbakhy/domain/entities/customer.dart';
-import 'package:matbakhy/domain/entities/delivery_zone.dart';
-import 'package:matbakhy/domain/entities/business_profile.dart';
-import 'package:matbakhy/domain/entities/product_option.dart';
-import 'package:matbakhy/domain/enums/user_role.dart';
-import 'package:matbakhy/domain/enums/order_status.dart';
-import 'package:matbakhy/domain/enums/payment_method.dart';
-import 'package:matbakhy/domain/enums/coupon_type.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/infrastructure/datasources/remote/auth_remote_data_source.dart';
-import 'package:matbakhy/infrastructure/datasources/remote/category_remote_data_source.dart';
-import 'package:matbakhy/infrastructure/datasources/remote/product_remote_data_source.dart';
-import 'package:matbakhy/infrastructure/datasources/remote/order_remote_data_source.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/application/menu/categories_cubit.dart';
-import 'package:matbakhy/application/menu/products_cubit.dart';
-import 'package:matbakhy/application/cart/cart_cubit.dart';
-import 'package:matbakhy/application/orders/customer_orders_cubit.dart';
-import 'package:matbakhy/application/admin/admin_orders_cubit.dart';
-import 'package:matbakhy/application/admin/admin_categories_cubit.dart';
-import 'package:matbakhy/application/admin/admin_products_cubit.dart';
-import 'package:matbakhy/domain/repositories/coupon_repository.dart';
-import 'package:matbakhy/domain/repositories/customer_repository.dart';
-import 'package:matbakhy/domain/repositories/delivery_zone_repository.dart';
-import 'package:matbakhy/domain/repositories/business_profile_repository.dart';
-import 'package:matbakhy/domain/repositories/report_repository.dart';
-import 'package:matbakhy/domain/repositories/product_option_repository.dart';
-import 'package:matbakhy/domain/repositories/print_repository.dart';
-import 'package:matbakhy/domain/repositories/address_repository.dart';
-import 'package:matbakhy/domain/entities/address.dart';
+import 'package:tarwi2a/domain/repositories/auth_repository.dart';
+import 'package:tarwi2a/domain/repositories/profile_repository.dart';
+import 'package:tarwi2a/domain/repositories/category_repository.dart';
+import 'package:tarwi2a/domain/repositories/product_repository.dart';
+import 'package:tarwi2a/domain/repositories/order_repository.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
+import 'package:tarwi2a/domain/entities/category.dart';
+import 'package:tarwi2a/domain/entities/product.dart';
+import 'package:tarwi2a/domain/entities/cart_item.dart';
+import 'package:tarwi2a/domain/entities/order.dart';
+import 'package:tarwi2a/domain/entities/order_item.dart';
+import 'package:tarwi2a/domain/entities/coupon.dart';
+import 'package:tarwi2a/domain/entities/customer.dart';
+import 'package:tarwi2a/domain/entities/delivery_zone.dart';
+import 'package:tarwi2a/domain/entities/business_profile.dart';
+import 'package:tarwi2a/domain/entities/product_option.dart';
+import 'package:tarwi2a/domain/enums/user_role.dart';
+import 'package:tarwi2a/domain/enums/order_status.dart';
+import 'package:tarwi2a/domain/enums/payment_method.dart';
+import 'package:tarwi2a/domain/enums/coupon_type.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/infrastructure/datasources/remote/auth_remote_data_source.dart';
+import 'package:tarwi2a/infrastructure/datasources/remote/category_remote_data_source.dart';
+import 'package:tarwi2a/infrastructure/datasources/remote/product_remote_data_source.dart';
+import 'package:tarwi2a/infrastructure/datasources/remote/order_remote_data_source.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/application/menu/categories_cubit.dart';
+import 'package:tarwi2a/application/menu/products_cubit.dart';
+import 'package:tarwi2a/application/cart/cart_cubit.dart';
+import 'package:tarwi2a/application/orders/customer_orders_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_orders_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_categories_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_products_cubit.dart';
+import 'package:tarwi2a/domain/repositories/coupon_repository.dart';
+import 'package:tarwi2a/domain/repositories/customer_repository.dart';
+import 'package:tarwi2a/domain/repositories/delivery_zone_repository.dart';
+import 'package:tarwi2a/domain/repositories/business_profile_repository.dart';
+import 'package:tarwi2a/domain/repositories/report_repository.dart';
+import 'package:tarwi2a/domain/repositories/product_option_repository.dart';
+import 'package:tarwi2a/domain/repositories/print_repository.dart';
+import 'package:tarwi2a/domain/repositories/address_repository.dart';
+import 'package:tarwi2a/domain/entities/address.dart';
 
 // --- Mock Supabase types ---
 
@@ -77,7 +77,12 @@ class MockCategoryRepository extends Mock implements CategoryRepository {}
 
 class MockProductRepository extends Mock implements ProductRepository {}
 
-class MockOrderRepository extends Mock implements OrderRepository {}
+class MockOrderRepository extends Mock implements OrderRepository {
+  @override
+  Stream<List<Map<String, dynamic>>> watchCustomerOrders(String customerId) {
+    return const Stream<List<Map<String, dynamic>>>.empty();
+  }
+}
 
 // --- Mock Cubits ---
 

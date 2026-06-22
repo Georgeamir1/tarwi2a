@@ -1,0 +1,1 @@
+-- Existing remote schema (applied before local setup)

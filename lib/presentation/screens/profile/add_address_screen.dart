@@ -34,7 +34,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   final _floorController = TextEditingController();
   final _apartmentController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   bool _isDefault = false;
   bool _isSaving = false;
   List<DeliveryZone> _zones = [];
@@ -65,7 +65,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       final labelLower = address.label.trim().toLowerCase();
       if (labelLower == 'البيت' || labelLower == 'home') {
         _selectedType = AddressType.home;
-      } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+      } else if (labelLower == 'العمل' ||
+          labelLower == 'الشغل' ||
+          labelLower == 'work') {
         _selectedType = AddressType.work;
       } else {
         _selectedType = AddressType.custom;
@@ -90,7 +92,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
           _isLoadingZones = false;
 
           // Pre-select zone if editing
-          if (widget.addressToEdit != null && widget.addressToEdit!.deliveryZoneId != null) {
+          if (widget.addressToEdit != null &&
+              widget.addressToEdit!.deliveryZoneId != null) {
             _selectedZone = _zones.firstWhere(
               (z) => z.id == widget.addressToEdit!.deliveryZoneId,
               orElse: () => _zones.first,
@@ -150,13 +153,13 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       'longitude': 31.2357,
       if (_selectedZone != null) 'delivery_zone_id': _selectedZone!.id,
       if (_selectedZone != null) 'delivery_zone_name': _selectedZone!.name,
-      if (_selectedZone != null) 'delivery_fee': _selectedZone!.fee,
     };
 
     try {
       if (widget.addressToEdit != null) {
         // Edit Mode
-        await sl<AddressCubit>().updateAddress(widget.addressToEdit!.id, data, authState.profile.id);
+        await sl<AddressCubit>().updateAddress(
+            widget.addressToEdit!.id, data, authState.profile.id);
       } else {
         // Add Mode
         await sl<AddressCubit>().createAddress(authState.profile.id, data);
@@ -178,7 +181,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     }
   }
 
-  Widget _buildTypeChip(AddressType type, String label, IconData outlineIcon, IconData filledIcon) {
+  Widget _buildTypeChip(AddressType type, String label, IconData outlineIcon,
+      IconData filledIcon) {
     final isSelected = _selectedType == type;
     final theme = Theme.of(context);
 
@@ -195,7 +199,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 _labelController.text = 'البيت';
               } else if (type == AddressType.work) {
                 _labelController.text = 'العمل';
-              } else if (widget.addressToEdit == null || _getTypeFromLabel(widget.addressToEdit!.label) != AddressType.custom) {
+              } else if (widget.addressToEdit == null ||
+                  _getTypeFromLabel(widget.addressToEdit!.label) !=
+                      AddressType.custom) {
                 _labelController.clear();
               } else {
                 _labelController.text = widget.addressToEdit!.label;
@@ -209,7 +215,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.outlineVariant,
+                color:
+                    isSelected ? AppColors.primary : AppColors.outlineVariant,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -218,7 +225,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               children: [
                 Icon(
                   isSelected ? filledIcon : outlineIcon,
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color:
+                      isSelected ? AppColors.primary : AppColors.textSecondary,
                   size: 24,
                 ),
                 const SizedBox(height: 6),
@@ -226,7 +234,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                   label,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                    color: isSelected ? AppColors.onPrimaryContainer : AppColors.textSecondary,
+                    color: isSelected
+                        ? AppColors.onPrimaryContainer
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -241,7 +251,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
     final labelLower = label.trim().toLowerCase();
     if (labelLower == 'البيت' || labelLower == 'home') {
       return AddressType.home;
-    } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+    } else if (labelLower == 'العمل' ||
+        labelLower == 'الشغل' ||
+        labelLower == 'work') {
       return AddressType.work;
     } else {
       return AddressType.custom;
@@ -271,7 +283,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
               top: 12,
               right: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.surface.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(AppRadius.full),
@@ -280,7 +293,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.gps_fixed, size: 14, color: AppColors.success),
+                    const Icon(Icons.gps_fixed,
+                        size: 14, color: AppColors.success),
                     const SizedBox(width: 6),
                     Text(
                       'تم تحديد موقع الدليفرى',
@@ -325,7 +339,8 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            child: CircularProgressIndicator(
+                strokeWidth: 2, color: AppColors.primary),
           ),
         ),
       );
@@ -379,14 +394,16 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       isExpanded: true,
       hint: Text(
         'اختر المنطقة لتاكيد التوصيل',
-        style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+        style: theme.textTheme.bodyMedium
+            ?.copyWith(color: AppColors.textSecondary),
       ),
       items: _zones.map((zone) {
         return DropdownMenuItem<DeliveryZone>(
           value: zone,
           child: Text(
             zone.name,
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.textPrimary),
+            style: theme.textTheme.bodyMedium
+                ?.copyWith(color: AppColors.textPrimary),
           ),
         );
       }).toList(),
@@ -465,15 +482,16 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                             hint: 'مثال: الجيم، بيت العيلة',
                             controller: _labelController,
                             prefixIcon: Icons.label_important_outline,
-                            validator: (v) =>
-                                v?.trim().isEmpty == true ? 'أدخل اسم العنوان' : null,
+                            validator: (v) => v?.trim().isEmpty == true
+                                ? 'أدخل اسم العنوان'
+                                : null,
                           ),
                         ],
                       ],
                     ),
                   ),
                 ),
-                
+
                 // SECTION 2: تفاصيل الموقع
                 Card(
                   margin: const EdgeInsets.only(top: AppSpacing.lg),
@@ -500,8 +518,9 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                           controller: _addressController,
                           prefixIcon: Icons.location_on_outlined,
                           maxLines: 2,
-                          validator: (v) =>
-                              v?.trim().isEmpty == true ? 'مطلوب تحديد العنوان بالتفصيل' : null,
+                          validator: (v) => v?.trim().isEmpty == true
+                              ? 'مطلوب تحديد العنوان بالتفصيل'
+                              : null,
                         ),
                       ],
                     ),
@@ -585,7 +604,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: AppSpacing.xxl),
                 AppButton(
                   label: isEditMode ? 'تحديث العنوان' : 'حفظ العنوان الجديد',
@@ -609,7 +628,8 @@ class _PulsingPin extends StatefulWidget {
   State<_PulsingPin> createState() => _PulsingPinState();
 }
 
-class _PulsingPinState extends State<_PulsingPin> with SingleTickerProviderStateMixin {
+class _PulsingPinState extends State<_PulsingPin>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override

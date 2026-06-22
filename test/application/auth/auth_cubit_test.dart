@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthResponse;
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
 import '../../helpers/test_helpers.dart';
 
 class MockSupabaseAuthState extends Mock implements supabase.AuthState {}
@@ -211,7 +211,8 @@ void main() {
     });
 
     group('signOut', () {
-      test('delegates signOut to repository', () async {
+      test('delegates signOut to repository and returns Right on success',
+          () async {
         when(() => mockAuthRepo.authStateChanges)
             .thenAnswer((_) => const Stream.empty());
         when(() => mockAuthRepo.currentUser).thenReturn(null);
@@ -219,9 +220,24 @@ void main() {
             .thenAnswer((_) async => right<Failure, void>(null));
 
         cubit = createCubit();
-        await cubit.signOut();
+        final result = await cubit.signOut();
 
         verify(() => mockAuthRepo.signOut()).called(1);
+        expect(result.isRight(), true);
+      });
+
+      test('returns Left on signOut failure', () async {
+        when(() => mockAuthRepo.authStateChanges)
+            .thenAnswer((_) => const Stream.empty());
+        when(() => mockAuthRepo.currentUser).thenReturn(null);
+        when(() => mockAuthRepo.signOut()).thenAnswer((_) async =>
+            left<Failure, void>(const Failure.unexpected(message: 'fail')));
+
+        cubit = createCubit();
+        final result = await cubit.signOut();
+
+        verify(() => mockAuthRepo.signOut()).called(1);
+        expect(result.isLeft(), true);
       });
     });
 

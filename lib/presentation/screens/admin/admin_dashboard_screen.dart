@@ -5,10 +5,12 @@ import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_orders_cubit.dart';
 import '../../../application/admin/admin_business_profile_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
+import '../../../application/notifications/notifications_cubit.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/enums/order_status.dart';
 import '../../extensions/order_status_x.dart';
 import '../../widgets/app_button.dart';
+import '../../widgets/notification_badge.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -143,6 +145,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   end: Alignment.bottomRight,
                                 ),
                                 onTap: () => context.push('/admin/reports'),
+                              ),
+                              _QuickActionCard(
+                                title: 'إرسال إشعار',
+                                subtitle: 'عروض وتحديثات',
+                                icon: Icons.campaign_rounded,
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFE02B2B),
+                                    Color(0xFFFF5252)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                onTap: () => context.push('/admin/broadcast'),
                               ),
                             ],
                           ),
@@ -286,36 +302,20 @@ class _DashboardHeader extends StatelessWidget {
                     onTap: onBackTap,
                   ),
                   const Spacer(),
-                  // Notification bell with badge
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _HeaderIconBtn(
+                  // Notification bell with badge (unread from cubit)
+                  BlocBuilder<NotificationsCubit, NotificationsState>(
+                    buildWhen: (prev, curr) =>
+                        prev.unreadCount != curr.unreadCount,
+                    builder: (context, notifState) {
+                      return NotificationBadge(
                         icon: Icons.notifications_none_rounded,
-                        size: 20,
+                        count: notifState.unreadCount,
+                        color: Colors.white,
+                        iconSize: 20,
+                        tooltip: 'الإشعارات',
                         onTap: () => context.push('/admin/notifications'),
-                      ),
-                      if (pendingCount > 0)
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(
-                              color: AppColors.statusPending,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              '$pendingCount',
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
+                      );
+                    },
                   ),
                 ],
               ),

@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/application/orders/customer_orders_cubit.dart';
-import 'package:matbakhy/domain/entities/order.dart';
+import 'package:tarwi2a/application/orders/customer_orders_cubit.dart';
+import 'package:tarwi2a/domain/entities/order.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

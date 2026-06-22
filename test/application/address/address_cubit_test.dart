@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/application/address/address_cubit.dart';
-import 'package:matbakhy/domain/entities/address.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
+import 'package:tarwi2a/application/address/address_cubit.dart';
+import 'package:tarwi2a/domain/entities/address.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {

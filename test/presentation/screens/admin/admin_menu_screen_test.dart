@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/admin/admin_menu_screen.dart';
-import 'package:matbakhy/application/admin/admin_products_cubit.dart';
-import 'package:matbakhy/application/admin/admin_categories_cubit.dart';
-import 'package:matbakhy/domain/entities/product.dart';
+import 'package:tarwi2a/presentation/screens/admin/admin_menu_screen.dart';
+import 'package:tarwi2a/application/admin/admin_products_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_categories_cubit.dart';
+import 'package:tarwi2a/domain/entities/product.dart';
 import '../../../helpers/test_helpers.dart';
 
 const _testProduct2 = Product(

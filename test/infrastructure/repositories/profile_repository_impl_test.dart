@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
-import 'package:matbakhy/infrastructure/datasources/remote/profile_remote_data_source.dart';
-import 'package:matbakhy/infrastructure/dtos/user_profile_dto.dart';
-import 'package:matbakhy/infrastructure/repositories/profile_repository_impl.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
+import 'package:tarwi2a/infrastructure/datasources/remote/profile_remote_data_source.dart';
+import 'package:tarwi2a/infrastructure/dtos/user_profile_dto.dart';
+import 'package:tarwi2a/infrastructure/repositories/profile_repository_impl.dart';
 import '../../helpers/test_helpers.dart';
 
 class MockProfileRemoteDataSource extends Mock

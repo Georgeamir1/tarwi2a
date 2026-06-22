@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matbakhy/application/theme/theme_cubit.dart';
+import 'package:tarwi2a/application/theme/theme_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

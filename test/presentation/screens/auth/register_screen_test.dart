@@ -5,11 +5,11 @@ import 'package:mocktail/mocktail.dart';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthResponse;
 
-import 'package:matbakhy/presentation/screens/auth/register_screen.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/presentation/widgets/error_banner.dart';
+import 'package:tarwi2a/presentation/screens/auth/register_screen.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/presentation/widgets/error_banner.dart';
 import '../../../helpers/test_helpers.dart';
 
 Widget _buildTestWidget(AuthCubit cubit) {

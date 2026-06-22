@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 
-import 'package:matbakhy/presentation/screens/cart/cart_screen.dart';
-import 'package:matbakhy/application/cart/cart_cubit.dart';
-import 'package:matbakhy/domain/entities/cart_item.dart';
-import 'package:matbakhy/domain/entities/selected_option.dart';
-import 'package:matbakhy/app/theme/app_theme.dart';
+import 'package:tarwi2a/presentation/screens/cart/cart_screen.dart';
+import 'package:tarwi2a/application/cart/cart_cubit.dart';
+import 'package:tarwi2a/domain/entities/cart_item.dart';
+import 'package:tarwi2a/domain/entities/selected_option.dart';
+import 'package:tarwi2a/app/theme/app_theme.dart';
 import '../../../helpers/test_helpers.dart';
 
 Widget _buildTestWidget({required CartCubit cartCubit}) {

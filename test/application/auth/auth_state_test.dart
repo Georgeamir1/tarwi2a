@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
-import 'package:matbakhy/domain/enums/user_role.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
+import 'package:tarwi2a/domain/enums/user_role.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
 
 void main() {
   final testProfile = UserProfile(

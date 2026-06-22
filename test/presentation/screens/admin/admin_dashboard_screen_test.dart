@@ -4,14 +4,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/admin/admin_dashboard_screen.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/application/admin/admin_orders_cubit.dart';
-import 'package:matbakhy/application/admin/admin_business_profile_cubit.dart';
+import 'package:tarwi2a/presentation/screens/admin/admin_dashboard_screen.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_orders_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_business_profile_cubit.dart';
+import 'package:tarwi2a/application/notifications/notifications_cubit.dart';
 import '../../../helpers/test_helpers.dart';
 
 class MockAdminBusinessProfileCubit extends Mock
     implements AdminBusinessProfileCubit {}
+
+class MockNotificationsCubit extends Mock implements NotificationsCubit {}
 
 GoRouter _createRouter() {
   return GoRouter(
@@ -24,7 +27,9 @@ GoRouter _createRouter() {
       GoRoute(path: '/admin/orders', builder: (_, __) => const Placeholder()),
       GoRoute(path: '/admin/menu', builder: (_, __) => const Placeholder()),
       GoRoute(path: '/login', builder: (_, __) => const Placeholder()),
-      GoRoute(path: '/admin/notifications', builder: (_, __) => const Placeholder()),
+      GoRoute(
+          path: '/admin/notifications',
+          builder: (_, __) => const Placeholder()),
     ],
   );
 }
@@ -33,6 +38,7 @@ Widget _buildTestWidget({
   required AdminOrdersCubit ordersCubit,
   required AuthCubit authCubit,
   required AdminBusinessProfileCubit businessProfileCubit,
+  required NotificationsCubit notificationsCubit,
 }) {
   return MaterialApp.router(
     routerConfig: _createRouter(),
@@ -40,7 +46,9 @@ Widget _buildTestWidget({
       providers: [
         BlocProvider<AdminOrdersCubit>.value(value: ordersCubit),
         BlocProvider<AuthCubit>.value(value: authCubit),
-        BlocProvider<AdminBusinessProfileCubit>.value(value: businessProfileCubit),
+        BlocProvider<AdminBusinessProfileCubit>.value(
+            value: businessProfileCubit),
+        BlocProvider<NotificationsCubit>.value(value: notificationsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -51,17 +59,20 @@ void main() {
   late MockAdminOrdersCubit mockOrdersCubit;
   late MockAuthCubit mockAuthCubit;
   late MockAdminBusinessProfileCubit mockBusinessProfileCubit;
+  late MockNotificationsCubit mockNotificationsCubit;
 
   setUpAll(() {
     registerFallbackValue(const AdminOrdersState());
     registerFallbackValue(const AuthState.initial());
     registerFallbackValue(const AdminBusinessProfileState());
+    registerFallbackValue(const NotificationsState());
   });
 
   setUp(() {
     mockOrdersCubit = MockAdminOrdersCubit();
     mockAuthCubit = MockAuthCubit();
     mockBusinessProfileCubit = MockAdminBusinessProfileCubit();
+    mockNotificationsCubit = MockNotificationsCubit();
 
     when(() => mockOrdersCubit.stream)
         .thenAnswer((_) => const Stream<AdminOrdersState>.empty());
@@ -69,6 +80,8 @@ void main() {
         .thenAnswer((_) => const Stream<AuthState>.empty());
     when(() => mockBusinessProfileCubit.stream)
         .thenAnswer((_) => const Stream<AdminBusinessProfileState>.empty());
+    when(() => mockNotificationsCubit.stream)
+        .thenAnswer((_) => const Stream<NotificationsState>.empty());
 
     // Default stub for business profile
     when(() => mockBusinessProfileCubit.state).thenReturn(
@@ -78,6 +91,11 @@ void main() {
       ),
     );
     when(() => mockBusinessProfileCubit.loadProfile()).thenAnswer((_) async {});
+
+    // Default stub for notifications
+    when(() => mockNotificationsCubit.state).thenReturn(
+      const NotificationsState(),
+    );
   });
 
   group('AdminDashboardScreen', () {
@@ -118,6 +136,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -138,6 +157,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -161,6 +181,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -180,12 +201,14 @@ void main() {
       );
       when(() => mockOrdersCubit.loadOrders()).thenAnswer((_) async {});
       when(() => mockAuthCubit.checkAuthStatus()).thenAnswer((_) {});
-      when(() => mockBusinessProfileCubit.loadProfile()).thenAnswer((_) async {});
+      when(() => mockBusinessProfileCubit.loadProfile())
+          .thenAnswer((_) async {});
 
       await tester.pumpWidget(_buildTestWidget(
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -204,6 +227,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       // Use pump() instead of pumpAndSettle() because CircularProgressIndicator
       // is an endless animation that never settles.
@@ -227,6 +251,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -247,6 +272,7 @@ void main() {
         ordersCubit: mockOrdersCubit,
         authCubit: mockAuthCubit,
         businessProfileCubit: mockBusinessProfileCubit,
+        notificationsCubit: mockNotificationsCubit,
       ));
       await tester.pumpAndSettle();
 
@@ -269,6 +295,7 @@ void main() {
           ordersCubit: mockOrdersCubit,
           authCubit: mockAuthCubit,
           businessProfileCubit: mockBusinessProfileCubit,
+          notificationsCubit: mockNotificationsCubit,
         ));
         await tester.pumpAndSettle();
 

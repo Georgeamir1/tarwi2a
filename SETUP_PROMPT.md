@@ -7,15 +7,15 @@ Do NOT suggest alternatives. Do NOT ask questions. Do NOT explain. Just CREATE F
 
 ## STEP 1 — Run this command first:
 ```
-flutter create matbakhy --org com.matbakhy --platforms android,ios
-cd matbakhy
+flutter create tarwi2a --org com.tarwi2a --platforms android,ios
+cd tarwi2a
 ```
 
 ---
 
 ## STEP 2 — Replace pubspec.yaml with this EXACT content:
 ```yaml
-name: matbakhy
+name: tarwi2a
 description: Food ordering app with admin panel
 publish_to: 'none'
 version: 1.0.0+1

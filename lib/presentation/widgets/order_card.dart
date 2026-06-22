@@ -9,6 +9,7 @@ import '../../domain/enums/order_status.dart';
 import '../../domain/enums/order_type.dart';
 import '../extensions/order_status_x.dart';
 import '../extensions/payment_method_x.dart';
+import '../extensions/price_x.dart';
 import 'order_status_tracker.dart';
 import '../../application/cart/cart_cubit.dart';
 
@@ -273,7 +274,7 @@ class _OrderCardState extends State<OrderCard> {
                                                 ),
                                               ),
                                               Text(
-                                                '${(item.productPrice * item.quantity).toStringAsFixed(0)} ج',
+                                                (item.productPrice * item.quantity).formatted,
                                                 style: theme.textTheme.bodySmall
                                                     ?.copyWith(
                                                   color: isDark
@@ -323,7 +324,7 @@ class _OrderCardState extends State<OrderCard> {
                                         ),
                                       ),
                                       Text(
-                                        '${widget.order.totalAmount.toStringAsFixed(0)} جنيه',
+                                        widget.order.totalAmount.formatted,
                                         style: theme.textTheme.titleMedium
                                             ?.copyWith(
                                           fontSize: 17,
@@ -581,7 +582,7 @@ class _ExpandedBody extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  '${item.subtotal.toStringAsFixed(0)} ج',
+                                  item.subtotal.formatted,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.primary,
@@ -630,7 +631,7 @@ class _ExpandedBody extends StatelessWidget {
                             style: theme.textTheme.bodySmall
                                 ?.copyWith(color: AppColors.textSecondary)),
                         Text(
-                          '-${order.discountAmount.toStringAsFixed(0)} ج',
+                          '-${order.discountAmount.formatted}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: AppColors.success,
                             fontWeight: FontWeight.w800,
@@ -653,7 +654,7 @@ class _ExpandedBody extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${order.totalAmount.toStringAsFixed(0)} جنيه',
+                        order.totalAmount.formatted,
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w900,
                           fontSize: 18,

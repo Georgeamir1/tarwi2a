@@ -15,6 +15,7 @@ import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
 import '../../../application/coupon/coupon_cubit.dart';
 import '../../extensions/payment_method_x.dart';
+import '../../extensions/price_x.dart';
 import '../../widgets/loading_button.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/coupon_input.dart';
@@ -115,7 +116,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               })
           .toList();
 
-      await sl<CustomerOrdersCubit>().placeOrder(
+      final ordersCubit = sl<CustomerOrdersCubit>();
+      await ordersCubit.placeOrder(
         customerId: profile.id,
         customerName: _nameController.text.trim(),
         customerPhone: _phoneController.text.trim(),
@@ -140,9 +142,24 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         deliveryZoneName: cartState.deliveryZoneName,
       );
 
+      final orderState = ordersCubit.state;
+      if (orderState.status == CustomerOrdersStatus.error) {
+        final errorMsg = orderState.failure?.message ?? 'حصل خطأ غير متوقع';
+        appLogger.e('[CheckoutScreen] _placeOrder — order FAILED: $errorMsg');
+        if (!mounted) return;
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل إنشاء الطلب: $errorMsg'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
       if (cartState.appliedCouponId != null) {
-        await sl<CouponRepository>()
-            .incrementUsage(cartState.appliedCouponId!);
+        await sl<CouponRepository>().incrementUsage(cartState.appliedCouponId!);
       }
 
       await sl<CustomerOrdersCubit>().loadOrders(profile.id);
@@ -155,13 +172,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       if (!mounted) return;
       _showSuccessDialog();
-    } catch (e) {
-      appLogger.e('[CheckoutScreen] _placeOrder — error: $e');
+    } catch (e, st) {
+      appLogger.e('[CheckoutScreen] _placeOrder — unexpected error',
+          error: e, stackTrace: st);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('حصل خطأ، حاول تاني'),
+        SnackBar(
+          content: Text('حصل خطأ: $e'),
           backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 5),
         ),
       );
     } finally {
@@ -177,7 +196,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       barrierDismissible: false,
       builder: (dialogContext) {
         final theme = Theme.of(dialogContext);
-        
+
         return TweenAnimationBuilder<double>(
           duration: const Duration(milliseconds: 550),
           tween: Tween<double>(begin: 0.85, end: 1.0),
@@ -210,7 +229,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         TweenAnimationBuilder<double>(
                           duration: const Duration(milliseconds: 700),
                           tween: Tween<double>(begin: 0.0, end: 1.0),
-                          curve: const Interval(0.2, 1.0, curve: Curves.elasticOut),
+                          curve: const Interval(0.2, 1.0,
+                              curve: Curves.elasticOut),
                           builder: (context, iconScale, child) {
                             return Transform.scale(
                               scale: iconScale,
@@ -222,7 +242,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.success.withValues(alpha: 0.2),
+                                      color: AppColors.success
+                                          .withValues(alpha: 0.2),
                                       blurRadius: 16,
                                       offset: const Offset(0, 6),
                                     ),
@@ -257,7 +278,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         const SizedBox(height: 28),
                         ElevatedButton(
                           onPressed: () {
-                            appLogger.i('[CheckoutScreen] navigate to /orders after success');
+                            appLogger.i(
+                                '[CheckoutScreen] navigate to /orders after success');
                             Navigator.of(dialogContext).pop();
                             context.go('/orders');
                           },
@@ -265,7 +287,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             backgroundColor: AppColors.primary,
                             foregroundColor: AppColors.onPrimary,
                             elevation: 2,
-                            shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                            shadowColor:
+                                AppColors.primary.withValues(alpha: 0.3),
                             minimumSize: const Size(double.infinity, 54),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -282,9 +305,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded, 
-                                   color: AppColors.onPrimary, 
-                                   size: 20),
+                              const Icon(Icons.arrow_forward_rounded,
+                                  color: AppColors.onPrimary, size: 20),
                             ],
                           ),
                         ),
@@ -380,7 +402,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final labelLower = address.label.trim().toLowerCase();
     if (labelLower == 'البيت' || labelLower == 'home') {
       addressIcon = Icons.home_rounded;
-    } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+    } else if (labelLower == 'العمل' ||
+        labelLower == 'الشغل' ||
+        labelLower == 'work') {
       addressIcon = Icons.work_rounded;
     }
 
@@ -426,7 +450,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     if (address.deliveryZoneName != null) ...[
                       const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: AppColors.successContainer,
                           borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -447,7 +472,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 onPressed: _pickAddress,
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -463,7 +489,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          if (address.building != null || address.floor != null || address.apartment != null) ...[
+          if (address.building != null ||
+              address.floor != null ||
+              address.apartment != null) ...[
             const SizedBox(height: 6),
             Text(
               [
@@ -480,7 +508,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 14),
+                const Icon(Icons.info_outline,
+                    color: AppColors.textSecondary, size: 14),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -502,7 +531,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => sl<CouponCubit>()),
@@ -553,8 +582,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ),
                     _CheckoutSectionCard(
-                      title: _orderType == OrderType.delivery ? 'بيانات التوصيل والتواصل' : 'بيانات التواصل',
-                      icon: _orderType == OrderType.delivery ? Icons.person_pin_circle_rounded : Icons.person_outline_rounded,
+                      title: _orderType == OrderType.delivery
+                          ? 'بيانات التوصيل والتواصل'
+                          : 'بيانات التواصل',
+                      icon: _orderType == OrderType.delivery
+                          ? Icons.person_pin_circle_rounded
+                          : Icons.person_outline_rounded,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -562,7 +595,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             _nameController,
                             'الاسم',
                             Icons.person_outline,
-                            validator: (v) => (v == null || v.isEmpty) ? 'أدخل اسمك' : null,
+                            validator: (v) =>
+                                (v == null || v.isEmpty) ? 'أدخل اسمك' : null,
                           ),
                           const SizedBox(height: 12),
                           _buildTextField(
@@ -570,7 +604,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             'رقم الهاتف',
                             Icons.phone_outlined,
                             keyboardType: TextInputType.phone,
-                            validator: (v) => (v == null || v.isEmpty) ? 'أدخل رقم الهاتف' : null,
+                            validator: (v) => (v == null || v.isEmpty)
+                                ? 'أدخل رقم الهاتف'
+                                : null,
                           ),
                           if (_orderType == OrderType.delivery) ...[
                             const SizedBox(height: 16),
@@ -582,27 +618,35 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: _addressValidationError != null
-                                      ? AppColors.errorContainer.withValues(alpha: 0.15)
+                                      ? AppColors.errorContainer
+                                          .withValues(alpha: 0.15)
                                       : AppColors.background,
-                                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
                                   border: Border.all(
                                     color: _addressValidationError != null
                                         ? AppColors.error
-                                        : AppColors.outlineVariant.withValues(alpha: 0.8),
-                                    width: _addressValidationError != null ? 1.5 : 1,
+                                        : AppColors.outlineVariant
+                                            .withValues(alpha: 0.8),
+                                    width: _addressValidationError != null
+                                        ? 1.5
+                                        : 1,
                                   ),
                                 ),
                                 child: Column(
                                   children: [
                                     Icon(
                                       Icons.location_off_rounded,
-                                      color: _addressValidationError != null ? AppColors.error : AppColors.textSecondary,
+                                      color: _addressValidationError != null
+                                          ? AppColors.error
+                                          : AppColors.textSecondary,
                                       size: 40,
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
                                       'لم يتم تحديد عنوان للتوصيل',
-                                      style: theme.textTheme.titleSmall?.copyWith(
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: AppColors.textPrimary,
                                       ),
@@ -610,7 +654,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     const SizedBox(height: 4),
                                     Text(
                                       'يجب اختيار عنوان توصيل محفوظ لتأكيد الطلب وحساب الرسوم',
-                                      style: theme.textTheme.bodySmall?.copyWith(
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
                                         color: AppColors.textSecondary,
                                       ),
                                       textAlign: TextAlign.center,
@@ -619,7 +664,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       const SizedBox(height: 8),
                                       Text(
                                         _addressValidationError!,
-                                        style: theme.textTheme.labelMedium?.copyWith(
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
                                           color: AppColors.error,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -628,15 +674,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     const SizedBox(height: 16),
                                     ElevatedButton.icon(
                                       onPressed: _pickAddress,
-                                      icon: const Icon(Icons.add_location_alt_rounded, size: 18),
-                                      label: const Text('اختيار أو إضافة عنوان جديد'),
+                                      icon: const Icon(
+                                          Icons.add_location_alt_rounded,
+                                          size: 18),
+                                      label: const Text(
+                                          'اختيار أو إضافة عنوان جديد'),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: AppColors.primary,
                                         foregroundColor: AppColors.onPrimary,
                                         elevation: 0,
-                                        minimumSize: const Size(double.infinity, 48),
+                                        minimumSize:
+                                            const Size(double.infinity, 48),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                                          borderRadius: BorderRadius.circular(
+                                              AppRadius.lg),
                                         ),
                                       ),
                                     ),
@@ -656,7 +707,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ),
                     _CheckoutSectionCard(
-                      title: _orderType == OrderType.delivery ? 'موعد التوصيل' : 'موعد الاستلام',
+                      title: _orderType == OrderType.delivery
+                          ? 'موعد التوصيل'
+                          : 'موعد الاستلام',
                       icon: Icons.schedule_rounded,
                       child: Column(
                         children: [
@@ -666,7 +719,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 child: _ScheduleChip(
                                   label: 'في أقرب وقت',
                                   selected: !_scheduleOrder,
-                                  onTap: () => setState(() => _scheduleOrder = false),
+                                  onTap: () =>
+                                      setState(() => _scheduleOrder = false),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -674,7 +728,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 child: _ScheduleChip(
                                   label: 'جدولة',
                                   selected: _scheduleOrder,
-                                  onTap: () => setState(() => _scheduleOrder = true),
+                                  onTap: () =>
+                                      setState(() => _scheduleOrder = true),
                                 ),
                               ),
                             ],
@@ -686,10 +741,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(AppRadius.md),
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.08),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.md),
                                   border: Border.all(
-                                    color: AppColors.primary.withValues(alpha: 0.3),
+                                    color: AppColors.primary
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Row(
@@ -700,9 +758,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     Expanded(
                                       child: Text(
                                         _scheduledDateTime != null
-                                            ? DateFormat('dd/MM/yyyy - hh:mm a').format(_scheduledDateTime!)
+                                            ? DateFormat('dd/MM/yyyy - hh:mm a')
+                                                .format(_scheduledDateTime!)
                                             : 'اختر التاريخ والوقت',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
                                           color: _scheduledDateTime != null
                                               ? AppColors.textPrimary
                                               : AppColors.textSecondary,
@@ -758,9 +818,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               padding: const EdgeInsets.all(14),
                               decoration: BoxDecoration(
                                 color: AppColors.tertiaryContainer,
-                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.lg),
                                 border: Border.all(
-                                  color: AppColors.tertiary.withValues(alpha: 0.3),
+                                  color:
+                                      AppColors.tertiary.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Row(
@@ -771,7 +833,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   Expanded(
                                     child: Text(
                                       'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
-                                      style: theme.textTheme.bodySmall?.copyWith(
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
                                         color: AppColors.onTertiaryContainer,
                                       ),
                                     ),
@@ -796,15 +859,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             HapticFeedback.lightImpact();
                           } else if (couponState.status == CouponStatus.error) {
                             HapticFeedback.heavyImpact();
-                          } else if (couponState.status == CouponStatus.removing ||
+                          } else if (couponState.status ==
+                                  CouponStatus.removing ||
                               couponState.status == CouponStatus.initial) {
                             context.read<CartCubit>().removeCoupon();
                           }
                         },
                         builder: (context, couponState) {
-                          final isLoading = couponState.status == CouponStatus.validating;
-                          final hasError = couponState.status == CouponStatus.error;
-                          final isApplied = couponState.status == CouponStatus.applied;
+                          final isLoading =
+                              couponState.status == CouponStatus.validating;
+                          final hasError =
+                              couponState.status == CouponStatus.error;
+                          final isApplied =
+                              couponState.status == CouponStatus.applied;
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -814,9 +881,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
                                     color: AppColors.successContainer,
-                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.lg),
                                     border: Border.all(
-                                      color: AppColors.success.withValues(alpha: 0.3),
+                                      color: AppColors.success
+                                          .withValues(alpha: 0.3),
                                       width: 1.5,
                                     ),
                                   ),
@@ -827,20 +896,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               'تم تطبيق كود: ${couponState.appliedCoupon!.code}',
-                                              style: theme.textTheme.titleSmall?.copyWith(
-                                                color: AppColors.successOnContainer,
+                                              style: theme.textTheme.titleSmall
+                                                  ?.copyWith(
+                                                color: AppColors
+                                                    .successOnContainer,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                             const SizedBox(height: 2),
                                             Text(
-                                              'وفرت ${couponState.discountAmount.toStringAsFixed(0)} ج من إجمالي طلبك',
-                                              style: theme.textTheme.labelMedium?.copyWith(
-                                                color: AppColors.successOnContainer.withValues(alpha: 0.8),
+                                              'وفرت ${couponState.discountAmount.formatted} من إجمالي طلبك',
+                                              style: theme.textTheme.labelMedium
+                                                  ?.copyWith(
+                                                color: AppColors
+                                                    .successOnContainer
+                                                    .withValues(alpha: 0.8),
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
@@ -850,16 +925,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       TextButton.icon(
                                         onPressed: () {
                                           HapticFeedback.lightImpact();
-                                          context.read<CouponCubit>().removeCoupon();
+                                          context
+                                              .read<CouponCubit>()
+                                              .removeCoupon();
                                           _couponCodeController.clear();
                                         },
-                                        icon: const Icon(Icons.close_rounded, size: 16),
+                                        icon: const Icon(Icons.close_rounded,
+                                            size: 16),
                                         label: const Text('إزالة'),
                                         style: TextButton.styleFrom(
                                           foregroundColor: AppColors.error,
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
                                           minimumSize: Size.zero,
-                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
                                         ),
                                       ),
                                     ],
@@ -870,37 +950,49 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   controller: _couponCodeController,
                                   isLoading: isLoading,
                                   onChanged: (String value) {
-                                    final couponCubit = context.read<CouponCubit>();
-                                    if (couponCubit.state.status == CouponStatus.error) {
+                                    final couponCubit =
+                                        context.read<CouponCubit>();
+                                    if (couponCubit.state.status ==
+                                        CouponStatus.error) {
                                       couponCubit.clearError();
                                     }
                                   },
                                   onApply: () {
-                                    final code = _couponCodeController.text.trim();
+                                    final code =
+                                        _couponCodeController.text.trim();
                                     if (code.isEmpty) return;
-                                    context.read<CouponCubit>().validateAndApply(code, cartState.total);
+                                    context
+                                        .read<CouponCubit>()
+                                        .validateAndApply(
+                                            code, cartState.total);
                                   },
                                 ),
                                 if (hasError) ...[
                                   const SizedBox(height: 8),
                                   AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
                                     decoration: BoxDecoration(
                                       color: AppColors.errorContainer,
-                                      borderRadius: BorderRadius.circular(AppRadius.md),
+                                      borderRadius:
+                                          BorderRadius.circular(AppRadius.md),
                                       border: Border.all(
-                                        color: AppColors.error.withValues(alpha: 0.25),
+                                        color: AppColors.error
+                                            .withValues(alpha: 0.25),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+                                        const Icon(Icons.error_outline_rounded,
+                                            color: AppColors.error, size: 20),
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: Text(
-                                            couponState.errorMessage ?? 'حصل خطأ في كود الخصم',
-                                            style: theme.textTheme.labelMedium?.copyWith(
+                                            couponState.errorMessage ??
+                                                'حصل خطأ في كود الخصم',
+                                            style: theme.textTheme.labelMedium
+                                                ?.copyWith(
                                               color: AppColors.onErrorContainer,
                                               fontWeight: FontWeight.bold,
                                             ),
@@ -922,25 +1014,32 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: Column(
                         children: [
                           ...cartState.items.map((item) => Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             '${item.productNameAr} × ${item.quantity}',
-                                            style: theme.textTheme.bodySmall?.copyWith(
+                                            style: theme.textTheme.bodySmall
+                                                ?.copyWith(
                                               fontSize: 13,
                                               color: AppColors.textPrimary,
                                             ),
                                           ),
                                           if (item.selectedOptions.isNotEmpty)
                                             Text(
-                                              item.selectedOptions.map((e) => e.name).join(', '),
-                                              style: theme.textTheme.labelSmall?.copyWith(
+                                              item.selectedOptions
+                                                  .map((e) => e.name)
+                                                  .join(', '),
+                                              style: theme.textTheme.labelSmall
+                                                  ?.copyWith(
                                                 color: AppColors.textSecondary,
                                               ),
                                             ),
@@ -948,8 +1047,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${item.subtotal.toStringAsFixed(0)} ج',
-                                      style: theme.textTheme.labelMedium?.copyWith(
+                                      item.subtotal.formatted,
+                                      style:
+                                          theme.textTheme.labelMedium?.copyWith(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 13,
                                         color: AppColors.textPrimary,
@@ -958,7 +1058,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ],
                                 ),
                               )),
-                          const Divider(height: 24, color: AppColors.outlineVariant),
+                          const Divider(
+                              height: 24, color: AppColors.outlineVariant),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -971,7 +1072,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 ),
                               ),
                               Text(
-                                '${cartState.total.toStringAsFixed(0)} جنيه',
+                                cartState.total.formatted,
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   color: AppColors.primary,
@@ -980,7 +1081,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             ],
                           ),
                           if (cartState.deliveryFee > 0) ...[
-                            const Divider(height: 16, color: AppColors.outlineVariant),
+                            const Divider(
+                                height: 16, color: AppColors.outlineVariant),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -993,158 +1095,157 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   ),
                                 ),
                                 Text(
-                                  '+${cartState.deliveryFee.toStringAsFixed(0)} ج',
+                                  '+${cartState.deliveryFee.formatted}',
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                                ],
-                              ),
-                            ],
-                            if (cartState.discountAmount > 0) ...[
-                              const Divider(height: 16, color: AppColors.outlineVariant),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'الخصم',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: AppColors.successOnContainer,
-                                    ),
-                                  ),
-                                  Text(
-                                    '-${cartState.discountAmount.toStringAsFixed(0)} ج',
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.success,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                            if (cartState.deliveryFee > 0 || cartState.discountAmount > 0) ...[
-                              const SizedBox(height: 4),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const Text(
-                                    'المبلغ النهائي',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${cartState.finalTotal.toStringAsFixed(0)} جنيه',
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.w900,
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                              ],
+                            ),
                           ],
-                        ),
+                          if (cartState.discountAmount > 0) ...[
+                            const Divider(
+                                height: 16, color: AppColors.outlineVariant),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'الخصم',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                    color: AppColors.successOnContainer,
+                                  ),
+                                ),
+                                Text(
+                                  '-${cartState.discountAmount.formatted}',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (cartState.deliveryFee > 0 ||
+                              cartState.discountAmount > 0) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'المبلغ النهائي',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  cartState.finalTotal.formatted,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
                       ),
-                      const SizedBox(height: 8),
-                      LoadingButton(
-                        onPressed: _placeOrder,
-                        label: 'تأكيد الطلب',
-                        isLoading: _isLoading,
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    LoadingButton(
+                      onPressed: _placeOrder,
+                      label: 'تأكيد الطلب',
+                      isLoading: _isLoading,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
-      );
-    }
-
-    Widget _buildTextField(
-      TextEditingController controller,
-      String hint,
-      IconData icon, {
-      TextInputType? keyboardType,
-      int maxLines = 1,
-      String? Function(String?)? validator,
-    }) {
-      return _CheckoutTextField(
-        controller: controller,
-        hint: hint,
-        icon: icon,
-        keyboardType: keyboardType,
-        maxLines: maxLines,
-        validator: validator,
-      );
-    }
+            ),
+          );
+        },
+      ),
+    );
   }
 
-  class _CheckoutSectionCard extends StatelessWidget {
-    final String title;
-    final IconData icon;
-    final Widget child;
-
-    const _CheckoutSectionCard({
-      required this.title,
-      required this.icon,
-      required this.child,
-    });
-
-    @override
-    Widget build(BuildContext context) {
-      final theme = Theme.of(context);
-      return Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        elevation: 0,
-        color: AppColors.surface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          side: BorderSide(
-            color: AppColors.outlineVariant.withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    icon,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              child,
-            ],
-          ),
-        ),
-      );
-    }
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    IconData icon, {
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return _CheckoutTextField(
+      controller: controller,
+      hint: hint,
+      icon: icon,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      validator: validator,
+    );
   }
+}
 
+class _CheckoutSectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
 
+  const _CheckoutSectionCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+  });
 
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        side: BorderSide(
+          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _OrderTypeChip extends StatefulWidget {
   final OrderType type;
@@ -1212,7 +1313,9 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
                   : AppColors.surface,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
@@ -1231,7 +1334,8 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
               children: [
                 Icon(
                   widget.type.icon,
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color:
+                      isSelected ? AppColors.primary : AppColors.textSecondary,
                   size: 24,
                 ),
                 const SizedBox(height: 6),
@@ -1239,7 +1343,9 @@ class _OrderTypeChipState extends State<_OrderTypeChip>
                   widget.type.arabicLabel,
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -1315,7 +1421,9 @@ class _ScheduleChipState extends State<_ScheduleChip>
                   : AppColors.surfaceContainerLow,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: widget.selected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+                color: widget.selected
+                    ? AppColors.primary
+                    : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: widget.selected ? 1.5 : 1.0,
               ),
             ),
@@ -1324,7 +1432,9 @@ class _ScheduleChipState extends State<_ScheduleChip>
               widget.label,
               style: theme.textTheme.labelLarge?.copyWith(
                 fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
-                color: widget.selected ? AppColors.primary : AppColors.textSecondary,
+                color: widget.selected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
               ),
             ),
           ),
@@ -1403,7 +1513,9 @@ class _PaymentOptionState extends State<_PaymentOption>
                   : AppColors.surface,
               borderRadius: AppRadius.lgAll,
               border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.5),
+                color: isSelected
+                    ? AppColors.primary
+                    : AppColors.outlineVariant.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: isSelected
@@ -1420,7 +1532,8 @@ class _PaymentOptionState extends State<_PaymentOption>
               children: [
                 Icon(
                   widget.icon,
-                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                  color:
+                      isSelected ? AppColors.primary : AppColors.textSecondary,
                   size: 24,
                 ),
                 const SizedBox(width: 14),
@@ -1428,8 +1541,11 @@ class _PaymentOptionState extends State<_PaymentOption>
                   child: Text(
                     widget.label,
                     style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
                 ),
@@ -1493,20 +1609,18 @@ class _CheckoutTextFieldState extends State<_CheckoutTextField> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     final primary = AppColors.primary;
     final outlineVariant = AppColors.outlineVariant;
     final textPrimary = AppColors.textPrimary;
     final textSecondary = AppColors.textSecondary;
     const fill = AppColors.surface;
-    
+
     final hasError = _errorText != null;
     final borderColor = hasError
         ? theme.colorScheme.error
-        : (_isFocused 
-            ? primary 
-            : outlineVariant.withValues(alpha: 0.5));
-            
+        : (_isFocused ? primary : outlineVariant.withValues(alpha: 0.5));
+
     final shadowColor = hasError ? theme.colorScheme.error : primary;
 
     return AnimatedContainer(

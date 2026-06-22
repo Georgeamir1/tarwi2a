@@ -5,15 +5,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/orders/orders_screen.dart';
-import 'package:matbakhy/application/orders/customer_orders_cubit.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/domain/entities/order.dart';
-import 'package:matbakhy/domain/entities/order_item.dart';
-import 'package:matbakhy/domain/enums/order_status.dart';
-import 'package:matbakhy/domain/enums/payment_method.dart';
-import 'package:matbakhy/app/theme/app_theme.dart';
-import 'package:matbakhy/presentation/widgets/skeleton_card.dart';
+import 'package:tarwi2a/presentation/screens/orders/orders_screen.dart';
+import 'package:tarwi2a/application/orders/customer_orders_cubit.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/domain/entities/order.dart';
+import 'package:tarwi2a/domain/entities/order_item.dart';
+import 'package:tarwi2a/domain/enums/order_status.dart';
+import 'package:tarwi2a/domain/enums/payment_method.dart';
+import 'package:tarwi2a/app/theme/app_theme.dart';
+import 'package:tarwi2a/presentation/widgets/skeleton_card.dart';
 import '../../../helpers/test_helpers.dart';
 
 final _testOrder = Order(

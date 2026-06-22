@@ -6,11 +6,11 @@ import 'package:dartz/dartz.dart' hide Order;
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthResponse;
 
-import 'package:matbakhy/presentation/screens/splash/splash_screen.dart';
-import 'package:matbakhy/application/auth/auth_cubit.dart';
-import 'package:matbakhy/domain/entities/user_profile.dart';
-import 'package:matbakhy/domain/failures/failure.dart';
-import 'package:matbakhy/core/constants/app_constants.dart';
+import 'package:tarwi2a/presentation/screens/splash/splash_screen.dart';
+import 'package:tarwi2a/application/auth/auth_cubit.dart';
+import 'package:tarwi2a/domain/entities/user_profile.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
+import 'package:tarwi2a/core/constants/app_constants.dart';
 import '../../../helpers/test_helpers.dart';
 
 GoRouter _createRouter() {

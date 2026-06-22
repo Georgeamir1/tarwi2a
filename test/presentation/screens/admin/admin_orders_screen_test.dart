@@ -4,11 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:matbakhy/presentation/screens/admin/admin_orders_screen.dart';
-import 'package:matbakhy/application/admin/admin_orders_cubit.dart';
-import 'package:matbakhy/domain/enums/order_status.dart';
-import 'package:matbakhy/domain/entities/order.dart';
-import 'package:matbakhy/domain/enums/payment_method.dart';
+import 'package:tarwi2a/presentation/screens/admin/admin_orders_screen.dart';
+import 'package:tarwi2a/application/admin/admin_orders_cubit.dart';
+import 'package:tarwi2a/domain/enums/order_status.dart';
+import 'package:tarwi2a/domain/entities/order.dart';
+import 'package:tarwi2a/domain/enums/payment_method.dart';
 import '../../../helpers/test_helpers.dart';
 
 GoRouter _createRouter(NavigatorObserver observer) {

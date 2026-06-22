@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../app/theme/app_theme.dart';
 import '../../application/cart/cart_cubit.dart';
+import '../extensions/price_x.dart';
 
 class FloatingCartBar extends StatelessWidget {
   final bool visible;
@@ -20,9 +21,9 @@ class FloatingCartBar extends StatelessWidget {
         final shouldShow = visible && hasItems;
 
         return AnimatedSlide(
-          offset: shouldShow ? Offset.zero : const Offset(0, 2.0),
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutBack,
+          offset: shouldShow ? Offset.zero : const Offset(0, 1.5),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
           child: AnimatedOpacity(
             opacity: shouldShow ? 1.0 : 0.0,
             duration: const Duration(milliseconds: 250),
@@ -73,7 +74,7 @@ class FloatingCartBar extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  '${state.totalItems} \u0635\u0646\u0641 \u00b7 ${state.total.toStringAsFixed(0)} \u062c\u0640',
+                                  '${state.totalItems} \u0635\u0646\u0641 \u00b7 ${state.total.formatted}',
                                   style: AppTypography.subheadline.copyWith(
                                     color: AppColors.onPrimary,
                                     fontWeight: FontWeight.w800,
@@ -85,11 +86,17 @@ class FloatingCartBar extends StatelessWidget {
                               textDirection: TextDirection.rtl,
                               children: [
                                 Text(
-                                  '\u0639\u0631\u0636 \u0627\u0644\u0633\u0644\u0629 \u2190',
+                                  '\u0639\u0631\u0636 \u0627\u0644\u0633\u0644\u0629',
                                   style: AppTypography.subheadline.copyWith(
                                     color: AppColors.onPrimary,
                                     fontWeight: FontWeight.w900,
                                   ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.keyboard_arrow_left_rounded,
+                                  color: AppColors.onPrimary,
+                                  size: 20,
                                 ),
                               ],
                             ),
