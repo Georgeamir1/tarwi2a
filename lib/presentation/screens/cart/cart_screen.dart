@@ -27,13 +27,8 @@ class CartScreen extends StatelessWidget {
             scrolledUnderElevation: 0,
             centerTitle: true,
             title: Text(
-              '\u0627\u0644\u0633\u0644\u0629${state.items.isNotEmpty ? ' (${state.totalItems})' : ''}',
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
+              'السلة${state.items.isNotEmpty ? ' (${state.totalItems})' : ''}',
+              style: Theme.of(context).appBarTheme.titleTextStyle,
             ),
             actions: [
               if (state.items.isNotEmpty)
@@ -41,14 +36,12 @@ class CartScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(left: 8),
                   child: TextButton(
                     onPressed: () => _showClearCartDialog(context),
-                    child: const Text(
-                      '\u0645\u0633\u062d \u0627\u0644\u0643\u0644',
-                      style: TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.error,
-                      ),
+                    child: Text(
+                      'مسح الكل',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
                   ),
                 ),
@@ -79,8 +72,8 @@ class CartScreen extends StatelessWidget {
                                   );
                             },
                             background: Container(
-                              alignment: Alignment.centerLeft,
-                              padding: const EdgeInsets.only(left: 24),
+                              alignment: AlignmentDirectional.centerEnd,
+                              padding: const EdgeInsetsDirectional.only(end: 24),
                               decoration: BoxDecoration(
                                 color: AppColors.error.withValues(alpha: 0.08),
                                 borderRadius:
@@ -89,7 +82,7 @@ class CartScreen extends StatelessWidget {
                               child: const Icon(
                                 Icons.delete_outline_rounded,
                                 color: AppColors.error,
-                                size: 24,
+                                size: 28,
                               ),
                             ),
                             confirmDismiss: (_) async {
@@ -105,6 +98,7 @@ class CartScreen extends StatelessWidget {
                                         name: '',
                                         nameAr: item.productNameAr,
                                         price: item.productPrice,
+                                        imageUrl: item.productImageUrl,
                                         isAvailable: true,
                                         sortOrder: 0,
                                       ),
@@ -141,31 +135,36 @@ class CartScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         backgroundColor: AppColors.surface,
-        title: const Text(
-          '\u062d\u0630\u0641 \u0627\u0644\u0635\u0646\u0641\u061f',
-          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700),
+        title: Text(
+          'حذف الصنف؟',
+          style: Theme.of(context).dialogTheme.titleTextStyle,
           textDirection: TextDirection.rtl,
         ),
-        content: const Text(
-          '\u0647\u0644 \u062a\u0631\u064a\u062f \u062d\u0630\u0641 \u0647\u0630\u0627 \u0627\u0644\u0635\u0646\u0641 \u0645\u0646 \u0627\u0644\u0633\u0644\u0629\u061f',
-          style: TextStyle(fontFamily: 'Cairo'),
+        content: Text(
+          'هل تريد حذف هذا الصنف من السلة؟',
+          style: Theme.of(context).dialogTheme.contentTextStyle ??
+              Theme.of(context).textTheme.bodyMedium,
           textDirection: TextDirection.rtl,
         ),
         actionsAlignment: MainAxisAlignment.end,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              '\u0625\u0644\u063a\u0627\u0621',
-              style: TextStyle(
-                  fontFamily: 'Cairo', color: AppColors.textSecondary),
+            child: Text(
+              'إلغاء',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              '\u062d\u0630\u0641',
-              style: TextStyle(fontFamily: 'Cairo', color: AppColors.error),
+            child: Text(
+              'حذف',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ),
         ],
@@ -181,24 +180,26 @@ class CartScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.xl),
         ),
         backgroundColor: AppColors.surface,
-        title: const Text(
-          '\u0645\u0633\u062d \u0627\u0644\u0633\u0644\u0629',
-          style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w700),
+        title: Text(
+          'مسح السلة',
+          style: Theme.of(context).dialogTheme.titleTextStyle,
           textDirection: TextDirection.rtl,
         ),
-        content: const Text(
-          '\u0647\u0644 \u0623\u0646\u062a \u0645\u062a\u0623\u0643\u062f \u0645\u0646 \u0645\u0633\u062d \u062c\u0645\u064a\u0639 \u0627\u0644\u0623\u0635\u0646\u0627\u0641\u061f',
-          style: TextStyle(fontFamily: 'Cairo'),
+        content: Text(
+          'هل أنت متأكد من مسح جميع الأصناف؟',
+          style: Theme.of(context).dialogTheme.contentTextStyle ??
+              Theme.of(context).textTheme.bodyMedium,
           textDirection: TextDirection.rtl,
         ),
         actionsAlignment: MainAxisAlignment.end,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '\u0625\u0644\u063a\u0627\u0621',
-              style: TextStyle(
-                  fontFamily: 'Cairo', color: AppColors.textSecondary),
+            child: Text(
+              'إلغاء',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
             ),
           ),
           TextButton(
@@ -206,9 +207,12 @@ class CartScreen extends StatelessWidget {
               context.read<CartCubit>().clearCart();
               Navigator.pop(ctx);
             },
-            child: const Text(
-              '\u0645\u0633\u062d',
-              style: TextStyle(fontFamily: 'Cairo', color: AppColors.error),
+            child: Text(
+              'مسح',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
           ),
         ],
@@ -222,47 +226,57 @@ class _EmptyCartView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 96,
+              height: 96,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryContainer.withValues(alpha: 0.4),
+                    AppColors.primaryContainer.withValues(alpha: 0.15),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
               child: const Icon(
-                Icons.shopping_cart_outlined,
-                size: 36,
+                Icons.shopping_bag_outlined,
+                size: 42,
                 color: AppColors.primary,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              '\u0627\u0644\u0633\u0644\u0629 \u0641\u0627\u0636\u064a\u0629',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
+            Text(
+              'السلة فارغة',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
               textDirection: TextDirection.rtl,
             ),
             const SizedBox(height: 8),
-            const Text(
-              '\u0634\u0648\u0641 \u0627\u0644\u0642\u0627\u0626\u0645\u0629 \u0648\u0627\u062e\u062a\u0627\u0631 \u0627\u0644\u0623\u0643\u0644\u0627\u062a \u0627\u0644\u0644\u064a \u062a\u0639\u062c\u0628\u0643',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
+            Text(
+              'تصفح القائمة الشهية وأضف أكلاتك المفضلة إليها الآن',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
             SizedBox(
               width: 200,
               height: 48,
@@ -271,18 +285,18 @@ class _EmptyCartView extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.onPrimary,
-                  elevation: 0,
+                  elevation: 2,
+                  shadowColor: AppColors.primaryShadow,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                 ),
-                child: const Text(
-                  '\u062a\u0635\u0641\u062d \u0627\u0644\u0642\u0627\u0626\u0645\u0629',
-                  style: TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Text(
+                  'تصفح القائمة',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.onPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
             ),
@@ -329,23 +343,19 @@ class _CheckoutBar extends StatelessWidget {
               textDirection: TextDirection.rtl,
               children: [
                 Text(
-                  '\u0627\u0644\u0645\u062c\u0645\u0648\u0639',
-                  style: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
-                  ),
+                  'المجموع',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
                 Text(
                   total.formatted,
-                  style: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
-                    height: 1,
-                  ),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
                 ),
               ],
             ),
@@ -354,12 +364,10 @@ class _CheckoutBar extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  '$totalItems \u0635\u0646\u0641',
-                  style: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 12,
-                    color: AppColors.textMuted,
-                  ),
+                  '$totalItems صنف',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColors.textMuted,
+                      ),
                 ),
               ],
             ),
@@ -381,11 +389,10 @@ class _CheckoutBar extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
-                  textStyle: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: AppColors.onPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -393,8 +400,7 @@ class _CheckoutBar extends StatelessWidget {
                   children: const [
                     Icon(Icons.check_circle_outline_rounded, size: 20),
                     SizedBox(width: 8),
-                    Text(
-                        '\u0625\u062a\u0645\u0627\u0645 \u0627\u0644\u0637\u0644\u0628'),
+                    Text('إتمام الطلب'),
                   ],
                 ),
               ),
@@ -439,18 +445,22 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         textDirection: TextDirection.rtl,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-            child: const Icon(
-              Icons.restaurant_menu_rounded,
-              color: AppColors.primary,
-              size: 24,
-            ),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            child: item.productImageUrl != null && item.productImageUrl!.isNotEmpty
+                ? Image.network(
+                    item.productImageUrl!,
+                    width: 64,
+                    height: 64,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildPlaceholderImage(),
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return _buildImagePlaceholderLoading();
+                    },
+                  )
+                : _buildPlaceholderImage(),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -459,13 +469,11 @@ class _CartItemCard extends StatelessWidget {
               children: [
                 Text(
                   item.productNameAr,
-                  style: const TextStyle(
-                    fontFamily: 'Cairo',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
                   textDirection: TextDirection.rtl,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -486,12 +494,11 @@ class _CartItemCard extends StatelessWidget {
                         ),
                         child: Text(
                           '${option.name}${option.priceAdjustment > 0 ? ' +${option.priceAdjustment.toStringAsFixed(0)}' : ''}',
-                          style: const TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.onTertiaryContainer,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.onTertiaryContainer,
+                              ),
                         ),
                       );
                     }).toList(),
@@ -509,12 +516,10 @@ class _CartItemCard extends StatelessWidget {
                     ),
                     Text(
                       item.subtotal.formatted,
-                      style: const TextStyle(
-                        fontFamily: 'Cairo',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
-                      ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
                     ),
                   ],
                 ),
@@ -522,6 +527,43 @@ class _CartItemCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppColors.primaryContainer.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: const Icon(
+        Icons.fastfood_rounded,
+        color: AppColors.primary,
+        size: 26,
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholderLoading() {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+          ),
+        ),
       ),
     );
   }
@@ -541,7 +583,7 @@ class _QuantityControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 36,
+      height: 44, // Meets touch target minimum of 44pt
       decoration: BoxDecoration(
         color: AppColors.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -550,42 +592,42 @@ class _QuantityControl extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               HapticFeedback.lightImpact();
               onRemove();
             },
             child: Container(
-              width: 36,
-              height: 36,
+              width: 44, // Consistent touch target area >= 44x44
+              height: 44,
               alignment: Alignment.center,
               child: const Icon(
                 Icons.remove_rounded,
-                size: 18,
+                size: 20,
                 color: AppColors.primary,
               ),
             ),
           ),
           Container(
-            constraints: const BoxConstraints(minWidth: 28),
+            constraints: const BoxConstraints(minWidth: 32),
             alignment: Alignment.center,
             child: Text(
               '$quantity',
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
             ),
           ),
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               HapticFeedback.lightImpact();
               onAdd();
             },
             child: Container(
-              width: 36,
-              height: 36,
+              width: 44, // Consistent touch target area >= 44x44
+              height: 44,
               decoration: const BoxDecoration(
                 color: AppColors.primary,
                 shape: BoxShape.circle,
@@ -593,7 +635,7 @@ class _QuantityControl extends StatelessWidget {
               alignment: Alignment.center,
               child: const Icon(
                 Icons.add_rounded,
-                size: 18,
+                size: 20,
                 color: AppColors.onPrimary,
               ),
             ),

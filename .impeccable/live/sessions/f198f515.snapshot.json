@@ -1,0 +1,29 @@
+{
+  "id": "f198f515",
+  "phase": "completed",
+  "pageUrl": "/",
+  "sourceFile": "website\\index.html",
+  "expectedVariants": 3,
+  "arrivedVariants": 3,
+  "visibleVariant": 1,
+  "paramValues": {
+    "logo-size": 300,
+    "glow-intensity": 0.5
+  },
+  "pendingEventSeq": null,
+  "pendingEvent": null,
+  "deliveryLease": null,
+  "checkpointRevision": 2,
+  "activeOwner": "d43b0020",
+  "sourceMarkers": {},
+  "fallbackMode": null,
+  "annotationArtifacts": [],
+  "diagnostics": [
+    {
+      "error": "carbonize_cleanup_required",
+      "file": "website\\index.html",
+      "message": "Accepted variant still has carbonize markers that must be folded into source CSS."
+    }
+  ],
+  "updatedAt": "2026-07-16T11:33:20.046Z"
+}

@@ -97,6 +97,9 @@ class _ProfileFormState extends State<_ProfileForm> {
   late TextEditingController _minOrderController;
   late TextEditingController _prepTimeController;
   late TextEditingController _busyMessageController;
+  late TextEditingController _whatsappController;
+  late TextEditingController _vodafoneCashController;
+  late TextEditingController _instapayController;
   late bool _acceptOrders;
   late bool _isBusy;
   late Map<String, OpeningPeriod> _openingHours;
@@ -113,6 +116,11 @@ class _ProfileFormState extends State<_ProfileForm> {
     _prepTimeController =
         TextEditingController(text: p?.defaultPrepTime.toString() ?? '30');
     _busyMessageController = TextEditingController(text: p?.busyMessage ?? '');
+    _whatsappController =
+        TextEditingController(text: p?.whatsappNumber ?? '');
+    _vodafoneCashController =
+        TextEditingController(text: p?.vodafoneCashNumber ?? '');
+    _instapayController = TextEditingController(text: p?.instapayHandle ?? '');
     _acceptOrders = p?.acceptOrders ?? true;
     _isBusy = p?.isBusy ?? false;
     _openingHours = Map<String, OpeningPeriod>.from(p?.openingHours ?? {});
@@ -126,6 +134,9 @@ class _ProfileFormState extends State<_ProfileForm> {
     _minOrderController.dispose();
     _prepTimeController.dispose();
     _busyMessageController.dispose();
+    _whatsappController.dispose();
+    _vodafoneCashController.dispose();
+    _instapayController.dispose();
     super.dispose();
   }
 
@@ -146,6 +157,15 @@ class _ProfileFormState extends State<_ProfileForm> {
       'busy_message': _busyMessageController.text.trim().isEmpty
           ? null
           : _busyMessageController.text.trim(),
+      'whatsapp_number': _whatsappController.text.trim().isEmpty
+          ? null
+          : _whatsappController.text.trim(),
+      'vodafone_cash_number': _vodafoneCashController.text.trim().isEmpty
+          ? null
+          : _vodafoneCashController.text.trim(),
+      'instapay_handle': _instapayController.text.trim().isEmpty
+          ? null
+          : _instapayController.text.trim(),
     });
   }
 
@@ -249,6 +269,45 @@ class _ProfileFormState extends State<_ProfileForm> {
                 controller: _prepTimeController,
                 prefixIcon: Icons.timer_outlined,
                 keyboardType: TextInputType.number,
+              ),
+              AppSpacing.gapH24,
+              Text(
+                'أرقام الدفع',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+              AppSpacing.gapH4,
+              Text(
+                'الأرقام اللي العميل هيدفع عليها ويبعت إيصال واتساب',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+              ),
+              AppSpacing.gapH12,
+              AppTextField(
+                label: 'رقم واتساب (دولي بدون +)',
+                controller: _whatsappController,
+                prefixIcon: Icons.chat_outlined,
+                hint: 'مثال: 201012345678',
+                keyboardType: TextInputType.phone,
+              ),
+              AppSpacing.gapH16,
+              AppTextField(
+                label: 'رقم فودافون كاش',
+                controller: _vodafoneCashController,
+                prefixIcon: Icons.account_balance_wallet_outlined,
+                hint: 'مثال: 01012345678',
+                keyboardType: TextInputType.phone,
+              ),
+              AppSpacing.gapH16,
+              AppTextField(
+                label: 'InstaPay (الاسم أو الرقم)',
+                controller: _instapayController,
+                prefixIcon: Icons.payment_rounded,
+                hint: 'مثال: 01012345678',
+                keyboardType: TextInputType.text,
               ),
               AppSpacing.gapH24,
               Text(

@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/product.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/product_repository.dart';
@@ -19,14 +18,12 @@ class ProductsCubit extends Cubit<ProductsState> {
         failure: failure,
       )),
       (products) {
-        for (final p in products) {
-          appLogger.d('[ProductsCubit] ${p.nameAr} — imageUrl: ${p.imageUrl}');
-        }
         final filterId = categoryId ?? state.selectedCategoryId;
+        final query = state.searchQuery;
         emit(state.copyWith(
           status: ProductsStatus.loaded,
           allProducts: products,
-          products: _filterByCategory(products, filterId),
+          products: _filter(products, filterId, query),
           selectedCategoryId: filterId,
         ));
       },
@@ -36,13 +33,44 @@ class ProductsCubit extends Cubit<ProductsState> {
   void selectCategory(String? categoryId) {
     emit(state.copyWith(
       selectedCategoryId: categoryId,
-      products: _filterByCategory(state.allProducts, categoryId),
+      products: _filter(state.allProducts, categoryId, state.searchQuery),
     ));
   }
 
-  List<Product> _filterByCategory(List<Product> source, String? categoryId) {
-    if (categoryId == null) return source;
-    return source.where((p) => p.categoryId == categoryId).toList();
+  void searchProducts(String query) {
+    emit(state.copyWith(
+      searchQuery: query,
+      products: _filter(
+        state.allProducts,
+        state.selectedCategoryId,
+        query,
+      ),
+    ));
+  }
+
+  List<Product> _filter(
+    List<Product> source,
+    String? categoryId,
+    String query,
+  ) {
+    var result = source;
+    if (categoryId != null) {
+      result = result.where((p) => p.categoryId == categoryId).toList();
+    }
+    if (query.isNotEmpty) {
+      final q = query.toLowerCase();
+      result = result
+          .where(
+            (p) =>
+                p.nameAr.toLowerCase().contains(q) ||
+                p.name.toLowerCase().contains(q) ||
+                (p.descriptionAr?.toLowerCase().contains(q) ?? false) ||
+                (p.description?.toLowerCase().contains(q) ?? false) ||
+                p.tags.any((t) => t.toLowerCase().contains(q)),
+          )
+          .toList();
+    }
+    return result;
   }
 }
 
@@ -52,6 +80,7 @@ class ProductsState extends Equatable {
   final List<Product> products;
   final List<Product> allProducts;
   final String? selectedCategoryId;
+  final String searchQuery;
   final ProductsStatus status;
   final Failure? failure;
 
@@ -59,6 +88,7 @@ class ProductsState extends Equatable {
     this.products = const [],
     this.allProducts = const [],
     this.selectedCategoryId,
+    this.searchQuery = '',
     this.status = ProductsStatus.initial,
     this.failure,
   });
@@ -70,6 +100,7 @@ class ProductsState extends Equatable {
     List<Product>? allProducts,
     String? selectedCategoryId,
     bool clearSelectedCategory = false,
+    String? searchQuery,
     ProductsStatus? status,
     Failure? failure,
   }) {
@@ -79,6 +110,7 @@ class ProductsState extends Equatable {
       selectedCategoryId: clearSelectedCategory
           ? null
           : (selectedCategoryId ?? this.selectedCategoryId),
+      searchQuery: searchQuery ?? this.searchQuery,
       status: status ?? this.status,
       failure: failure,
     );
@@ -86,5 +118,6 @@ class ProductsState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [products, allProducts, selectedCategoryId, status, failure];
+      [products, allProducts, selectedCategoryId, searchQuery, status, failure];
 }
+

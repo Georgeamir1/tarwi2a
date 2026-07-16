@@ -14,6 +14,7 @@ CartItemDTO _$CartItemDTOFromJson(Map<String, dynamic> json) => CartItemDTO(
       selectedOptions: (json['selectedOptions'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
+      productImageUrl: json['productImageUrl'] as String?,
     );
 
 Map<String, dynamic> _$CartItemDTOToJson(CartItemDTO instance) =>
@@ -23,4 +24,5 @@ Map<String, dynamic> _$CartItemDTOToJson(CartItemDTO instance) =>
       'productPrice': instance.productPrice,
       'quantity': instance.quantity,
       'selectedOptions': instance.selectedOptions,
+      'productImageUrl': instance.productImageUrl,
     };

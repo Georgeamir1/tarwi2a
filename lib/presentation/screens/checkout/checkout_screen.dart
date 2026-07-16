@@ -3,12 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../domain/enums/order_type.dart';
 import '../../../domain/enums/payment_method.dart';
 import '../../../domain/entities/address.dart';
+import '../../../domain/entities/business_profile.dart';
+import '../../../domain/repositories/business_profile_repository.dart';
 import '../../../domain/repositories/coupon_repository.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
@@ -43,6 +46,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String? _selectedAddressId;
   Address? _selectedAddress;
   String? _addressValidationError;
+  BusinessProfile? _businessProfile;
 
   @override
   void initState() {
@@ -56,7 +60,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _nameController.text = authState.profile.name;
         _phoneController.text = authState.profile.phone ?? '';
       }
+      _loadBusinessProfile();
     });
+  }
+
+  Future<void> _loadBusinessProfile() async {
+    final result = await sl<BusinessProfileRepository>().get();
+    result.fold(
+      (failure) => appLogger.e('[CheckoutScreen] failed to load business profile',
+          error: failure),
+      (profile) {
+        if (mounted) setState(() => _businessProfile = profile);
+      },
+    );
   }
 
   @override
@@ -68,6 +84,56 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     _notesController.dispose();
     _couponCodeController.dispose();
     super.dispose();
+  }
+
+  /// Returns the transfer target (number/handle) for the selected method,
+  /// or null if it hasn't been configured by the admin.
+  String? get _paymentAccount {
+    final p = _businessProfile;
+    if (p == null) return null;
+    switch (_paymentMethod) {
+      case PaymentMethod.wallet:
+        return p.vodafoneCashNumber;
+      case PaymentMethod.instapay:
+        return p.instapayHandle;
+      case PaymentMethod.cash:
+        return null;
+    }
+  }
+
+  Future<void> _copyAccount() async {
+    final account = _paymentAccount;
+    if (account == null) return;
+    await Clipboard.setData(ClipboardData(text: account));
+    HapticFeedback.lightImpact();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('تم نسخ رقم الحوالة'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _openWhatsAppProof() async {
+    final p = _businessProfile;
+    if (p?.whatsappNumber == null) return;
+    final amount = context.read<CartCubit>().state.finalTotal.toStringAsFixed(0);
+    final message =
+        'مرحباً، أنا ${_nameController.text.trim().isEmpty ? "عميل" : _nameController.text.trim()}'
+        ' - ${_phoneController.text.trim()}.'
+        ' حوّلت $amount ج.م بطريقة ${_paymentMethod.arabicLabel}'
+        ' على $_paymentAccount. بنفصل الطلب دلوقتي ✅';
+    final url = Uri.parse(
+        'https://wa.me/${p!.whatsappNumber}?text=${Uri.encodeComponent(message)}');
+    final launched = await launchUrl(url, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      appLogger.w('[CheckoutScreen] could not launch WhatsApp');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر فتح واتساب')),
+      );
+    }
   }
 
   Future<void> _placeOrder() async {
@@ -814,33 +880,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ),
                           if (_paymentMethod != PaymentMethod.cash) ...[
                             const SizedBox(height: 12),
-                            Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: AppColors.tertiaryContainer,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.lg),
-                                border: Border.all(
-                                  color:
-                                      AppColors.tertiary.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.info_outline_rounded,
-                                      color: AppColors.tertiary, size: 18),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'هتدفع ${_paymentMethod.arabicLabel} وترفع لقطة الشاشة دلوقتي أو بعد الطلب',
-                                      style:
-                                          theme.textTheme.bodySmall?.copyWith(
-                                        color: AppColors.onTertiaryContainer,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            _TransferCard(
+                              amount: cartState.finalTotal,
+                              methodLabel: _paymentMethod.arabicLabel,
+                              account: _paymentAccount,
+                              onCopy: _copyAccount,
+                              onWhatsApp: _businessProfile?.whatsappNumber != null
+                                  ? _openWhatsAppProof
+                                  : null,
                             ),
                           ],
                         ],
@@ -1242,6 +1289,147 @@ class _CheckoutSectionCard extends StatelessWidget {
             child,
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Card shown for wallet/InstaPay orders: shows the amount to transfer,
+/// the configured account number (copyable), and a WhatsApp proof button.
+class _TransferCard extends StatelessWidget {
+  final double amount;
+  final String methodLabel;
+  final String? account;
+  final VoidCallback onCopy;
+  final VoidCallback? onWhatsApp;
+
+  const _TransferCard({
+    required this.amount,
+    required this.methodLabel,
+    required this.account,
+    required this.onCopy,
+    this.onWhatsApp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasAccount = account != null && account!.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.account_balance_wallet_rounded,
+                  color: AppColors.primary, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'حوّل ${amount.toStringAsFixed(0)} ج.م بطريقة $methodLabel',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (hasAccount)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                    color: AppColors.outlineVariant.withValues(alpha: 0.6)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.copy_rounded,
+                      size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: SelectableText(
+                      account!,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: onCopy,
+                    icon: const Icon(Icons.copy_all_rounded, size: 16),
+                    label: const Text('نسخ'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      minimumSize: Size.zero,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.errorContainer,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline_rounded,
+                      size: 18, color: AppColors.error),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'المطعم لسه محددش رقم $methodLabel. تقدر تختار كاش أو تواصل معانا.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (onWhatsApp != null && hasAccount) ...[
+            const SizedBox(height: 10),
+            FilledButton.icon(
+              onPressed: onWhatsApp,
+              icon: const Icon(Icons.chat_rounded, size: 18),
+              label: const Text('بعد ما تحوّل، ابعت إيصال واتساب'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'هنبعت رسالة فيها اسمك والمبلغ. ابعت صورة الإيصال جوه المحادثة.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

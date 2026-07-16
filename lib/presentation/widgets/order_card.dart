@@ -7,6 +7,7 @@ import '../../domain/entities/order.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../domain/enums/order_status.dart';
 import '../../domain/enums/order_type.dart';
+import '../../domain/enums/payment_method.dart';
 import '../extensions/order_status_x.dart';
 import '../extensions/payment_method_x.dart';
 import '../extensions/price_x.dart';
@@ -491,6 +492,11 @@ class _ExpandedBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderType = OrderType.fromString(order.orderType);
+    final isPaid = order.paymentStatus == 'confirmed' || order.status == OrderStatus.delivered;
+    final paymentStatusLabel = isPaid
+        ? 'تم الدفع'
+        : (order.paymentMethod == PaymentMethod.cash ? 'الدفع عند الاستلام' : 'معلق');
+    final paymentStatusColor = isPaid ? AppColors.success : AppColors.warning;
 
     return Container(
       width: double.infinity,
@@ -520,10 +526,8 @@ class _ExpandedBody extends StatelessWidget {
           _DetailRow('طريقة الدفع', order.paymentMethod.arabicLabel),
           _DetailRow(
             'حالة الدفع',
-            order.paymentStatus == 'paid' ? 'تم الدفع' : 'معلق',
-            valueColor: order.paymentStatus == 'paid'
-                ? AppColors.success
-                : AppColors.warning,
+            paymentStatusLabel,
+            valueColor: paymentStatusColor,
           ),
           _DetailRow(
             'التاريخ',
@@ -686,10 +690,7 @@ class _ExpandedBody extends StatelessWidget {
               OrderStatusTracker.vertical(status: order.status)
             else
               _CancelledBanner(theme: theme),
-            if (!isCancelled && activeStep >= 2) ...[
-              const SizedBox(height: 12),
-              _DriverCard(theme: theme, isDark: isDark),
-            ],
+            // DriverCard removed since we do not store driver data yet
           ] else ...[
             const SizedBox(height: 18),
             _CancelledBanner(theme: theme),
@@ -864,79 +865,3 @@ class _CancelledBanner extends StatelessWidget {
   }
 }
 
-class _DriverCard extends StatelessWidget {
-  final ThemeData theme;
-  final bool isDark;
-  const _DriverCard({required this.theme, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.8),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              color: AppColors.primary,
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'محمد علي (مندوب التوصيل)',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? AppColors.darkTextPrimary
-                        : AppColors.onSurface,
-                  ),
-                ),
-                Text(
-                  '+20 111 222 3333',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.darkTextSecondary
-                        : AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('جاري الاتصال بمندوب التوصيل...'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            icon: const Icon(Icons.phone_in_talk_rounded),
-            color: AppColors.success,
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.success.withValues(alpha: 0.1),
-              padding: const EdgeInsets.all(8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

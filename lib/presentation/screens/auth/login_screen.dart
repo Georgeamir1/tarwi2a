@@ -6,6 +6,9 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../widgets/error_banner.dart';
+import '../../../core/di/injection_container.dart';
+import '../../../core/services/biometric_service.dart';
+import '../../../domain/repositories/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _isLoading = false;
   bool _obscurePassword = true;
   String? _error;
+  bool _biometricsAvailable = false;
 
   // Staggered entry animations
   late AnimationController _staggerController;
@@ -57,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen>
   void initState() {
     super.initState();
     appLogger.d('[LoginScreen] initState');
+    _checkBiometricsAvailability();
 
     _staggerController = AnimationController(
       duration: const Duration(milliseconds: 900),
@@ -171,6 +176,67 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  Future<void> _checkBiometricsAvailability() async {
+    try {
+      final service = sl<BiometricService>();
+      final isSupported = await service.isHardwareSupported;
+      final isEnabled = service.isEnabled;
+      final hasEnrolled = await service.hasEnrolledBiometrics;
+      if (mounted) {
+        setState(() {
+          _biometricsAvailable = isSupported && isEnabled && hasEnrolled;
+        });
+      }
+    } catch (e) {
+      appLogger.e('[LoginScreen] Error checking biometrics availability', error: e);
+    }
+  }
+
+  Future<void> _loginWithBiometrics() async {
+    final biometricService = sl<BiometricService>();
+    final isSupported = await biometricService.isHardwareSupported;
+    final hasEnrolled = await biometricService.hasEnrolledBiometrics;
+    
+    if (!isSupported || !hasEnrolled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('الخدمة البيومترية غير متوفرة أو لم يتم تسجيل بصمة على هذا الجهاز'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final authenticated = await biometricService.authenticate();
+    if (!authenticated) return;
+
+    final credentials = await biometricService.getCredentials();
+    if (credentials == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لم يتم العثور على بيانات تسجيل دخول محفوظة. يرجى تسجيل الدخول يدويًا أولاً وتفعيل البصمة من الإعدادات.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    _shimmerController.repeat();
+
+    context.read<AuthCubit>().signIn(
+          email: credentials['email']!,
+          password: credentials['password']!,
+        );
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
       appLogger.d('[LoginScreen] _login — form validation failed');
@@ -200,6 +266,19 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       _shimmerController.stop();
       setState(() => _isLoading = false);
+
+      // Save credentials if biometrics is enabled and we have the password from the controller
+      final biometricService = sl<BiometricService>();
+      if (biometricService.isEnabled && _passwordController.text.isNotEmpty) {
+        final email = sl<AuthRepository>().currentUser?.email;
+        if (email != null) {
+          biometricService.saveCredentials(
+            email,
+            _passwordController.text,
+          );
+        }
+      }
+
       if (state.profile.role.isAdmin) {
         context.go('/admin');
       } else {
@@ -875,84 +954,67 @@ class _LoginScreenState extends State<LoginScreen>
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 12),
-
-                                // Biometric button
-                                Semantics(
-                                  button: true,
-                                  label: 'تسجيل الدخول بالبصمة',
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {
-                                        appLogger.d(
-                                            '[LoginScreen] biometric tapped');
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                                'تسجيل الدخول بالبصمة قريباً!'),
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                      AppRadius.lg),
-                                            ),
-                                            duration:
-                                                const Duration(seconds: 2),
-                                          ),
-                                        );
-                                      },
-                                      borderRadius:
-                                          BorderRadius.circular(AppRadius.xl),
-                                      child: AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        width: 56,
-                                        height: 56,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                              AppRadius.xl),
-                                          color: isDark
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.06)
-                                              : Colors.white
-                                                  .withValues(alpha: 0.7),
-                                          border: Border.all(
-                                            color: AppColors.primary.withValues(
-                                              alpha: 0.2 +
-                                                  0.15 *
-                                                      (_ambientAnimation.value -
-                                                          0.88) /
-                                                      0.24,
-                                            ),
-                                            width: 1.5,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  AppColors.primary.withValues(
-                                                alpha: 0.05 +
-                                                    0.08 *
-                                                        (_ambientAnimation
-                                                                .value -
+                                if (_biometricsAvailable) ...[
+                                  const SizedBox(width: 12),
+                                  // Biometric button
+                                  Semantics(
+                                    button: true,
+                                    label: 'تسجيل الدخول بالبصمة',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _loginWithBiometrics,
+                                        borderRadius:
+                                            BorderRadius.circular(AppRadius.xl),
+                                        child: AnimatedContainer(
+                                          duration:
+                                              const Duration(milliseconds: 200),
+                                          width: 56,
+                                          height: 56,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.xl),
+                                            color: isDark
+                                                ? Colors.white
+                                                    .withValues(alpha: 0.06)
+                                                : Colors.white
+                                                    .withValues(alpha: 0.7),
+                                            border: Border.all(
+                                              color: AppColors.primary.withValues(
+                                                alpha: 0.2 +
+                                                    0.15 *
+                                                        (_ambientAnimation.value -
                                                             0.88) /
                                                         0.24,
                                               ),
-                                              blurRadius: 8,
-                                              spreadRadius: 1,
-                                            )
-                                          ],
-                                        ),
-                                        child: const Icon(
-                                          Icons.fingerprint_rounded,
-                                          color: AppColors.primary,
-                                          size: 28,
+                                              width: 1.5,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color:
+                                                    AppColors.primary.withValues(
+                                                  alpha: 0.05 +
+                                                      0.08 *
+                                                          (_ambientAnimation
+                                                                  .value -
+                                                              0.88) /
+                                                          0.24,
+                                                ),
+                                                blurRadius: 8,
+                                                spreadRadius: 1,
+                                              )
+                                            ],
+                                          ),
+                                          child: const Icon(
+                                            Icons.fingerprint_rounded,
+                                            color: AppColors.primary,
+                                            size: 28,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
                             ),
                           ),

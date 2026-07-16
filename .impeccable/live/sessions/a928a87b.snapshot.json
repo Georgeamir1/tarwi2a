@@ -1,0 +1,22 @@
+{
+  "id": "a928a87b",
+  "phase": "discarded",
+  "pageUrl": "/",
+  "sourceFile": "website/index.html",
+  "expectedVariants": 3,
+  "arrivedVariants": 3,
+  "visibleVariant": 1,
+  "paramValues": {
+    "logo-height": 44
+  },
+  "pendingEventSeq": null,
+  "pendingEvent": null,
+  "deliveryLease": null,
+  "checkpointRevision": 6,
+  "activeOwner": "c1bfaf20",
+  "sourceMarkers": {},
+  "fallbackMode": null,
+  "annotationArtifacts": [],
+  "diagnostics": [],
+  "updatedAt": "2026-07-16T11:48:09.327Z"
+}

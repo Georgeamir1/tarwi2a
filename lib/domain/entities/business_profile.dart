@@ -16,6 +16,9 @@ class BusinessProfile with _$BusinessProfile {
     @Default(false) bool isBusy,
     String? busyMessage,
     @Default(true) bool acceptOrders,
+    String? whatsappNumber,
+    String? vodafoneCashNumber,
+    String? instapayHandle,
     required DateTime updatedAt,
   }) = _BusinessProfile;
 }

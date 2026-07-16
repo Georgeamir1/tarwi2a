@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_orders_cubit.dart';
+import '../../../application/rating/rating_cubit.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/enums/order_status.dart';
@@ -23,6 +24,7 @@ class AdminOrderDetailScreen extends StatefulWidget {
 
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   late String _currentStatus;
+  late String _currentPaymentStatus;
   bool _isUpdating = false;
 
   static const _nextStatus = {
@@ -43,8 +45,9 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   void initState() {
     super.initState();
     _currentStatus = widget.order.status.value;
+    _currentPaymentStatus = widget.order.paymentStatus;
     appLogger.d(
-        '[AdminOrderDetail] initState — order: ${widget.order.id}, status: $_currentStatus');
+        '[AdminOrderDetail] initState — order: ${widget.order.id}, status: $_currentStatus, paymentStatus: $_currentPaymentStatus');
   }
 
   Future<void> _printOrder() async {
@@ -89,7 +92,12 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
       await context
           .read<AdminOrdersCubit>()
           .updateStatus(widget.order.id, newStatus);
-      setState(() => _currentStatus = newStatus);
+      setState(() {
+        _currentStatus = newStatus;
+        if (newStatus == 'delivered') {
+          _currentPaymentStatus = 'confirmed';
+        }
+      });
       appLogger.d(
           '[AdminOrderDetail] _updateStatus — success, new status: $newStatus');
       if (!mounted) return;
@@ -114,89 +122,188 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
     }
   }
 
+  Future<void> _confirmPayment() async {
+    appLogger.d('[AdminOrderDetail] _confirmPayment — order: ${widget.order.id}');
+    setState(() => _isUpdating = true);
+    try {
+      await context.read<AdminOrdersCubit>().confirmPayment(widget.order.id);
+      appLogger.d('[AdminOrderDetail] _confirmPayment — success');
+      if (mounted) {
+        setState(() {
+          _currentPaymentStatus = 'confirmed';
+        });
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تم تأكيد استلام الدفع'),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } catch (e) {
+      appLogger.e('[AdminOrderDetail] _confirmPayment — error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('حصل خطأ'), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final order = widget.order;
     final nextStatus = _nextStatus[_currentStatus];
     final nextLabel = _nextStatusLabel[_currentStatus];
+    final isOnlinePayment =
+        order.paymentMethod.value != 'cash';
+    final isPaymentPending = _currentPaymentStatus == 'pending';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('طلب #${order.id.substring(0, 8).toUpperCase()}'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            appLogger.d('[AdminOrderDetail] back pressed');
-            context.pop();
-          },
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _StatusStepper(currentStatus: _currentStatus),
-          AppSpacing.gapH16,
-          InfoCard(
-            title: 'بيانات العميل',
-            children: [
-              InfoRow('الاسم', order.customerName),
-              InfoRow('الهاتف', order.customerPhone),
-              if (order.customerAddress != null)
-                InfoRow('العنوان', order.customerAddress!),
-              InfoRow('طريقة الدفع', order.paymentMethod.arabicLabel),
-              InfoRow(
-                  'التاريخ',
-                  DateFormat('dd/MM/yyyy - hh:mm a')
-                      .format(order.createdAt.toLocal())),
-              if (order.notes != null) InfoRow('ملاحظات', order.notes!),
-            ],
-          ),
-          AppSpacing.gapH16,
-          InfoCard(
-            title: 'الأصناف',
-            children: [
-              ...order.items.map((item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        Expanded(
+    return BlocProvider<RatingCubit>(
+      create: (context) => sl<RatingCubit>()..loadOrderRating(widget.order.id),
+      child: BlocBuilder<RatingCubit, RatingState>(
+        builder: (context, ratingState) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('طلب #${order.id.substring(0, 8).toUpperCase()}'),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () {
+                  appLogger.d('[AdminOrderDetail] back pressed');
+                  context.pop();
+                },
+              ),
+            ),
+            body: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                _StatusStepper(currentStatus: _currentStatus),
+                AppSpacing.gapH16,
+                InfoCard(
+                  title: 'بيانات العميل',
+                  children: [
+                    InfoRow('الاسم', order.customerName),
+                    InfoRow('الهاتف', order.customerPhone),
+                    if (order.customerAddress != null)
+                      InfoRow('العنوان', order.customerAddress!),
+                    InfoRow('طريقة الدفع', order.paymentMethod.arabicLabel),
+                    if (isOnlinePayment)
+                      InfoRow(
+                        'حالة الدفع',
+                        isPaymentPending ? 'معلق' : 'تم الدفع ✅',
+                      ),
+                    InfoRow(
+                        'التاريخ',
+                        DateFormat('dd/MM/yyyy - hh:mm a')
+                            .format(order.createdAt.toLocal())),
+                    if (order.notes != null) InfoRow('ملاحظات', order.notes!),
+                  ],
+                ),
+                if (ratingState.orderRating != null) ...[
+                  AppSpacing.gapH16,
+                  InfoCard(
+                    title: 'تقييم العميل للطلب',
+                    children: [
+                      Row(
+                        children: [
+                          ...List.generate(5, (index) => Icon(
+                            index < ratingState.orderRating!.rating
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: AppColors.statusPending,
+                            size: 24,
+                          )),
+                          const SizedBox(width: 12),
+                          Text(
+                            '${ratingState.orderRating!.rating} / 5',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.statusPending,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (ratingState.orderRating!.comment != null &&
+                          ratingState.orderRating!.comment!.isNotEmpty) ...[
+                        AppSpacing.gapH12,
+                        Text(
+                          'التعليق:',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            border: Border.all(color: AppColors.outlineVariant),
+                          ),
                           child: Text(
-                            '${item.productName} × ${item.quantity}',
-                            style: theme.textTheme.bodyMedium,
+                            ratingState.orderRating!.comment!,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+                AppSpacing.gapH16,
+                InfoCard(
+                  title: 'الأصناف',
+                  children: [
+                    ...order.items.map((item) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${item.productName} × ${item.quantity}',
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                              ),
+                              Text(
+                                '${item.subtotal.toStringAsFixed(0)} ج',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                    const Divider(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'الإجمالي',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+
+                           fontSize: 160
                           ),
                         ),
                         Text(
-                          '${item.subtotal.toStringAsFixed(0)} ج',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
+                          '${order.totalAmount.toStringAsFixed(0)} جنيه',
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.primary,
                           ),
                         ),
                       ],
                     ),
-                  )),
-              const Divider(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'الإجمالي',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                  Text(
-                    '${order.totalAmount.toStringAsFixed(0)} جنيه',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
           AppSpacing.gapH24,
           if (nextStatus != null &&
               _currentStatus != 'delivered' &&
@@ -221,6 +328,25 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
               shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
             ),
           ),
+          if (isOnlinePayment && isPaymentPending) ...[
+            AppSpacing.gapH12,
+            FilledButton.icon(
+              onPressed: _isUpdating ? null : _confirmPayment,
+              icon: _isUpdating
+                  ? const SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.check_circle_outline_rounded, size: 18),
+              label: const Text('تأكيد استلام الدفع'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.success,
+                minimumSize: const Size(double.infinity, 52),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+              ),
+            ),
+          ],
           if (_currentStatus != 'delivered' &&
               _currentStatus != 'cancelled') ...[
             AppSpacing.gapH12,
@@ -266,6 +392,9 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
         ],
       ),
     );
+  },
+),
+);
   }
 }
 

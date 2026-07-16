@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-22 |
-| **Phase** | 28b (UX Redesign) / Bug Fixes |
-| **Task** | Implemented GoRouter reactive redirect using GoRouterRefreshStream linked to AuthCubit. |
-| **Notes** | `flutter analyze` passes with 0 errors, 0 warnings, 0 info. Fixed a bug where logging out left the profile screen stuck in a loading state until user interaction; GoRouter now instantly detects sign-out and redirects to `/login`. |
+| **Last session** | 2026-06-23 |
+| **Phase** | Ratings and Reviews Integration |
+| **Task** | Implemented the remote persistence and presentation of order ratings and product reviews. |
+| **Notes** | Wired `RateOrderScreen` and `ProductReviewsScreen` with a new `RatingCubit` and `RatingRepository`. Ratings are now saved in the remote Supabase database and retrieved dynamically with calculated summary averages. `flutter analyze` passes successfully with 0 issues.
 
 ---
 
@@ -741,3 +741,22 @@ alter publication supabase_realtime add table business_profiles;
 - [✓] 28b.10 Full consolidation of all 3 customer-order screens into ONE inline-expandable surface. `OrderCard` rewritten as expandable widget with `AnimatedSize` (320ms / easeOutCubic). `OrdersScreen` simplified — one `BlocBuilder`, single-expansion state, no navigation. `order_detail_screen.dart` and its test deleted. Router redirects `/orders/:id` and `/orders/:id/track` → `/orders?expand=<id>`; `OrdersScreen` honors `expandOrderId` constructor param to auto-open the right card. Zero duplicate `loadOrders` calls. `flutter analyze` passes 0 issues
 - [✓] 28.26 Update DESIGN.md — document split strategy (auth=dark, customer=light)
 - [✓] 28.27 Run flutter analyze — must pass 0 errors
+
+---
+
+## 🔷 Phase 29: Order Ratings & Product Reviews (Supabase Integration)
+**Skills:** flutter-layer-based-clean-architecture, flutter-error-handling, dart-language, dart-tooling
+**Target:** Save order ratings to Supabase and show product reviews dynamically
+
+- [✓] 29.1 Create database migration SQL file `supabase/migrations/20260623_000002_create_order_ratings.sql`
+- [✓] 29.2 Create domain entities `lib/domain/entities/order_rating.dart`
+- [✓] 29.3 Create domain repository `lib/domain/repositories/rating_repository.dart`
+- [✓] 29.4 Create DTO `lib/infrastructure/dtos/order_rating_dto.dart`
+- [✓] 29.5 Create remote data source `lib/infrastructure/datasources/remote/rating_remote_data_source.dart`
+- [✓] 29.6 Implement `lib/infrastructure/repositories/rating_repository_impl.dart`
+- [✓] 29.7 Register types in Dependency Injection `lib/core/di/injection_container.dart`
+- [✓] 29.8 Run build_runner to generate code files
+- [✓] 29.9 Create Cubit and State `lib/application/rating/rating_cubit.dart`
+- [✓] 29.10 Update `lib/presentation/screens/orders/rate_order_screen.dart` to use cubit
+- [✓] 29.11 Update `lib/presentation/screens/product/product_reviews_screen.dart` to show dynamic reviews
+- [✓] 29.12 Run `flutter analyze` — must pass 0 errors

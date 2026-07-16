@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../app/theme/app_theme.dart';
+import '../../../core/di/injection_container.dart';
+import '../../../application/rating/rating_cubit.dart';
 import '../../widgets/app_top_bar.dart';
+import '../../widgets/empty_state.dart';
 
 class ProductReviewsScreen extends StatelessWidget {
   final String productId;
@@ -14,29 +19,92 @@ class ProductReviewsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const AppTopBar(
-        title: 'التقييمات',
-        variant: TopBarVariant.withBack,
-      ),
-      body: Column(
-        children: [
-          _RatingSummary(productName: productName),
-          const Divider(color: AppColors.outlineVariant),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              itemCount: 5,
-              itemBuilder: (context, index) => const _ReviewTile(
-                name: 'أحمد',
-                date: 'منذ 3 أيام',
-                rating: 5,
-                comment: 'أكل ممتاز وخدمة سريعة. حقيقي من أفضل المطاعم اللي جربتها!',
-              ),
-            ),
-          ),
-        ],
+    return BlocProvider<RatingCubit>(
+      create: (context) => sl<RatingCubit>()..loadProductRatings(productId),
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: const AppTopBar(
+          title: 'التقييمات',
+          variant: TopBarVariant.withBack,
+        ),
+        body: BlocBuilder<RatingCubit, RatingState>(
+          builder: (context, state) {
+            if (state.status == RatingStatus.loading) {
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primary),
+              );
+            }
+
+            if (state.status == RatingStatus.error) {
+              return Center(
+                child: Text(
+                  state.failure?.map(
+                        server: (f) => f.message,
+                        network: (f) => f.message,
+                        validation: (f) => f.message,
+                        unexpected: (f) => f.message,
+                      ) ??
+                      'حدث خطأ غير متوقع أثناء تحميل التقييمات',
+                  style: const TextStyle(color: AppColors.error),
+                ),
+              );
+            }
+
+            final ratings = state.productRatings;
+
+            double averageRating = 0.0;
+            if (ratings.isNotEmpty) {
+              final sum = ratings.map((r) => r.rating).reduce((a, b) => a + b);
+              averageRating = sum / ratings.length;
+            }
+
+            if (ratings.isEmpty) {
+              return Column(
+                children: [
+                  _RatingSummary(
+                    productName: productName,
+                    averageRating: 0.0,
+                    totalReviews: 0,
+                  ),
+                  const Divider(color: AppColors.outlineVariant),
+                  const Expanded(
+                    child: EmptyState(
+                      icon: Icons.star_outline_rounded,
+                      title: 'لا توجد تقييمات بعد',
+                      subtitle: 'كن أول من يطلب ويقيم هذا المنتج!',
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              children: [
+                _RatingSummary(
+                  productName: productName,
+                  averageRating: averageRating,
+                  totalReviews: ratings.length,
+                ),
+                const Divider(color: AppColors.outlineVariant),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    itemCount: ratings.length,
+                    itemBuilder: (context, index) {
+                      final review = ratings[index];
+                      return _ReviewTile(
+                        name: review.customerName,
+                        date: review.createdAt,
+                        rating: review.rating,
+                        comment: review.comment ?? 'بدون تعليق',
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -44,12 +112,19 @@ class ProductReviewsScreen extends StatelessWidget {
 
 class _RatingSummary extends StatelessWidget {
   final String productName;
+  final double averageRating;
+  final int totalReviews;
 
-  const _RatingSummary({required this.productName});
+  const _RatingSummary({
+    required this.productName,
+    required this.averageRating,
+    required this.totalReviews,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final int roundedRating = averageRating.round();
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
@@ -69,18 +144,26 @@ class _RatingSummary extends StatelessWidget {
                 Row(
                   children: [
                     ...List.generate(
-                        5,
-                        (i) => Icon(
-                              Icons.star,
-                              size: 20,
-                              color: i < 4 ? AppColors.statusPending : AppColors.outlineVariant,
-                            )),
+                      5,
+                      (i) => Icon(
+                        Icons.star,
+                        size: 20,
+                        color: i < roundedRating ? AppColors.statusPending : AppColors.outlineVariant,
+                      ),
+                    ),
                     const SizedBox(width: 8),
                     Text(
-                      '4.2',
+                      averageRating.toStringAsFixed(1),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '($totalReviews تقييم)',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -96,7 +179,7 @@ class _RatingSummary extends StatelessWidget {
 
 class _ReviewTile extends StatelessWidget {
   final String name;
-  final String date;
+  final DateTime date;
   final int rating;
   final String comment;
 
@@ -106,6 +189,25 @@ class _ReviewTile extends StatelessWidget {
     required this.rating,
     required this.comment,
   });
+
+  String _formatRelativeTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    if (difference.inMinutes < 1) {
+      return 'الآن';
+    } else if (difference.inMinutes < 60) {
+      return 'منذ ${difference.inMinutes} دقيقة';
+    } else if (difference.inHours < 24 && dateTime.day == now.day) {
+      return 'اليوم، ${DateFormat('hh:mm a').format(dateTime)}';
+    } else if (difference.inDays == 1 ||
+        (difference.inHours < 48 &&
+            dateTime.day ==
+                now.subtract(const Duration(days: 1)).day)) {
+      return 'أمس، ${DateFormat('hh:mm a').format(dateTime)}';
+    } else {
+      return DateFormat('yyyy-MM-dd').format(dateTime);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +236,7 @@ class _ReviewTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  date,
+                  _formatRelativeTime(date.toLocal()),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: AppColors.textSecondary,
                   ),

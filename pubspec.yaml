@@ -55,6 +55,9 @@ dependencies:
   # Share
   share_plus: ^7.2.2
 
+  # External app launch (WhatsApp, tel, etc.)
+  url_launcher: ^6.3.1
+
   # Image Picker
   image_picker: ^1.0.7
 
@@ -64,6 +67,8 @@ dependencies:
   shared_preferences: ^2.3.3
   logger: ^2.5.0
   html: ^0.15.4
+  local_auth: ^2.1.8
+  flutter_secure_storage: ^9.0.0
 
   # Observability
   sentry_flutter: ^8.0.0

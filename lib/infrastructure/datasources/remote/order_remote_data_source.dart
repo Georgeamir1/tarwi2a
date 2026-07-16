@@ -51,7 +51,12 @@ class OrderRemoteDataSource {
   }
 
   Future<void> updateStatus(String orderId, String status) async {
-    await _client.from('orders').update({'status': status}).eq('id', orderId);
+    final updates = <String, dynamic>{'status': status};
+    if (status == 'delivered') {
+      updates['payment_status'] = 'confirmed';
+    }
+    final response = await _client.from('orders').update(updates).eq('id', orderId).select().single();
+    appLogger.d('[OrderRemoteDS] updateStatus success. Supabase response: $response');
   }
 
   Future<void> updatePaymentStatus(String orderId, String paymentStatus,
@@ -60,7 +65,8 @@ class OrderRemoteDataSource {
     if (paymentProofUrl != null) {
       updates['payment_proof_url'] = paymentProofUrl;
     }
-    await _client.from('orders').update(updates).eq('id', orderId);
+    final response = await _client.from('orders').update(updates).eq('id', orderId).select().single();
+    appLogger.d('[OrderRemoteDS] updatePaymentStatus success. Supabase response: $response');
   }
 
   Stream<List<Map<String, dynamic>>> watchOrders() {

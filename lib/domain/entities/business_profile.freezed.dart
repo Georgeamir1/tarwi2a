@@ -28,6 +28,9 @@ mixin _$BusinessProfile {
   bool get isBusy => throw _privateConstructorUsedError;
   String? get busyMessage => throw _privateConstructorUsedError;
   bool get acceptOrders => throw _privateConstructorUsedError;
+  String? get whatsappNumber => throw _privateConstructorUsedError;
+  String? get vodafoneCashNumber => throw _privateConstructorUsedError;
+  String? get instapayHandle => throw _privateConstructorUsedError;
   DateTime get updatedAt => throw _privateConstructorUsedError;
 
   /// Create a copy of BusinessProfile
@@ -55,6 +58,9 @@ abstract class $BusinessProfileCopyWith<$Res> {
       bool isBusy,
       String? busyMessage,
       bool acceptOrders,
+      String? whatsappNumber,
+      String? vodafoneCashNumber,
+      String? instapayHandle,
       DateTime updatedAt});
 }
 
@@ -84,6 +90,9 @@ class _$BusinessProfileCopyWithImpl<$Res, $Val extends BusinessProfile>
     Object? isBusy = null,
     Object? busyMessage = freezed,
     Object? acceptOrders = null,
+    Object? whatsappNumber = freezed,
+    Object? vodafoneCashNumber = freezed,
+    Object? instapayHandle = freezed,
     Object? updatedAt = null,
   }) {
     return _then(_value.copyWith(
@@ -131,6 +140,18 @@ class _$BusinessProfileCopyWithImpl<$Res, $Val extends BusinessProfile>
           ? _value.acceptOrders
           : acceptOrders // ignore: cast_nullable_to_non_nullable
               as bool,
+      whatsappNumber: freezed == whatsappNumber
+          ? _value.whatsappNumber
+          : whatsappNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      vodafoneCashNumber: freezed == vodafoneCashNumber
+          ? _value.vodafoneCashNumber
+          : vodafoneCashNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instapayHandle: freezed == instapayHandle
+          ? _value.instapayHandle
+          : instapayHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
       updatedAt: null == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -159,6 +180,9 @@ abstract class _$$BusinessProfileImplCopyWith<$Res>
       bool isBusy,
       String? busyMessage,
       bool acceptOrders,
+      String? whatsappNumber,
+      String? vodafoneCashNumber,
+      String? instapayHandle,
       DateTime updatedAt});
 }
 
@@ -186,6 +210,9 @@ class __$$BusinessProfileImplCopyWithImpl<$Res>
     Object? isBusy = null,
     Object? busyMessage = freezed,
     Object? acceptOrders = null,
+    Object? whatsappNumber = freezed,
+    Object? vodafoneCashNumber = freezed,
+    Object? instapayHandle = freezed,
     Object? updatedAt = null,
   }) {
     return _then(_$BusinessProfileImpl(
@@ -233,6 +260,18 @@ class __$$BusinessProfileImplCopyWithImpl<$Res>
           ? _value.acceptOrders
           : acceptOrders // ignore: cast_nullable_to_non_nullable
               as bool,
+      whatsappNumber: freezed == whatsappNumber
+          ? _value.whatsappNumber
+          : whatsappNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      vodafoneCashNumber: freezed == vodafoneCashNumber
+          ? _value.vodafoneCashNumber
+          : vodafoneCashNumber // ignore: cast_nullable_to_non_nullable
+              as String?,
+      instapayHandle: freezed == instapayHandle
+          ? _value.instapayHandle
+          : instapayHandle // ignore: cast_nullable_to_non_nullable
+              as String?,
       updatedAt: null == updatedAt
           ? _value.updatedAt
           : updatedAt // ignore: cast_nullable_to_non_nullable
@@ -256,6 +295,9 @@ class _$BusinessProfileImpl implements _BusinessProfile {
       this.isBusy = false,
       this.busyMessage,
       this.acceptOrders = true,
+      this.whatsappNumber,
+      this.vodafoneCashNumber,
+      this.instapayHandle,
       required this.updatedAt})
       : _openingHours = openingHours;
 
@@ -292,11 +334,17 @@ class _$BusinessProfileImpl implements _BusinessProfile {
   @JsonKey()
   final bool acceptOrders;
   @override
+  final String? whatsappNumber;
+  @override
+  final String? vodafoneCashNumber;
+  @override
+  final String? instapayHandle;
+  @override
   final DateTime updatedAt;
 
   @override
   String toString() {
-    return 'BusinessProfile(id: $id, name: $name, phone: $phone, address: $address, logoUrl: $logoUrl, openingHours: $openingHours, minOrder: $minOrder, defaultPrepTime: $defaultPrepTime, isBusy: $isBusy, busyMessage: $busyMessage, acceptOrders: $acceptOrders, updatedAt: $updatedAt)';
+    return 'BusinessProfile(id: $id, name: $name, phone: $phone, address: $address, logoUrl: $logoUrl, openingHours: $openingHours, minOrder: $minOrder, defaultPrepTime: $defaultPrepTime, isBusy: $isBusy, busyMessage: $busyMessage, acceptOrders: $acceptOrders, whatsappNumber: $whatsappNumber, vodafoneCashNumber: $vodafoneCashNumber, instapayHandle: $instapayHandle, updatedAt: $updatedAt)';
   }
 
   @override
@@ -320,6 +368,12 @@ class _$BusinessProfileImpl implements _BusinessProfile {
                 other.busyMessage == busyMessage) &&
             (identical(other.acceptOrders, acceptOrders) ||
                 other.acceptOrders == acceptOrders) &&
+            (identical(other.whatsappNumber, whatsappNumber) ||
+                other.whatsappNumber == whatsappNumber) &&
+            (identical(other.vodafoneCashNumber, vodafoneCashNumber) ||
+                other.vodafoneCashNumber == vodafoneCashNumber) &&
+            (identical(other.instapayHandle, instapayHandle) ||
+                other.instapayHandle == instapayHandle) &&
             (identical(other.updatedAt, updatedAt) ||
                 other.updatedAt == updatedAt));
   }
@@ -338,6 +392,9 @@ class _$BusinessProfileImpl implements _BusinessProfile {
       isBusy,
       busyMessage,
       acceptOrders,
+      whatsappNumber,
+      vodafoneCashNumber,
+      instapayHandle,
       updatedAt);
 
   /// Create a copy of BusinessProfile
@@ -363,6 +420,9 @@ abstract class _BusinessProfile implements BusinessProfile {
       final bool isBusy,
       final String? busyMessage,
       final bool acceptOrders,
+      final String? whatsappNumber,
+      final String? vodafoneCashNumber,
+      final String? instapayHandle,
       required final DateTime updatedAt}) = _$BusinessProfileImpl;
 
   @override
@@ -387,6 +447,12 @@ abstract class _BusinessProfile implements BusinessProfile {
   String? get busyMessage;
   @override
   bool get acceptOrders;
+  @override
+  String? get whatsappNumber;
+  @override
+  String? get vodafoneCashNumber;
+  @override
+  String? get instapayHandle;
   @override
   DateTime get updatedAt;
 

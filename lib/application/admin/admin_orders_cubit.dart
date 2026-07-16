@@ -68,6 +68,12 @@ class AdminOrdersCubit extends Cubit<AdminOrdersState> {
     loadOrders();
   }
 
+  Future<void> confirmPayment(String orderId) async {
+    appLogger.d('[AdminOrdersCubit] confirming payment for order $orderId');
+    await _orderRepository.updatePaymentStatus(orderId, 'confirmed');
+    loadOrders();
+  }
+
   @override
   Future<void> close() {
     _subscription?.cancel();

@@ -23,6 +23,12 @@ class BusinessProfileDTO {
   final String? busyMessage;
   @JsonKey(name: 'accept_orders')
   final bool acceptOrders;
+  @JsonKey(name: 'whatsapp_number')
+  final String? whatsappNumber;
+  @JsonKey(name: 'vodafone_cash_number')
+  final String? vodafoneCashNumber;
+  @JsonKey(name: 'instapay_handle')
+  final String? instapayHandle;
   @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
 
@@ -38,6 +44,9 @@ class BusinessProfileDTO {
     required this.isBusy,
     this.busyMessage,
     required this.acceptOrders,
+    this.whatsappNumber,
+    this.vodafoneCashNumber,
+    this.instapayHandle,
     required this.updatedAt,
   });
 
@@ -71,6 +80,9 @@ class BusinessProfileDTO {
       isBusy: isBusy,
       busyMessage: busyMessage,
       acceptOrders: acceptOrders,
+      whatsappNumber: whatsappNumber,
+      vodafoneCashNumber: vodafoneCashNumber,
+      instapayHandle: instapayHandle,
       updatedAt: updatedAt,
     );
   }

@@ -22,6 +22,7 @@ mixin _$CartItem {
   int get quantity => throw _privateConstructorUsedError;
   List<SelectedOption> get selectedOptions =>
       throw _privateConstructorUsedError;
+  String? get productImageUrl => throw _privateConstructorUsedError;
 
   /// Create a copy of CartItem
   /// with the given fields replaced by the non-null parameter values.
@@ -40,7 +41,8 @@ abstract class $CartItemCopyWith<$Res> {
       String productNameAr,
       double productPrice,
       int quantity,
-      List<SelectedOption> selectedOptions});
+      List<SelectedOption> selectedOptions,
+      String? productImageUrl});
 }
 
 /// @nodoc
@@ -63,6 +65,7 @@ class _$CartItemCopyWithImpl<$Res, $Val extends CartItem>
     Object? productPrice = null,
     Object? quantity = null,
     Object? selectedOptions = null,
+    Object? productImageUrl = freezed,
   }) {
     return _then(_value.copyWith(
       productId: null == productId
@@ -85,6 +88,10 @@ class _$CartItemCopyWithImpl<$Res, $Val extends CartItem>
           ? _value.selectedOptions
           : selectedOptions // ignore: cast_nullable_to_non_nullable
               as List<SelectedOption>,
+      productImageUrl: freezed == productImageUrl
+          ? _value.productImageUrl
+          : productImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -102,7 +109,8 @@ abstract class _$$CartItemImplCopyWith<$Res>
       String productNameAr,
       double productPrice,
       int quantity,
-      List<SelectedOption> selectedOptions});
+      List<SelectedOption> selectedOptions,
+      String? productImageUrl});
 }
 
 /// @nodoc
@@ -123,6 +131,7 @@ class __$$CartItemImplCopyWithImpl<$Res>
     Object? productPrice = null,
     Object? quantity = null,
     Object? selectedOptions = null,
+    Object? productImageUrl = freezed,
   }) {
     return _then(_$CartItemImpl(
       productId: null == productId
@@ -145,6 +154,10 @@ class __$$CartItemImplCopyWithImpl<$Res>
           ? _value._selectedOptions
           : selectedOptions // ignore: cast_nullable_to_non_nullable
               as List<SelectedOption>,
+      productImageUrl: freezed == productImageUrl
+          ? _value.productImageUrl
+          : productImageUrl // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -157,7 +170,8 @@ class _$CartItemImpl extends _CartItem {
       required this.productNameAr,
       required this.productPrice,
       required this.quantity,
-      final List<SelectedOption> selectedOptions = const []})
+      final List<SelectedOption> selectedOptions = const [],
+      this.productImageUrl})
       : _selectedOptions = selectedOptions,
         super._();
 
@@ -179,8 +193,11 @@ class _$CartItemImpl extends _CartItem {
   }
 
   @override
+  final String? productImageUrl;
+
+  @override
   String toString() {
-    return 'CartItem(productId: $productId, productNameAr: $productNameAr, productPrice: $productPrice, quantity: $quantity, selectedOptions: $selectedOptions)';
+    return 'CartItem(productId: $productId, productNameAr: $productNameAr, productPrice: $productPrice, quantity: $quantity, selectedOptions: $selectedOptions, productImageUrl: $productImageUrl)';
   }
 
   @override
@@ -197,7 +214,9 @@ class _$CartItemImpl extends _CartItem {
             (identical(other.quantity, quantity) ||
                 other.quantity == quantity) &&
             const DeepCollectionEquality()
-                .equals(other._selectedOptions, _selectedOptions));
+                .equals(other._selectedOptions, _selectedOptions) &&
+            (identical(other.productImageUrl, productImageUrl) ||
+                other.productImageUrl == productImageUrl));
   }
 
   @override
@@ -207,7 +226,8 @@ class _$CartItemImpl extends _CartItem {
       productNameAr,
       productPrice,
       quantity,
-      const DeepCollectionEquality().hash(_selectedOptions));
+      const DeepCollectionEquality().hash(_selectedOptions),
+      productImageUrl);
 
   /// Create a copy of CartItem
   /// with the given fields replaced by the non-null parameter values.
@@ -224,7 +244,8 @@ abstract class _CartItem extends CartItem {
       required final String productNameAr,
       required final double productPrice,
       required final int quantity,
-      final List<SelectedOption> selectedOptions}) = _$CartItemImpl;
+      final List<SelectedOption> selectedOptions,
+      final String? productImageUrl}) = _$CartItemImpl;
   const _CartItem._() : super._();
 
   @override
@@ -237,6 +258,8 @@ abstract class _CartItem extends CartItem {
   int get quantity;
   @override
   List<SelectedOption> get selectedOptions;
+  @override
+  String? get productImageUrl;
 
   /// Create a copy of CartItem
   /// with the given fields replaced by the non-null parameter values.

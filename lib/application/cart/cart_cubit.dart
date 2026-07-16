@@ -32,6 +32,7 @@ class CartCubit extends Cubit<CartState> {
         productId: product.id,
         productNameAr: product.nameAr,
         productPrice: product.price,
+        productImageUrl: product.imageUrl,
         quantity: 1,
         selectedOptions: selectedOptions,
       ));

@@ -11,6 +11,7 @@ class CartItemDTO {
   final double productPrice;
   final int quantity;
   final List<Map<String, dynamic>>? selectedOptions;
+  final String? productImageUrl;
 
   const CartItemDTO({
     required this.productId,
@@ -18,6 +19,7 @@ class CartItemDTO {
     required this.productPrice,
     required this.quantity,
     this.selectedOptions,
+    this.productImageUrl,
   });
 
   factory CartItemDTO.fromJson(Map<String, dynamic> json) =>
@@ -30,6 +32,7 @@ class CartItemDTO {
         productNameAr: productNameAr,
         productPrice: productPrice,
         quantity: quantity,
+        productImageUrl: productImageUrl,
         selectedOptions: (selectedOptions ?? [])
             .map((e) => SelectedOption(
                   optionId: e['option_id'] as String? ?? '',
@@ -45,6 +48,7 @@ class CartItemDTO {
         productNameAr: item.productNameAr,
         productPrice: item.productPrice,
         quantity: item.quantity,
+        productImageUrl: item.productImageUrl,
         selectedOptions: item.selectedOptions
             .map((e) => {
                   'option_id': e.optionId,

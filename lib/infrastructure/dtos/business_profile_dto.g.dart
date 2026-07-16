@@ -19,6 +19,9 @@ BusinessProfileDTO _$BusinessProfileDTOFromJson(Map<String, dynamic> json) =>
       isBusy: json['is_busy'] as bool,
       busyMessage: json['busy_message'] as String?,
       acceptOrders: json['accept_orders'] as bool,
+      whatsappNumber: json['whatsapp_number'] as String?,
+      vodafoneCashNumber: json['vodafone_cash_number'] as String?,
+      instapayHandle: json['instapay_handle'] as String?,
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
 
@@ -35,5 +38,8 @@ Map<String, dynamic> _$BusinessProfileDTOToJson(BusinessProfileDTO instance) =>
       'is_busy': instance.isBusy,
       'busy_message': instance.busyMessage,
       'accept_orders': instance.acceptOrders,
+      'whatsapp_number': instance.whatsappNumber,
+      'vodafone_cash_number': instance.vodafoneCashNumber,
+      'instapay_handle': instance.instapayHandle,
       'updated_at': instance.updatedAt.toIso8601String(),
     };

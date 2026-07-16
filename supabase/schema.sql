@@ -127,6 +127,9 @@ CREATE TABLE IF NOT EXISTS business_profiles (
   is_busy BOOLEAN DEFAULT false,
   busy_message TEXT,
   accept_orders BOOLEAN DEFAULT true,
+  whatsapp_number TEXT,        -- international format without + (e.g. 201xxxxxxxxx)
+  vodafone_cash_number TEXT,
+  instapay_handle TEXT,
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -8,6 +8,8 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/services/push_notification_service.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/profile_list_tile.dart';
+import '../../../core/services/biometric_service.dart';
+import '../../../domain/repositories/auth_repository.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -20,11 +22,146 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notifications = true;
   bool _orderUpdates = true;
   String? _userId;
+  bool _biometricsSupported = false;
+  bool _biometricsEnabled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    _checkBiometrics();
+  }
+
+  Future<void> _checkBiometrics() async {
+    final service = sl<BiometricService>();
+    final supported = await service.isHardwareSupported;
+    if (mounted) {
+      setState(() {
+        _biometricsSupported = supported;
+        _biometricsEnabled = service.isEnabled;
+      });
+    }
+  }
+
+  Future<void> _onBiometricsChanged(bool value) async {
+    final service = sl<BiometricService>();
+    if (value) {
+      final authenticated = await service.authenticate();
+      if (!authenticated) {
+        setState(() => _biometricsEnabled = false);
+        return;
+      }
+
+      if (!mounted) return;
+
+      final password = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final controller = TextEditingController();
+          final formKey = GlobalKey<FormState>();
+          return AlertDialog(
+            title: const Text('تفعيل الدخول بالبصمة'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('الرجاء إدخال كلمة مرور حسابك لتشفيرها وحفظها بشكل آمن على هذا الجهاز:'),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: controller,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      hintText: 'كلمة المرور الحالية',
+                    ),
+                    validator: (v) => v == null || v.isEmpty ? 'الحقل مطلوب' : null,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('إلغاء'),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(context, controller.text);
+                  }
+                },
+                child: const Text('تأكيد'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (password == null || password.isEmpty || !mounted) {
+        setState(() => _biometricsEnabled = false);
+        return;
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final authState = context.read<AuthCubit>().state;
+      if (authState is! Authenticated) {
+        Navigator.pop(context);
+        return;
+      }
+      final email = sl<AuthRepository>().currentUser?.email;
+      if (email == null) {
+        Navigator.pop(context);
+        return;
+      }
+
+      final result = await sl<AuthRepository>().signIn(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Dismiss loading
+
+      final messenger = ScaffoldMessenger.of(context);
+
+      result.fold(
+        (failure) {
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('كلمة المرور غير صحيحة، فشل تفعيل البصمة'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          setState(() => _biometricsEnabled = false);
+        },
+        (_) async {
+          await service.saveCredentials(email, password);
+          await service.setEnabled(true);
+          setState(() => _biometricsEnabled = true);
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('تم تفعيل تسجيل الدخول بالبصمة بنجاح!'),
+              backgroundColor: AppColors.statusDelivered,
+            ),
+          );
+        },
+      );
+    } else {
+      await service.setEnabled(false);
+      setState(() => _biometricsEnabled = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تم إلغاء تفعيل تسجيل الدخول بالبصمة'),
+        ),
+      );
+    }
   }
 
   void _load() {
@@ -108,6 +245,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
               ),
+              if (_biometricsSupported) ...[
+                const _SectionLabel(title: 'الأمان'),
+                _SettingsTile(
+                  icon: Icons.fingerprint_rounded,
+                  title: 'تسجيل الدخول بالبصمة',
+                  subtitle: 'استخدام البصمة أو Face ID للمصادقة السريعة',
+                  trailing: Switch(
+                    value: _biometricsEnabled,
+                    onChanged: _onBiometricsChanged,
+                  ),
+                ),
+              ],
               const _SectionLabel(title: 'الإشعارات'),
               _SettingsTile(
                 icon: Icons.notifications_outlined,

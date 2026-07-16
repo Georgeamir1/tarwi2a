@@ -34,14 +34,29 @@ class _MenuBodyState extends State<_MenuBody>
     with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
   String? _lastCategoryQuery;
+  String? _lastSearchQuery;
+
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
 
   @override
   void initState() {
     super.initState();
+    _focusNode.addListener(_onFocusChange);
+    _searchController.addListener(_onSearchTextChange);
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     )..forward();
+  }
+
+  void _onFocusChange() {
+    setState(() => _isFocused = _focusNode.hasFocus);
+  }
+
+  void _onSearchTextChange() {
+    setState(() {});
   }
 
   @override
@@ -49,11 +64,31 @@ class _MenuBodyState extends State<_MenuBody>
     super.didChangeDependencies();
     final routerState = GoRouterState.of(context);
     final categoryQuery = routerState.uri.queryParameters['category'];
+    final searchQuery = routerState.uri.queryParameters['search'];
+
+    bool changed = false;
     if (categoryQuery != _lastCategoryQuery) {
       _lastCategoryQuery = categoryQuery;
+      changed = true;
+    }
+    if (searchQuery != _lastSearchQuery) {
+      _lastSearchQuery = searchQuery;
+      changed = true;
+      if (searchQuery != null) {
+        if (_searchController.text != searchQuery) {
+          _searchController.text = searchQuery;
+        }
+      } else {
+        _searchController.clear();
+      }
+    }
+
+    if (changed) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          context.read<ProductsCubit>().selectCategory(categoryQuery);
+          final cubit = context.read<ProductsCubit>();
+          cubit.selectCategory(categoryQuery);
+          cubit.searchProducts(searchQuery ?? '');
         }
       });
     }
@@ -61,6 +96,10 @@ class _MenuBodyState extends State<_MenuBody>
 
   @override
   void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _searchController.removeListener(_onSearchTextChange);
+    _focusNode.dispose();
+    _searchController.dispose();
     _animCtrl.dispose();
     super.dispose();
   }
@@ -72,6 +111,101 @@ class _MenuBodyState extends State<_MenuBody>
     ]);
   }
 
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 52,
+        decoration: BoxDecoration(
+          color: _isFocused ? AppColors.surface : AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(
+            color: _isFocused ? AppColors.primary : AppColors.outlineVariant,
+            width: _isFocused ? 2 : 1,
+          ),
+          boxShadow: _isFocused
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          textDirection: TextDirection.rtl,
+          children: [
+            const SizedBox(width: 18),
+            AnimatedScale(
+              scale: _isFocused ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                Icons.search_rounded,
+                color: _isFocused ? AppColors.primary : AppColors.textSecondary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                focusNode: _focusNode,
+                textDirection: TextDirection.rtl,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                ),
+                cursorColor: AppColors.primary,
+                onChanged: (value) {
+                  context.read<ProductsCubit>().searchProducts(value.trim());
+                },
+                decoration: const InputDecoration(
+                  hintText: 'ابحث عن طبق...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 15,
+                    color: AppColors.textSecondary,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+              ),
+            ),
+            if (_searchController.text.isNotEmpty)
+              IconButton(
+                icon: const Icon(
+                  Icons.clear_rounded,
+                  size: 20,
+                  color: AppColors.textSecondary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _searchController.clear();
+                  });
+                  context.read<ProductsCubit>().searchProducts('');
+                },
+              ),
+            const SizedBox(width: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,7 +214,9 @@ class _MenuBodyState extends State<_MenuBody>
         child: Column(
           children: [
             const _MenuHeader(),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            _buildSearchBar(),
+            const SizedBox(height: 16),
             const _CategoryTabs(),
             const SizedBox(height: 16),
             Expanded(

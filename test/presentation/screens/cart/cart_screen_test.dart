@@ -77,10 +77,10 @@ void main() {
         await tester.pumpWidget(_buildTestWidget(cartCubit: mockCartCubit));
         await tester.pumpAndSettle();
 
-        expect(find.text('السلة فاضية'), findsOneWidget);
+        expect(find.text('السلة فارغة'), findsOneWidget);
         expect(
-            find.text('شوف القائمة واختار الأكلات اللي تعجبك'), findsOneWidget);
-        expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
+            find.text('تصفح القائمة الشهية وأضف أكلاتك المفضلة إليها الآن'), findsOneWidget);
+        expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
       });
 
       testWidgets('checkout button at bottom', (tester) async {

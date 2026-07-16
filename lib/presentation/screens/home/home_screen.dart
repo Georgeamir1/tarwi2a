@@ -333,6 +333,8 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
   final FocusNode _focusNode = FocusNode();
   bool _isFocused = false;
 
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -343,10 +345,19 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
     setState(() => _isFocused = _focusNode.hasFocus);
   }
 
+  void _onSearchSubmit(String query) {
+    _focusNode.unfocus();
+    if (query.trim().isNotEmpty) {
+      context.go('/menu?search=${Uri.encodeComponent(query.trim())}');
+      _searchController.clear();
+    }
+  }
+
   @override
   void dispose() {
     _focusNode.removeListener(_onFocusChange);
     _focusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -401,6 +412,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                controller: _searchController,
                 focusNode: _focusNode,
                 textDirection: TextDirection.rtl,
                 style: AppTypography.body.copyWith(
@@ -408,6 +420,7 @@ class _HomeSearchBarState extends State<_HomeSearchBar> {
                   color: AppColors.textPrimary,
                 ),
                 cursorColor: AppColors.primary,
+                onSubmitted: _onSearchSubmit,
                 decoration: const InputDecoration(
                   hintText:
                       '\u0627\u0628\u062d\u062b \u0639\u0646 \u0637\u0628\u0642\u2026',
@@ -448,6 +461,7 @@ class _HomeHeroCarousel extends StatefulWidget {
   @override
   State<_HomeHeroCarousel> createState() => _HomeHeroCarouselState();
 }
+
 class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
   int _current = 0;
   Timer? _timer;
@@ -501,7 +515,8 @@ class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
           return const _HeroSkeleton();
         }
 
-        final heroes = prodState.allProducts.where((p) => p.showInBanner).toList();
+        final heroes =
+            prodState.allProducts.where((p) => p.showInBanner).toList();
         if (heroes.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -575,6 +590,7 @@ class _HomeHeroCarouselState extends State<_HomeHeroCarousel> {
     );
   }
 }
+
 class _HeroCard extends StatefulWidget {
   final Product product;
   final bool isActive;
@@ -589,6 +605,7 @@ class _HeroCard extends StatefulWidget {
   @override
   State<_HeroCard> createState() => _HeroCardState();
 }
+
 class _HeroCardState extends State<_HeroCard> {
   bool _pressed = false;
 
@@ -743,11 +760,13 @@ class _HeroCardState extends State<_HeroCard> {
                                           vertical: 5,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(999),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
                                           border: Border.all(
-                                            color:
-                                                Colors.white.withValues(alpha: 0.3),
+                                            color: Colors.white
+                                                .withValues(alpha: 0.3),
                                             width: 1,
                                           ),
                                         ),
@@ -761,7 +780,8 @@ class _HeroCardState extends State<_HeroCard> {
                                           ),
                                         ),
                                       ),
-                                      if (widget.product.descriptionAr != null) ...[
+                                      if (widget.product.descriptionAr !=
+                                          null) ...[
                                         const SizedBox(width: 8),
                                         Flexible(
                                           child: Text(
@@ -769,8 +789,8 @@ class _HeroCardState extends State<_HeroCard> {
                                             style: TextStyle(
                                               fontFamily: 'Cairo',
                                               fontSize: 12,
-                                              color:
-                                                  Colors.white.withValues(alpha: 0.85),
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.85),
                                               height: 1.3,
                                             ),
                                             maxLines: 1,
@@ -831,6 +851,7 @@ class _HeroCardState extends State<_HeroCard> {
     );
   }
 }
+
 class _HeroSkeleton extends StatelessWidget {
   const _HeroSkeleton();
 
@@ -848,6 +869,7 @@ class _HeroSkeleton extends StatelessWidget {
     );
   }
 }
+
 class _HomePopularSection extends StatelessWidget {
   const _HomePopularSection();
 
@@ -928,6 +950,7 @@ class _HomePopularSection extends StatelessWidget {
     );
   }
 }
+
 class _PopularCard extends StatefulWidget {
   final Product product;
   final VoidCallback onTap;
@@ -937,6 +960,7 @@ class _PopularCard extends StatefulWidget {
   @override
   State<_PopularCard> createState() => _PopularCardState();
 }
+
 class _PopularCardState extends State<_PopularCard> {
   bool _pressed = false;
 
@@ -996,131 +1020,133 @@ class _PopularCardState extends State<_PopularCard> {
     final p = widget.product;
 
     return GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.95 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeInOut,
-        child: SizedBox(
-          width: 158,
-          child: Container(
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 58,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                        child: ProductImage(
-                          imageUrl: p.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: Container(
-                            color: AppColors.surfaceContainerLow,
-                          ),
-                          errorWidget: Container(
-                            color: AppColors.surfaceContainerLow,
-                            child: const Icon(
-                              Icons.restaurant_menu,
-                              color: AppColors.textSecondary,
-                              size: 28,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        decoration: const BoxDecoration(
-                          borderRadius: BorderRadius.vertical(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeInOut,
+          child: SizedBox(
+            width: 158,
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 58,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(20),
                           ),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.center,
-                            colors: [
-                              Colors.transparent,
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        right: 10,
-                        child: _buildTagBadge(p),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  flex: 42,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          p.nameAr,
-                          style: const TextStyle(
-                            fontFamily: 'Cairo',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                            height: 1.2,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textDirection: TextDirection.rtl,
-                        ),
-                        Row(
-                          textDirection: TextDirection.rtl,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              p.price.formatted,
-                              style: const TextStyle(
-                                fontFamily: 'Cairo',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.primary,
+                          child: ProductImage(
+                            imageUrl: p.imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: Container(
+                              color: AppColors.surfaceContainerLow,
+                            ),
+                            errorWidget: Container(
+                              color: AppColors.surfaceContainerLow,
+                              child: const Icon(
+                                Icons.restaurant_menu,
+                                color: AppColors.textSecondary,
+                                size: 28,
                               ),
-                              textDirection: TextDirection.rtl,
                             ),
-                            CartAddButton(
-                              product: p,
-                              iconSize: 16,
-                              buttonSize: 28,
+                          ),
+                        ),
+                        Container(
+                          decoration: const BoxDecoration(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
                             ),
-                          ],
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.center,
+                              colors: [
+                                Colors.transparent,
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 10,
+                          right: 10,
+                          child: _buildTagBadge(p),
                         ),
                       ],
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    flex: 42,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            p.nameAr,
+                            style: const TextStyle(
+                              fontFamily: 'Cairo',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                              height: 1.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.rtl,
+                          ),
+                          Row(
+                            textDirection: TextDirection.rtl,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                p.price.formatted,
+                                style: const TextStyle(
+                                  fontFamily: 'Cairo',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
+                                textDirection: TextDirection.rtl,
+                              ),
+                              CartAddButton(
+                                product: p,
+                                iconSize: 16,
+                                buttonSize: 28,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ));
-}}
+        ));
+  }
+}
+
 class _HomeCategoryPreviews extends StatelessWidget {
   final Animation<double> stagger;
 
@@ -1154,7 +1180,7 @@ class _HomeCategoryPreviews extends StatelessWidget {
 
             return SliverList(
               delegate: SliverChildBuilderDelegate(
-                    (context, catIndex) {
+                (context, catIndex) {
                   final category = previewCategories[catIndex];
                   final catProducts = prodState.allProducts
                       .where((p) => p.categoryId == category.id)
@@ -1215,7 +1241,7 @@ class _HomeCategoryPreviews extends StatelessWidget {
                           ),
                           itemCount: catProducts.length,
                           separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppSpacing.md),
+                              const SizedBox(height: AppSpacing.md),
                           itemBuilder: (context, index) {
                             final product = catProducts[index];
                             return AnimatedBuilder(
@@ -1257,5 +1283,3 @@ class _HomeCategoryPreviews extends StatelessWidget {
     );
   }
 }
-
-

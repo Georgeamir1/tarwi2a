@@ -46,11 +46,15 @@ import '../../domain/repositories/print_repository.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../../domain/repositories/device_token_repository.dart';
 import '../../domain/repositories/broadcast_repository.dart';
+import '../../domain/repositories/rating_repository.dart';
 import '../../infrastructure/repositories/auth_repository_impl.dart';
 import '../../infrastructure/repositories/profile_repository_impl.dart';
 import '../../infrastructure/repositories/category_repository_impl.dart';
 import '../../infrastructure/repositories/product_repository_impl.dart';
 import '../../infrastructure/repositories/order_repository_impl.dart';
+import '../../infrastructure/repositories/rating_repository_impl.dart';
+import '../../infrastructure/datasources/remote/rating_remote_data_source.dart';
+import '../../application/rating/rating_cubit.dart';
 import '../../application/auth/auth_cubit.dart';
 import '../../application/menu/categories_cubit.dart';
 import '../../application/menu/products_cubit.dart';
@@ -71,13 +75,20 @@ import '../../application/admin/admin_product_options_cubit.dart';
 import '../../application/notifications/notifications_cubit.dart';
 import '../../application/notifications/notification_preferences_cubit.dart';
 import '../../application/admin/admin_broadcast_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/thermal_printer_service.dart';
 import '../../core/services/device_token_service.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/services/biometric_service.dart';
 
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
+  // SharedPreferences & Biometric Service
+  final sharedPrefs = await SharedPreferences.getInstance();
+  sl.registerLazySingleton<SharedPreferences>(() => sharedPrefs);
+  sl.registerLazySingleton<BiometricService>(() => BiometricService(sl()));
+
   // Data Sources (lazy singletons - stateless)
   sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSource());
   sl.registerLazySingleton<ProfileRemoteDataSource>(
@@ -111,6 +122,8 @@ Future<void> initDependencies() async {
       () => DeviceTokenRemoteDataSource());
   sl.registerLazySingleton<BroadcastRemoteDataSource>(
       () => BroadcastRemoteDataSource());
+  sl.registerLazySingleton<RatingRemoteDataSource>(
+      () => RatingRemoteDataSource());
 
   // Repositories (lazy singletons)
   sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
@@ -143,6 +156,8 @@ Future<void> initDependencies() async {
       () => DeviceTokenRepositoryImpl(sl()));
   sl.registerLazySingleton<BroadcastRepository>(
       () => BroadcastRepositoryImpl(sl()));
+  sl.registerLazySingleton<RatingRepository>(
+      () => RatingRepositoryImpl(sl()));
   sl.registerLazySingleton<DeviceTokenService>(() => DeviceTokenService(sl()));
   sl.registerLazySingleton<PushNotificationService>(
       () => PushNotificationService(
@@ -180,4 +195,5 @@ Future<void> initDependencies() async {
       () => NotificationPreferencesCubit(sl()));
   sl.registerFactory<AdminBroadcastCubit>(
       () => AdminBroadcastCubit(sl()));
+  sl.registerFactory<RatingCubit>(() => RatingCubit(sl()));
 }

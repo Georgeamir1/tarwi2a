@@ -11,6 +11,7 @@ class CartItem with _$CartItem {
     required double productPrice,
     required int quantity,
     @Default([]) List<SelectedOption> selectedOptions,
+    String? productImageUrl,
   }) = _CartItem;
 
   const CartItem._();

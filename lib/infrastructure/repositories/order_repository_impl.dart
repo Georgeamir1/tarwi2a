@@ -89,7 +89,8 @@ class OrderRepositoryImpl implements OrderRepository {
     try {
       await _remoteDataSource.updateStatus(orderId, status);
       return right<Failure, void>(null);
-    } catch (e) {
+    } catch (e, st) {
+      appLogger.e('[OrderRepo] updateStatus FAILED', error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
@@ -107,7 +108,8 @@ class OrderRepositoryImpl implements OrderRepository {
         paymentProofUrl: paymentProofUrl,
       );
       return right<Failure, void>(null);
-    } catch (e) {
+    } catch (e, st) {
+      appLogger.e('[OrderRepo] updatePaymentStatus FAILED', error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
