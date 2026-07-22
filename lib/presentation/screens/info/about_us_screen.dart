@@ -36,7 +36,7 @@ class AboutUsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'ترويقه',
+              'ترويئه',
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -50,7 +50,7 @@ class AboutUsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             Text(
-              'ترويقه هو تطبيق طلبات أكل عربي أصيل. بنوصلك أشهى الأكلات من أفضل المطاعم لحد باب بيتك. تقدر تتصفح القوائم، تطلب بسهولة، وتتابع طلبك خطوة بخطوة.',
+              'ترويئه هو تطبيق طلبات أكل عربي أصيل. بنوصلك أشهى الأكلات من أفضل المطاعم لحد باب بيتك. تقدر تتصفح القوائم، تطلب بسهولة، وتتابع طلبك خطوة بخطوة.',
               style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
               textAlign: TextAlign.center,
             ),

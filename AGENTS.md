@@ -1,4 +1,4 @@
-# AGENTS.md — Troo2a (ترويقه) Food Ordering App
+# AGENTS.md — Tarwi2a (ترويئه) Food Ordering App
 
 > ## ⚡ START HERE — كل سيشن جديدة
 > 1. **اقرا `PROGRESS.md`** — هتلاقي أول `[ ]` = اللي لسه متعملش

@@ -1,5 +1,5 @@
 -- =============================================
--- ترويقه (Troo2a) - Complete Database Schema
+-- ترويئه (Tarwi2a) - Complete Database Schema
 -- Run this in Supabase SQL Editor
 -- Last Updated: 2026-05-22
 -- =============================================

@@ -53,7 +53,7 @@ class ThermalPrinterService {
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
               pw.Text(
-                'ترويقه',
+                'ترويئه',
                 style: pw.TextStyle(font: arabicBold, fontSize: 20),
                 textDirection: pw.TextDirection.rtl,
               ),

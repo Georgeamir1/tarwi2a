@@ -102,7 +102,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
               const _ContactMethod(
                 icon: Icons.email_outlined,
                 title: 'الإيميل',
-                subtitle: 'support@troo2a.com',
+                subtitle: 'support@tarwi2a.com',
               ),
               const SizedBox(height: 16),
               const _ContactMethod(

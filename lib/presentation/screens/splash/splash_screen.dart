@@ -415,7 +415,7 @@ class _SplashScreenState extends State<SplashScreen>
                     child: Opacity(
                       opacity: _logoFade.value,
                       child: Semantics(
-                        label: 'شعار ترويقه',
+                        label: 'شعار ترويئه',
                         child: Image.asset(
                           'assets/images/splash_logo-removebg-preview.png',
                           width: 180,
@@ -457,7 +457,8 @@ class _SplashScreenState extends State<SplashScreen>
                         'أكلات أصيلة، طعم لا يُنسى',
                         textAlign: TextAlign.center,
                         style: AppTypography.subheadline.copyWith(
-                          color: AppColors.darkTextSecondary.withValues(alpha: 0.85),
+                          color: AppColors.darkTextSecondary
+                              .withValues(alpha: 0.85),
                           letterSpacing: 0.5,
                           height: 1.5,
                         ),
@@ -537,8 +538,7 @@ class _ParticlePainter extends CustomPainter {
       canvas.drawCircle(Offset(dx, dy), particle.size * 2.5, glowPaint);
 
       // Core circle
-      final corePaint = Paint()
-        ..color = color.withValues(alpha: alpha);
+      final corePaint = Paint()..color = color.withValues(alpha: alpha);
       canvas.drawCircle(Offset(dx, dy), particle.size, corePaint);
     }
   }

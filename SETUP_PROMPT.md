@@ -95,7 +95,7 @@ Find the line `<manifest` and add this line right after it:
 class AppConstants {
   static const supabaseUrl = 'YOUR_SUPABASE_URL';
   static const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
-  static const appName = 'ترويقه';
+  static const appName = 'ترويئه';
   static const paymentCash = 'cash';
   static const paymentWallet = 'wallet';
   static const paymentInstapay = 'instapay';
@@ -721,11 +721,11 @@ void main() async {
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
   );
-  runApp(const ProviderScope(child: Troo2aApp()));
+  runApp(const ProviderScope(child: Tarwi2aApp()));
 }
 
-class Troo2aApp extends ConsumerWidget {
-  const Troo2aApp({super.key});
+class Tarwi2aApp extends ConsumerWidget {
+  const Tarwi2aApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

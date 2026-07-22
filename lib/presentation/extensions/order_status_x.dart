@@ -78,7 +78,7 @@ extension OrderStatusX on OrderStatus {
       case OrderStatus.confirmed:
         return 'تمت مراجعة الطلب والموافقة عليه';
       case OrderStatus.preparing:
-        return 'طهاة ترويقة يحضرون وجبتك اللذيذة الآن';
+        return 'طهاة ترويئة يحضرون وجبتك اللذيذة الآن';
       case OrderStatus.ready:
         return 'طعامك جاهز وبانتظار مندوب التوصيل';
       case OrderStatus.delivered:
@@ -103,7 +103,7 @@ extension OrderStatusX on OrderStatus {
       {
         'label': 'التحضير',
         'icon': Icons.restaurant_rounded,
-        'desc': 'طهاة ترويقة يحضرون وجبتك اللذيذة الآن',
+        'desc': 'طهاة ترويئه يحضرون وجبتك اللذيذة الآن',
       },
       {
         'label': 'جاهز',

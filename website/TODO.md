@@ -5,32 +5,32 @@
 ## Phase 2 — High Priority
 
 ### HTML (`index.html`)
-1. **Fix OG/Twitter image paths** — Change `assets/images/...` to absolute URL (social sharing broken when shared on WhatsApp/Twitter)
-2. **Fix `aria-disabled` on `<a href="#">`** — Footer legal links scroll to top when clicked; replace with `<span>` elements
-3. **Add `loading="lazy"`** to 18 below-the-fold images (3 feature images + 15 category thumbnail `<img>` tags)
-4. **Add `role="status"` / `aria-live="polite"`** to toast `#toast` (copy confirmation invisible to screen readers)
-5. **Add `<link rel="canonical">`** tag in `<head>`
-6. **Add `width` / `height`** attributes to key images (hero-logo, feature-image, logo-img) to prevent CLS layout shift
+1. [x] **Fix OG/Twitter image paths** — Changed to absolute URLs (https://tarwi2a.com/...)
+2. [x] **Fix `aria-disabled` on footer links** — Replaced `<a href="#">` with `<span>` elements
+3. [x] **Add `loading="lazy"`** to below-the-fold images (hero ambient + 3 feature images + footer logo)
+4. [x] **Add `role="status"` / `aria-live="polite"`** to toast `#toast`
+5. [x] **Add `<link rel="canonical">`** tag in `<head>`
+6. [x] **Add `width` / `height`** attributes to key images (logo, hero-logo, feature images, footer logo)
 
 ### CSS (`style.css`)
-7. **Merge duplicate `.hero-content` blocks** — Two definitions at lines ~456 and ~600 override each other; consolidate into one
-8. **Replace 3x `!important`** (lines 380, 1710, 1789) with higher-specificity selectors
-9. **Add `.hidden` utility class** — Replace inline `style="display:none"` on HTML elements with CSS class
-10. **Add `@media print` styles** — Hide nav, FAB, scroll indicator; show contact info
-11. **Add tablet breakpoint** `@media (max-width: 1024px)` — 2-col feature grid, adjusted spacing
-12. **Remove dead CSS comments** (e.g. `/* Stats (removed — no longer in HTML) */` on line 579)
+7. [x] **Merge duplicate `.hero-content` blocks** — Consolidated into one block
+8. [x] **Replace 3x `!important`** with higher-specificity selectors
+9. [x] **Add `.hidden` utility class** — Replaced inline `style="display:none"` on HTML elements
+10. ~~Add `@media print` styles~~ — SKIPPED (UI change)
+11. ~~Add tablet breakpoint~~ — SKIPPED (UI change)
+12. [x] **Remove dead CSS comment** (`/* Stats (removed — no longer in HTML) */`)
 
 ### JS (`script.js`)
-13. **Throttle scroll listener** — Wrap `updateActiveNavLink()` call with `requestAnimationFrame` to reduce ~60x/sec to once per frame
-14. **Scope MutationObserver** — Observe `#menuGrid` instead of entire `document.body` (less GC pressure, fewer false triggers)
-15. **Add `aria-pressed`** to category filter `.cat-btn` buttons — Toggle in JS on category change
-16. **Wrap all JS in IIFE** — `(() => { ... })();` to prevent global scope pollution
+13. [x] **Throttle scroll listener** — Wrapped `updateActiveNavLink()` with `requestAnimationFrame`
+14. [x] **Scope MutationObserver** — Now observes `#menuGrid` instead of `document.body`
+15. [x] **Add `aria-pressed`** to category filter buttons — Toggled in JS on category change
+16. [x] **Wrap all JS in IIFE** — `(() => { ... })();`
 
 ## Phase 3 — Low Priority / Polish
-17. Convert remaining ~15 hardcoded `rgba()` values to CSS custom properties
-18. Add OG `og:url` meta tag (absolute URL)
-19. Add `og:site_name` meta tag
-20. Consider `prefers-color-scheme` dark mode (stretch goal)
+17. [x] Convert remaining hardcoded `rgba()` values to CSS custom properties
+18. [x] Add OG `og:url` meta tag (absolute URL)
+19. [x] Add `og:site_name` meta tag
+20. ~~Consider `prefers-color-scheme` dark mode~~ — SKIPPED (UI change)
 
 ---
 

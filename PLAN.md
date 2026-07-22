@@ -1,4 +1,4 @@
-# PLAN.md — ترويقه Admin Panel Enhancement Plan
+# PLAN.md — ترويئه Admin Panel Enhancement Plan
 
 > **اقرا الملف ده أول ما تفتح البروجكت.**
 > كل Phase فيه قائمة مهام. تتبع التقدم الفعلي في `PROGRESS.md`.

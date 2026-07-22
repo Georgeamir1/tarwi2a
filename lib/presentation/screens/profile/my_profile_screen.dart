@@ -212,7 +212,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                   children: [
                     _ProfileMenuItem(
                       icon: Icons.info_outline,
-                      title: 'عن ترويقة',
+                      title: 'عن ترويئة',
                       subtitle: 'معلومات عن قصتنا ورؤيتنا',
                       iconColor: Colors.teal,
                       onTap: () => context.push('/info/about'),

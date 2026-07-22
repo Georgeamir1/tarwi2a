@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-05-14T00:00:00.000Z",
-  "title": "Design System: Troo2a",
+  "title": "Design System: Tarwi2a",
   "extensions": {
     "colorMeta": {
       "ember-orange": { "role": "primary", "displayName": "Ember Orange", "canonical": "oklch(64% 0.22 45)", "tonalRamp": ["oklch(15% 0.05 45)", "oklch(25% 0.08 45)", "oklch(35% 0.10 45)", "oklch(45% 0.14 45)", "oklch(55% 0.18 45)", "oklch(65% 0.22 45)", "oklch(75% 0.18 45)", "oklch(85% 0.10 45)"] },
@@ -91,7 +91,7 @@
   ],
   "narrative": {
     "northStar": "The Neighborhood Kitchen",
-    "overview": "Troo2a looks like the place you already know. Not a chain. Not fine dining. The restaurant on the corner where the owner waves from the counter, portions are generous, and nothing feels precious. The visual system translates Arabic hospitality into pixels: warm but restrained, familiar but never folksy, clean but never cold. Every surface starts from the question: would this feel right in a neighborhood restaurant? The answer rules out white-tablecloth austerity, corporate dashboard polish, and gamified food-app playfulness.",
+    "overview": "Tarwi2a looks like the place you already know. Not a chain. Not fine dining. The restaurant on the corner where the owner waves from the counter, portions are generous, and nothing feels precious. The visual system translates Arabic hospitality into pixels: warm but restrained, familiar but never folksy, clean but never cold. Every surface starts from the question: would this feel right in a neighborhood restaurant? The answer rules out white-tablecloth austerity, corporate dashboard polish, and gamified food-app playfulness.",
     "keyCharacteristics": [
       "One accent, used at knife-point. The ember orange appears on primary actions, selection states, and status indicators only.",
       "Depth through tone, not drop shadow. Surfaces stack by background tint: ash → white → darker ash.",

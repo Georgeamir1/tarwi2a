@@ -13,7 +13,7 @@ Separate staging environment allows you to test:
 
 1. Go to https://supabase.com/dashboard
 2. Click **New Project**
-3. Name: `troo2a-staging`
+3. Name: `tarwi2a-staging`
 4. Set a strong password and save it in your password manager
 
 ### Get Staging Credentials

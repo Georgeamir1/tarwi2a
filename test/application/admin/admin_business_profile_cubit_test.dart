@@ -17,8 +17,7 @@ void main() {
 
   setUp(() {
     mockRepo = MockBusinessProfileRepository();
-    when(() => mockRepo.watchProfile())
-        .thenAnswer((_) => const Stream.empty());
+    when(() => mockRepo.watchProfile()).thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminBusinessProfileCubit', () {
@@ -36,7 +35,7 @@ void main() {
       await cubit.loadProfile();
 
       expect(cubit.state.status, AdminBusinessProfileStatus.loaded);
-      expect(cubit.state.profile!.name, 'ترويقه');
+      expect(cubit.state.profile!.name, 'ترويئه');
       verify(() => mockRepo.get()).called(1);
     });
 

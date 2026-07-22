@@ -13,7 +13,7 @@ class AppConstants {
   );
 
   // App
-  static const appName = 'ترويقه';
+  static const appName = 'ترويئه';
 
   // Payment Methods
   static const paymentCash = 'cash';

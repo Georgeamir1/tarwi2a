@@ -1,12 +1,15 @@
 /* ============================================================
-   Tarwi2a (ترويقة) — Landing Page Script
+   Tarwi2a (ترويئة) — Landing Page Script
    ============================================================ */
+
+(() => {
+'use strict';
 
 // ===== MENU DATA =====
 const menuData = {
   soups: {
     name: 'الشوربة',
-    emoji: 'https://images.unsplash.com/photo-1476718406336-bb5a9690ee2a?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/soups.jpg',
     items: [
       { ar: 'شوربة كريمة بالجمبرى', en: 'Cream Soup with Shrimp', price: 170 },
       { ar: 'شوربة كريمة بالفراخ', en: 'Cream Soup with Chicken', price: 120 },
@@ -16,7 +19,7 @@ const menuData = {
   },
   dishes: {
     name: 'أطباق متنوعة',
-    emoji: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/dishes.jpg',
     items: [
       { ar: 'لازانيا لحم', en: 'Meat Lasagna', price: 195 },
       { ar: 'لازانيا فراخ', en: 'Chicken Lasagna', price: 185 },
@@ -31,7 +34,7 @@ const menuData = {
   },
   pans: {
     name: 'الطاسات',
-    emoji: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/pans.jpg',
     items: [
       { ar: 'كبدة بالردة', en: 'Liver with Bran Pan', price: 75, note: 'ثمن كيلو' },
       { ar: 'كبدة عجالى بلدى باللية', en: 'Baladi Veal Liver with Tail Fat Pan', price: 100, note: 'ثمن كيلو' },
@@ -55,7 +58,7 @@ const menuData = {
   },
   crepes: {
     name: 'الكريب',
-    emoji: 'https://images.unsplash.com/photo-1519676867240-79358e885a85?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/crepes.jpg',
     items: [
       { ar: 'كريب بطاطس موتزريلا', en: 'Mozzarella Potato Crepe', price: 85 },
       { ar: 'كريب بطاطس ميكس جبن', en: 'Mixed Cheese Potato Crepe', price: 95 },
@@ -68,7 +71,7 @@ const menuData = {
       { ar: 'كريب كفتة بلدى', en: 'Baladi Kofta Crepe', price: 145 },
       { ar: 'كريب فاهيتا لحم', en: 'Meat Fajita Crepe', price: 145 },
       { ar: 'كريب فاهيتا فراخ', en: 'Chicken Fajita Crepe', price: 135 },
-      { ar: 'كريب ترويقة', en: 'Tarwiza Crepe', price: 165 },
+      { ar: 'كريب ترويئة', en: 'Tarwiza Crepe', price: 165 },
       { ar: 'كريب سجق شرقى', en: 'Eastern Sausage Crepe', price: 130 },
       { ar: 'كريب ميكس جبن', en: 'Mixed Cheese Crepe', price: 100 },
       { ar: 'كريب تشكن كرسبي', en: 'Chicken Crispy Crepe', price: 135 },
@@ -78,7 +81,7 @@ const menuData = {
   },
   pizza: {
     name: 'البيتزا',
-    emoji: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/pizza.jpg',
     items: [
       { ar: 'بيتزا مارجريتا', en: 'Marguerita Pizza', price: 155 },
       { ar: 'بيتزا هوت دوج', en: 'Hot Dog Pizza', price: 180 },
@@ -96,7 +99,7 @@ const menuData = {
       { ar: 'بيتزا تونة', en: 'Tuna Pizza', price: 195 },
       { ar: 'بيتزا بسطرمة', en: 'Pastrami Pizza', price: 180 },
       { ar: 'بيتزا كواترو فورماج', en: 'Quattro Formaggi Pizza', price: 155 },
-      { ar: 'بيتزا ترويقة', en: 'Tarwiza Pizza', price: 140 },
+      { ar: 'بيتزا ترويئة', en: 'Tarwiza Pizza', price: 140 },
       { ar: 'بيتزا فاهيتا فراخ', en: 'Chicken Fajita Pizza', price: 175 },
       { ar: 'بيتزا فاهيتا لحم', en: 'Meat Fajita Pizza', price: 180 },
       { ar: 'بيتزا كلازونى ميكس فراخ', en: 'Calzone Mixed Chicken', price: 250 },
@@ -106,7 +109,7 @@ const menuData = {
   },
   sandwiches: {
     name: 'الساندوتش',
-    emoji: 'https://images.unsplash.com/photo-1509722747041-616f39b57569?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/sandwiches.jpg',
     items: [
       { ar: 'كبدة اسكندرانى', en: 'Alexandrian Liver Sandwich', price: 40 },
       { ar: 'سجق اسكندرانى', en: 'Alexandrian Sausage Sandwich', price: 40 },
@@ -132,9 +135,9 @@ const menuData = {
   },
   hawawshi: {
     name: 'حواوشي',
-    emoji: 'https://images.unsplash.com/photo-1608686207856-001b95cf60ca?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/hawawshi.jpg',
     items: [
-      { ar: 'حواوشى ترويقة', en: 'Tarwiza Hawawshi', price: 75 },
+      { ar: 'حواوشى ترويئة', en: 'Tarwiza Hawawshi', price: 75 },
       { ar: 'حواوشى رومى', en: 'Romi Hawawshi', price: 65, desc: 'لحمه + جبنه رومى + سجق' },
       { ar: 'حواوشى موتزريلا', en: 'Mozzarella Hawawshi', price: 65 },
       { ar: 'حواوشى فورمة', en: 'Forma Hawawshi', price: 125 },
@@ -146,7 +149,7 @@ const menuData = {
   },
   syrian: {
     name: 'سندوتشات سوري',
-    emoji: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/syrian.jpg',
     items: [
       { ar: 'ساندوتش بطاطس', en: 'Potato Syrian Sandwich', price: 35 },
       { ar: 'ساندوتش بطاطس مكس جبن', en: 'Mixed Cheese Potato Syrian', price: 55 },
@@ -166,7 +169,7 @@ const menuData = {
   },
   pasta: {
     name: 'المعكرونات والمعجنات',
-    emoji: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/pasta.jpg',
     items: [
       { ar: 'لازانيا لحم', en: 'Lasagna Meat', price: 195 },
       { ar: 'لازانيا فراخ', en: 'Lasagna Chicken', price: 185 },
@@ -174,7 +177,7 @@ const menuData = {
   },
   rizo: {
     name: 'ريزو',
-    emoji: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/rizo.jpg',
     items: [
       { ar: 'ريزو تشيكن بانيه', en: 'Chicken Pane Rizo', price: 85 },
       { ar: 'ريزو تشيكن زنجر', en: 'Chicken Zinger Rizo', price: 85 },
@@ -185,7 +188,7 @@ const menuData = {
   },
   grills: {
     name: 'المشويات',
-    emoji: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/grills.jpg',
     items: [
       { ar: 'فرخة مشوية سادة', en: 'Grilled Chicken Plain', price: 90, desc: 'سلطة، عيش، وطحينة', note: 'ربع فرخة' },
       { ar: 'فرخة مشوية', en: 'Grilled Chicken', price: 100, desc: 'أرز بسمتي، سلطة، عيش، طحينة، ومخلل', note: 'ربع فرخة' },
@@ -202,7 +205,7 @@ const menuData = {
   },
   meals: {
     name: 'الوجبات',
-    emoji: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/meals.jpg',
     items: [
       { ar: 'وجبة ربع فرخة "ورك"', en: 'Quarter Chicken Thigh Meal', price: 125, desc: 'ربع فرخة ورك + رز + عيش + سلطة + طحينة' },
       { ar: 'وجبة ربع فرخة "صدر"', en: 'Quarter Chicken Breast Meal', price: 135, desc: 'ربع فرخة صدر + رز + عيش + سلطة + طحينة' },
@@ -212,13 +215,13 @@ const menuData = {
       { ar: 'وجبة حمام محشي', en: 'Stuffed Pigeon Meal', price: 250, desc: 'فرد حمام محشي + أرز + سلطة + طحينة + عيش' },
       { ar: 'وجبة ضانى', en: 'Lamb Meal', price: 450, desc: 'ربع كباب ضانى + ربع كفتة ضانى + سلطة + طحينة + عيش' },
       { ar: 'وجبة مشكل مشاوي', en: 'Mixed Grills Platter', price: 300, desc: '2 كفتة + 2 شيش + 2 طرب + ربع فرخة + رز + سلطة + طحينة' },
-      { ar: 'وجبة مشكل ترويقة', en: 'Mixed Tarwiza Platter', price: 175, desc: 'ثمن كفتة + ثمن شيش طاووق + رز + سلطة + طحينة' },
+      { ar: 'وجبة مشكل ترويئة', en: 'Mixed Tarwiza Platter', price: 175, desc: 'ثمن كفتة + ثمن شيش طاووق + رز + سلطة + طحينة' },
       { ar: 'وجبة سجق', en: 'Sausage Platter Meal', price: 170, desc: 'ربع سجق + رز + عيش + سلطة + طحينة' },
     ]
   },
   addons: {
     name: 'الإضافات',
-    emoji: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/addons.jpg',
     items: [
       { ar: 'أرز بسمتي', en: 'Basmati Rice', price: 35 },
       { ar: 'مكرونة بشاميل', en: 'Pasta Bechamel', price: 110 },
@@ -235,7 +238,7 @@ const menuData = {
   },
   desserts: {
     name: 'الحلو',
-    emoji: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=80&h=80&fit=crop',
+    emoji: 'assets/categories/desserts.jpg',
     items: [
       { ar: 'كريب نوتيلا', en: 'Nutella Crepe', price: 120 },
     ]
@@ -251,12 +254,17 @@ const categoryFilter = document.getElementById('categoryFilter');
 const heroParticles = document.getElementById('heroParticles');
 
 // ===== NAVBAR SCROLL =====
+let scrollTicking = false;
 window.addEventListener('scroll', () => {
-  const scrollY = window.scrollY;
-  navbar.classList.toggle('scrolled', scrollY > 50);
-
-  // Update active nav link
-  updateActiveNavLink();
+  if (!scrollTicking) {
+    requestAnimationFrame(() => {
+      const scrollY = window.scrollY;
+      navbar.classList.toggle('scrolled', scrollY > 50);
+      updateActiveNavLink();
+      scrollTicking = false;
+    });
+    scrollTicking = true;
+  }
 });
 
 function updateActiveNavLink() {
@@ -404,19 +412,19 @@ function renderMenu(filter = 'all', searchVal = '') {
   const emptyState = document.getElementById('menuEmptyState');
 
   if (searchQuery) {
-    badge.style.display = 'block';
+    badge.classList.remove('hidden');
     countSpan.textContent = totalItemsFound;
-    clearBtn.style.display = 'flex';
+    clearBtn.classList.remove('hidden');
   } else {
-    badge.style.display = 'none';
-    clearBtn.style.display = 'none';
+    badge.classList.add('hidden');
+    clearBtn.classList.add('hidden');
   }
 
   if (totalItemsFound === 0) {
-    emptyState.style.display = 'flex';
+    emptyState.classList.remove('hidden');
     menuGrid.style.display = 'none';
   } else {
-    emptyState.style.display = 'none';
+    emptyState.classList.add('hidden');
     menuGrid.style.display = 'grid';
   }
 }
@@ -454,6 +462,7 @@ if (resetSearchBtn) {
     const allBtn = categoryFilter.querySelector('[data-category="all"]');
     if (allBtn) {
       allBtn.classList.add('active');
+    allBtn.setAttribute('aria-pressed', 'true');
       allBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
     
@@ -466,8 +475,12 @@ categoryFilter.addEventListener('click', e => {
   const btn = e.target.closest('.cat-btn');
   if (!btn) return;
 
-  categoryFilter.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  categoryFilter.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
   btn.classList.add('active');
+  btn.setAttribute('aria-pressed', 'true');
 
   // Center active category chip smoothly
   btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
@@ -609,7 +622,7 @@ function checkAndFallbackImages() {
 }
 
 // Watch dynamically added items via MutationObserver
-const observer = new MutationObserver((mutations) => {
+const menuGridObserver = new MutationObserver((mutations) => {
   mutations.forEach(mutation => {
     mutation.addedNodes.forEach(node => {
       if (node.nodeType === Node.ELEMENT_NODE) {
@@ -626,7 +639,7 @@ const observer = new MutationObserver((mutations) => {
     });
   });
 });
-observer.observe(document.body, { childList: true, subtree: true });
+menuGridObserver.observe(menuGrid, { childList: true, subtree: true });
 
 // Run checks
 checkAndFallbackImages();
@@ -661,3 +674,5 @@ if (whatsappFab) {
 
 // ===== INIT =====
 renderMenu('all');
+
+})();

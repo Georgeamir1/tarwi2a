@@ -260,7 +260,7 @@ final testDeliveryZone = DeliveryZone(
 
 final testBusinessProfile = BusinessProfile(
   id: 'bp-1',
-  name: 'ترويقه',
+  name: 'ترويئه',
   phone: '+201000000000',
   address: 'القاهرة، مصر',
   openingHours: const {
