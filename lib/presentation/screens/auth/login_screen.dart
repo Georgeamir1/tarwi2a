@@ -178,9 +178,10 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _checkBiometricsAvailability() async {
     try {
+      if (!sl.isRegistered<BiometricService>()) return;
       final service = sl<BiometricService>();
       final isSupported = await service.isHardwareSupported;
-      final isEnabled = service.isEnabled;
+      final isEnabled = service.isBiometricsAvailableForLogin;
       final hasEnrolled = await service.hasEnrolledBiometrics;
       if (mounted) {
         setState(() {
@@ -188,7 +189,8 @@ class _LoginScreenState extends State<LoginScreen>
         });
       }
     } catch (e) {
-      appLogger.e('[LoginScreen] Error checking biometrics availability', error: e);
+      appLogger.e('[LoginScreen] Error checking biometrics availability',
+          error: e);
     }
   }
 
@@ -196,12 +198,13 @@ class _LoginScreenState extends State<LoginScreen>
     final biometricService = sl<BiometricService>();
     final isSupported = await biometricService.isHardwareSupported;
     final hasEnrolled = await biometricService.hasEnrolledBiometrics;
-    
+
     if (!isSupported || !hasEnrolled) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('الخدمة البيومترية غير متوفرة أو لم يتم تسجيل بصمة على هذا الجهاز'),
+          content: Text(
+              'الخدمة البيومترية غير متوفرة أو لم يتم تسجيل بصمة على هذا الجهاز'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -216,7 +219,8 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('لم يتم العثور على بيانات تسجيل دخول محفوظة. يرجى تسجيل الدخول يدويًا أولاً وتفعيل البصمة من الإعدادات.'),
+          content: Text(
+              'لم يتم العثور على بيانات تسجيل دخول محفوظة. يرجى تسجيل الدخول يدويًا أولاً وتفعيل البصمة من الإعدادات.'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -267,15 +271,20 @@ class _LoginScreenState extends State<LoginScreen>
       _shimmerController.stop();
       setState(() => _isLoading = false);
 
-      // Save credentials if biometrics is enabled and we have the password from the controller
-      final biometricService = sl<BiometricService>();
-      if (biometricService.isEnabled && _passwordController.text.isNotEmpty) {
-        final email = sl<AuthRepository>().currentUser?.email;
-        if (email != null) {
-          biometricService.saveCredentials(
-            email,
-            _passwordController.text,
-          );
+      // Save credentials only if biometrics is enabled for THIS user and we have the password from the controller
+      if (sl.isRegistered<BiometricService>()) {
+        final biometricService = sl<BiometricService>();
+        final userId = state.profile.id;
+        if (biometricService.isEnabledForUser(userId) &&
+            _passwordController.text.isNotEmpty) {
+          final email = sl<AuthRepository>().currentUser?.email;
+          if (email != null) {
+            biometricService.saveCredentials(
+              userId: userId,
+              email: email,
+              password: _passwordController.text,
+            );
+          }
         }
       }
 
@@ -448,7 +457,8 @@ class _LoginScreenState extends State<LoginScreen>
                                       fontWeight: FontWeight.w800,
                                       color: isDark
                                           ? Colors.white
-                                          : AppColors.onSurface.withValues(alpha: 0.9),
+                                          : AppColors.onSurface
+                                              .withValues(alpha: 0.9),
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -980,10 +990,12 @@ class _LoginScreenState extends State<LoginScreen>
                                                 : Colors.white
                                                     .withValues(alpha: 0.7),
                                             border: Border.all(
-                                              color: AppColors.primary.withValues(
+                                              color:
+                                                  AppColors.primary.withValues(
                                                 alpha: 0.2 +
                                                     0.15 *
-                                                        (_ambientAnimation.value -
+                                                        (_ambientAnimation
+                                                                .value -
                                                             0.88) /
                                                         0.24,
                                               ),
@@ -991,8 +1003,8 @@ class _LoginScreenState extends State<LoginScreen>
                                             ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color:
-                                                    AppColors.primary.withValues(
+                                                color: AppColors.primary
+                                                    .withValues(
                                                   alpha: 0.05 +
                                                       0.08 *
                                                           (_ambientAnimation

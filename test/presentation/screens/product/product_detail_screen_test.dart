@@ -12,7 +12,8 @@ import 'package:tarwi2a/domain/entities/selected_option.dart';
 import 'package:tarwi2a/app/theme/app_theme.dart';
 import '../../../helpers/test_helpers.dart';
 
-class MockAdminProductOptionsCubit extends Mock implements AdminProductOptionsCubit {}
+class MockAdminProductOptionsCubit extends Mock
+    implements AdminProductOptionsCubit {}
 
 Widget _buildTestWidget({
   required Product product,
@@ -31,7 +32,8 @@ Widget _buildTestWidget({
             builder: (_, __) => MultiBlocProvider(
               providers: [
                 BlocProvider<CartCubit>.value(value: cartCubit),
-                BlocProvider<AdminProductOptionsCubit>.value(value: optionsCubit),
+                BlocProvider<AdminProductOptionsCubit>.value(
+                    value: optionsCubit),
               ],
               child: ProductDetailScreen(product: product),
             ),
@@ -64,10 +66,12 @@ void main() {
         .thenAnswer((_) => const Stream<CartState>.empty());
     when(() => mockCartCubit.close()).thenAnswer((_) async {});
 
-    when(() => mockOptionsCubit.state).thenReturn(const AdminProductOptionsState());
+    when(() => mockOptionsCubit.state)
+        .thenReturn(const AdminProductOptionsState());
     when(() => mockOptionsCubit.stream)
         .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
-    when(() => mockOptionsCubit.loadByProductId(any())).thenAnswer((_) async {});
+    when(() => mockOptionsCubit.loadByProductId(any()))
+        .thenAnswer((_) async {});
     when(() => mockOptionsCubit.close()).thenAnswer((_) async {});
   });
 
@@ -140,7 +144,8 @@ void main() {
       });
 
       testWidgets('add to cart button calls CartCubit.addItem', (tester) async {
-        when(() => mockCartCubit.addItem(any(), selectedOptions: any(named: 'selectedOptions'))).thenReturn(null);
+        when(() => mockCartCubit.addItem(any(),
+            selectedOptions: any(named: 'selectedOptions'))).thenReturn(null);
 
         await tester.pumpWidget(
           _buildTestWidget(
@@ -154,7 +159,8 @@ void main() {
         await tester.tap(find.text('أضف للسلة'));
         await tester.pump();
 
-        verify(() => mockCartCubit.addItem(testProduct, selectedOptions: any(named: 'selectedOptions'))).called(1);
+        verify(() => mockCartCubit.addItem(testProduct,
+            selectedOptions: any(named: 'selectedOptions'))).called(1);
       });
     });
   });

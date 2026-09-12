@@ -48,7 +48,8 @@ class FoodCardLarge extends StatelessWidget {
                   width: 140,
                   height: 140,
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: const Icon(Icons.fastfood, color: Colors.grey, size: 48),
+                  child:
+                      const Icon(Icons.fastfood, color: Colors.grey, size: 48),
                 ),
               ),
             ),
@@ -83,12 +84,16 @@ class FoodCardLarge extends StatelessWidget {
                       AppSpacing.gapH8,
                       Wrap(
                         spacing: 4,
-                        children: tags!.map((tag) => Chip(
-                          label: Text(tag, style: theme.textTheme.labelSmall),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        )).toList(),
+                        children: tags!
+                            .map((tag) => Chip(
+                                  label: Text(tag,
+                                      style: theme.textTheme.labelSmall),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                ))
+                            .toList(),
                       ),
                     ],
                     const Spacer(),

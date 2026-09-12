@@ -148,7 +148,9 @@ class _RatingSummary extends StatelessWidget {
                       (i) => Icon(
                         Icons.star,
                         size: 20,
-                        color: i < roundedRating ? AppColors.statusPending : AppColors.outlineVariant,
+                        color: i < roundedRating
+                            ? AppColors.statusPending
+                            : AppColors.outlineVariant,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -201,8 +203,7 @@ class _ReviewTile extends StatelessWidget {
       return 'اليوم، ${DateFormat('hh:mm a').format(dateTime)}';
     } else if (difference.inDays == 1 ||
         (difference.inHours < 48 &&
-            dateTime.day ==
-                now.subtract(const Duration(days: 1)).day)) {
+            dateTime.day == now.subtract(const Duration(days: 1)).day)) {
       return 'أمس، ${DateFormat('hh:mm a').format(dateTime)}';
     } else {
       return DateFormat('yyyy-MM-dd').format(dateTime);

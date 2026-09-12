@@ -34,9 +34,8 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       return AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        systemOverlayStyle: isDark
-            ? SystemUiOverlayStyle.light
-            : SystemUiOverlayStyle.dark,
+        systemOverlayStyle:
+            isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
         leading: leading ??
             (onBack != null
                 ? IconButton(
@@ -45,7 +44,9 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: (isDark ? AppColors.darkSurface : AppColors.surface).withValues(alpha: 0.8),
+                        color:
+                            (isDark ? AppColors.darkSurface : AppColors.surface)
+                                .withValues(alpha: 0.8),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.arrow_back_ios_new, size: 18),
@@ -64,17 +65,17 @@ class AppTopBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
-      systemOverlayStyle: isDark
-          ? SystemUiOverlayStyle.light
-          : SystemUiOverlayStyle.dark,
+      systemOverlayStyle:
+          isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       leading: variant == TopBarVariant.withBack
           ? leading ??
               IconButton(
-                onPressed: onBack ?? () {
-                  if (Navigator.of(context).canPop()) {
-                    context.pop();
-                  }
-                },
+                onPressed: onBack ??
+                    () {
+                      if (Navigator.of(context).canPop()) {
+                        context.pop();
+                      }
+                    },
                 icon: const Icon(Icons.arrow_back_ios_new, size: 20),
               )
           : variant == TopBarVariant.withMenu

@@ -57,6 +57,59 @@ class AuthRemoteDataSource {
     }
   }
 
+  Future<void> resendVerificationEmail(String email) async {
+    appLogger.d('[AuthDS] resendVerificationEmail called — email: $email');
+    try {
+      await _client.auth.resend(type: OtpType.signup, email: email);
+      appLogger.d('[AuthDS] resendVerificationEmail ✅');
+    } catch (e, s) {
+      appLogger.e('[AuthDS] resendVerificationEmail ❌ failed',
+          error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword(String email, {String? redirectTo}) async {
+    appLogger.d('[AuthDS] resetPassword called — email: $email');
+    try {
+      await _client.auth.resetPasswordForEmail(email, redirectTo: redirectTo);
+      appLogger.d('[AuthDS] resetPassword ✅');
+    } catch (e, s) {
+      appLogger.e('[AuthDS] resetPassword ❌ failed', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> updatePassword(String newPassword) async {
+    appLogger.d('[AuthDS] updatePassword called');
+    try {
+      await _client.auth.updateUser(UserAttributes(password: newPassword));
+      appLogger.d('[AuthDS] updatePassword ✅');
+    } catch (e, s) {
+      appLogger.e('[AuthDS] updatePassword ❌ failed', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    appLogger.d('[AuthDS] deleteAccount called');
+    try {
+      final response = await _client.functions.invoke('delete-account');
+      final status = response.status;
+      if (status >= 400) {
+        String? err;
+        if (response.data is Map) {
+          err = response.data['error'] as String?;
+        }
+        throw Exception(err ?? 'فشل حذف الحساب (رمز $status)');
+      }
+      appLogger.d('[AuthDS] deleteAccount ✅');
+    } catch (e, s) {
+      appLogger.e('[AuthDS] deleteAccount ❌ failed', error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
   User? get currentUser {
     final user = _client.auth.currentUser;
     appLogger.d(

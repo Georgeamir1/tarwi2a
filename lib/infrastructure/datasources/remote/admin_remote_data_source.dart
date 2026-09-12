@@ -15,23 +15,17 @@ class AdminRemoteDataSource {
   }
 
   Future<Map<String, dynamic>> getDashboardStats() async {
-    final totalOrders = await _client
-        .from('orders')
-        .select('*')
-        .count(CountOption.exact);
+    final totalOrders =
+        await _client.from('orders').select('*').count(CountOption.exact);
     final pendingOrders = await _client
         .from('orders')
         .select('*')
         .eq('status', 'pending')
         .count(CountOption.exact);
-    final totalProducts = await _client
-        .from('products')
-        .select('*')
-        .count(CountOption.exact);
-    final totalCustomers = await _client
-        .from('profiles')
-        .select('*')
-        .count(CountOption.exact);
+    final totalProducts =
+        await _client.from('products').select('*').count(CountOption.exact);
+    final totalCustomers =
+        await _client.from('profiles').select('*').count(CountOption.exact);
 
     return {
       'totalOrders': totalOrders.count,
@@ -42,7 +36,10 @@ class AdminRemoteDataSource {
   }
 
   Future<List<CouponDTO>> getCoupons() async {
-    final data = await _client.from('coupons').select().order('created_at', ascending: false);
+    final data = await _client
+        .from('coupons')
+        .select()
+        .order('created_at', ascending: false);
     return (data as List).map((e) => CouponDTO.fromJson(e)).toList();
   }
 
@@ -63,7 +60,8 @@ class AdminRemoteDataSource {
     return (data as List).map((e) => DeliveryZoneDTO.fromJson(e)).toList();
   }
 
-  Future<void> upsertDeliveryZone(Map<String, dynamic> data, {String? id}) async {
+  Future<void> upsertDeliveryZone(Map<String, dynamic> data,
+      {String? id}) async {
     if (id != null) {
       await _client.from('delivery_zones').update(data).eq('id', id);
     } else {
@@ -76,7 +74,10 @@ class AdminRemoteDataSource {
     return (data as List).cast<Map<String, dynamic>>();
   }
 
-  Future<void> upsertBusinessSetting(String key, Map<String, dynamic> value) async {
-    await _client.from('business_settings').upsert({'key': key, 'value': value});
+  Future<void> upsertBusinessSetting(
+      String key, Map<String, dynamic> value) async {
+    await _client
+        .from('business_settings')
+        .upsert({'key': key, 'value': value});
   }
 }

@@ -51,8 +51,9 @@ class DashboardOrdersChart extends StatelessWidget {
               drawVerticalLine: false,
               horizontalInterval: yInterval,
               getDrawingHorizontalLine: (value) => FlLine(
-                color: (isDark ? AppColors.darkDivider : AppColors.outlineVariant)
-                    .withValues(alpha: 0.4),
+                color:
+                    (isDark ? AppColors.darkDivider : AppColors.outlineVariant)
+                        .withValues(alpha: 0.4),
                 strokeWidth: 0.5,
               ),
             ),
@@ -62,9 +63,8 @@ class DashboardOrdersChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 28,
-                  interval: data.length > 7
-                      ? (data.length / 4).ceilToDouble()
-                      : 1.0,
+                  interval:
+                      data.length > 7 ? (data.length / 4).ceilToDouble() : 1.0,
                   getTitlesWidget: (value, meta) {
                     final i = value.toInt();
                     if (i >= 0 && i < data.length) {
@@ -169,4 +169,3 @@ class DashboardOrdersChart extends StatelessWidget {
     );
   }
 }
-

@@ -32,11 +32,11 @@ void main() {
   group('createOrder', () {
     test('returns Right(Order) on success', () async {
       when(() => mockDS.createOrder(
-            orderData: any(named: 'orderData'),
-            itemsData: any(named: 'itemsData'),
+            payload: any(named: 'payload'),
           )).thenAnswer((_) async => testOrderDTO);
 
       final result = await repo.createOrder(
+        requestId: 'req-test-123',
         customerId: 'user-123',
         customerName: 'محمد',
         customerPhone: '01001234567',
@@ -55,12 +55,22 @@ void main() {
           expect(order.customerName, 'محمد');
         },
       );
+
+      verify(() => mockDS.createOrder(
+            payload: any(
+              named: 'payload',
+              that: isA<Map<String, dynamic>>().having(
+                (m) => m['request_id'],
+                'request_id',
+                'req-test-123',
+              ),
+            ),
+          )).called(1);
     });
 
     test('returns Left(Failure) on exception', () async {
       when(() => mockDS.createOrder(
-            orderData: any(named: 'orderData'),
-            itemsData: any(named: 'itemsData'),
+            payload: any(named: 'payload'),
           )).thenThrow(Exception('test error'));
 
       final result = await repo.createOrder(

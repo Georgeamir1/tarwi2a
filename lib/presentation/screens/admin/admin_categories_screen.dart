@@ -36,7 +36,9 @@ class AdminCategoriesScreen extends StatelessWidget {
                 ],
               ),
               body: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  ? const Center(
+                      child:
+                          CircularProgressIndicator(color: AppColors.primary))
                   : _buildBody(context, state, productsState),
             );
           },
@@ -82,11 +84,10 @@ class AdminCategoriesScreen extends StatelessWidget {
       itemCount: state.categories.length,
       itemBuilder: (_, index) {
         final cat = state.categories[index];
-        
+
         // Calculate product count under this category
-        final productCount = productsState.products
-            .where((p) => p.categoryId == cat.id)
-            .length;
+        final productCount =
+            productsState.products.where((p) => p.categoryId == cat.id).length;
 
         return _CategoryCard(
           category: cat,
@@ -114,7 +115,8 @@ class AdminCategoriesScreen extends StatelessWidget {
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: const Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 48),
+          icon: const Icon(Icons.warning_amber_rounded,
+              color: AppColors.warning, size: 48),
           title: const Text('لا يمكن الحذف'),
           content: Text(
             'هذا القسم يحتوي على ($productCount) من الأصناف.\nيرجى نقل أو حذف الأصناف أولاً قبل حذف القسم.',
@@ -133,9 +135,11 @@ class AdminCategoriesScreen extends StatelessWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.delete_forever_rounded, color: AppColors.error, size: 48),
+        icon: const Icon(Icons.delete_forever_rounded,
+            color: AppColors.error, size: 48),
         title: const Text('حذف القسم؟'),
-        content: Text('هل أنت متأكد من حذف قسم "${category.nameAr}"؟\nلا يمكن التراجع عن هذا الإجراء.'),
+        content: Text(
+            'هل أنت متأكد من حذف قسم "${category.nameAr}"؟\nلا يمكن التراجع عن هذا الإجراء.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -203,7 +207,9 @@ class _CategoryCard extends StatelessWidget {
           color: isActive ? AppColors.surface : AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: isActive ? AppColors.outlineVariant : AppColors.outlineVariant.withValues(alpha: 0.5),
+            color: isActive
+                ? AppColors.outlineVariant
+                : AppColors.outlineVariant.withValues(alpha: 0.5),
             width: isActive ? 1.2 : 1.0,
           ),
           boxShadow: isActive
@@ -227,19 +233,21 @@ class _CategoryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.15)),
                 ),
                 alignment: Alignment.center,
-                child: category.imageUrl != null && category.imageUrl!.isNotEmpty
-                    ? Text(
-                        category.imageUrl!,
-                        style: const TextStyle(fontSize: 26),
-                      )
-                    : const Icon(
-                        Icons.category_rounded,
-                        color: AppColors.primary,
-                        size: 24,
-                      ),
+                child:
+                    category.imageUrl != null && category.imageUrl!.isNotEmpty
+                        ? Text(
+                            category.imageUrl!,
+                            style: const TextStyle(fontSize: 26),
+                          )
+                        : const Icon(
+                            Icons.category_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
               ),
               const SizedBox(width: 14),
 
@@ -255,13 +263,16 @@ class _CategoryCard extends StatelessWidget {
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontFamily: 'Cairo',
                             fontWeight: FontWeight.w800,
-                            color: isActive ? AppColors.onSurface : AppColors.textSecondary,
+                            color: isActive
+                                ? AppColors.onSurface
+                                : AppColors.textSecondary,
                           ),
                         ),
                         if (!isActive) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
                               color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -291,15 +302,19 @@ class _CategoryCard extends StatelessWidget {
                       children: [
                         // Sort Order Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(AppRadius.full),
-                            border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.8)),
+                            border: Border.all(
+                                color: AppColors.outlineVariant
+                                    .withValues(alpha: 0.8)),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.sort_rounded, size: 12, color: AppColors.textSecondary),
+                              const Icon(Icons.sort_rounded,
+                                  size: 12, color: AppColors.textSecondary),
                               const SizedBox(width: 4),
                               Text(
                                 'الترتيب: ${category.sortOrder}',
@@ -316,7 +331,8 @@ class _CategoryCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         // Product Count Badge
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
                             color: AppColors.primary.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(AppRadius.full),
@@ -365,9 +381,12 @@ class _CategoryCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                              border: Border.all(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.2)),
                             ),
-                            child: const Icon(Icons.edit_rounded, size: 16, color: AppColors.primary),
+                            child: const Icon(Icons.edit_rounded,
+                                size: 16, color: AppColors.primary),
                           ),
                         ),
                       ),
@@ -383,9 +402,12 @@ class _CategoryCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              border: Border.all(color: AppColors.error.withValues(alpha: 0.2)),
+                              border: Border.all(
+                                  color:
+                                      AppColors.error.withValues(alpha: 0.2)),
                             ),
-                            child: const Icon(Icons.delete_outline_rounded, size: 16, color: AppColors.error),
+                            child: const Icon(Icons.delete_outline_rounded,
+                                size: 16, color: AppColors.error),
                           ),
                         ),
                       ),
@@ -423,8 +445,26 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
 
   // Food Emojis lists
   final List<String> _emojis = [
-    '🍔', '🍕', '🥤', '🍰', '🥗', '🍦', '🍗', '🍟', '🌮', '🍝',
-    '🍳', '☕', '🍱', '🍩', '🍎', '🍇', '🍣', '🌶️', '🍖', '🍲'
+    '🍔',
+    '🍕',
+    '🥤',
+    '🍰',
+    '🥗',
+    '🍦',
+    '🍗',
+    '🍟',
+    '🌮',
+    '🍝',
+    '🍳',
+    '☕',
+    '🍱',
+    '🍩',
+    '🍎',
+    '🍇',
+    '🍣',
+    '🌶️',
+    '🍖',
+    '🍲'
   ];
 
   @override
@@ -433,7 +473,8 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
     final c = widget.category;
     _nameArController = TextEditingController(text: c?.nameAr ?? '');
     _nameController = TextEditingController(text: c?.name ?? '');
-    _sortOrderController = TextEditingController(text: c?.sortOrder.toString() ?? '0');
+    _sortOrderController =
+        TextEditingController(text: c?.sortOrder.toString() ?? '0');
     _isActive = c?.isActive ?? true;
     _selectedEmoji = c?.imageUrl; // Using imageUrl as emoji indicator
   }
@@ -455,18 +496,22 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
       labelText: labelText,
       hintText: hintText,
       prefixIcon: Icon(prefixIcon, color: AppColors.textMuted, size: 20),
-      labelStyle: const TextStyle(fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13),
-      hintStyle: const TextStyle(fontFamily: 'Cairo', color: AppColors.textMuted, fontSize: 12),
+      labelStyle: const TextStyle(
+          fontFamily: 'Cairo', color: AppColors.textSecondary, fontSize: 13),
+      hintStyle: const TextStyle(
+          fontFamily: 'Cairo', color: AppColors.textMuted, fontSize: 12),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       filled: true,
       fillColor: AppColors.surfaceContainerLow,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+        borderSide:
+            BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        borderSide: BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+        borderSide:
+            BorderSide(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -507,7 +552,9 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEditing ? 'تم تعديل القسم بنجاح' : 'تم إضافة القسم بنجاح', style: const TextStyle(fontFamily: 'Cairo')),
+          content: Text(
+              _isEditing ? 'تم تعديل القسم بنجاح' : 'تم إضافة القسم بنجاح',
+              style: const TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.success,
         ),
       );
@@ -516,7 +563,8 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('حدث خطأ أثناء الحفظ. يرجى المحاولة لاحقاً.', style: TextStyle(fontFamily: 'Cairo')),
+          content: Text('حدث خطأ أثناء الحفظ. يرجى المحاولة لاحقاً.',
+              style: TextStyle(fontFamily: 'Cairo')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -575,13 +623,18 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
                   // Name AR
                   TextFormField(
                     controller: _nameArController,
-                    style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontFamily: 'Cairo',
+                        fontSize: 14),
                     decoration: _inputDecoration(
                       labelText: 'الاسم بالعربية *',
                       hintText: 'مثال: المشروبات',
                       prefixIcon: Icons.edit_rounded,
                     ),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال الاسم بالعربية' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'يرجى إدخال الاسم بالعربية'
+                        : null,
                   ),
                   const SizedBox(height: 14),
 
@@ -590,7 +643,10 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
                     textDirection: TextDirection.ltr,
                     child: TextFormField(
                       controller: _nameController,
-                      style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                      style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontFamily: 'Cairo',
+                          fontSize: 14),
                       decoration: _inputDecoration(
                         labelText: 'الاسم بالإنجليزية (اختياري)',
                         hintText: 'e.g. Beverages',
@@ -605,21 +661,27 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
                     controller: _sortOrderController,
                     keyboardType: TextInputType.number,
                     textDirection: TextDirection.ltr,
-                    style: const TextStyle(color: AppColors.textPrimary, fontFamily: 'Cairo', fontSize: 14),
+                    style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontFamily: 'Cairo',
+                        fontSize: 14),
                     decoration: _inputDecoration(
                       labelText: 'الترتيب التنازلي',
                       hintText: '0',
                       prefixIcon: Icons.sort_rounded,
                     ),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'يرجى إدخال رقم الترتيب' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'يرجى إدخال رقم الترتيب'
+                        : null,
                   ),
                   const SizedBox(height: 20),
 
                   // Emoji picker / selector
                   Row(
                     children: [
-                      const Icon(Icons.emoji_emotions_outlined, size: 16, color: AppColors.textSecondary),
+                      const Icon(Icons.emoji_emotions_outlined,
+                          size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
                       Text(
                         'أيقونة القسم (رموز تعبيرية)',
@@ -660,13 +722,17 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
                                   : AppColors.surfaceContainerLow,
                               borderRadius: BorderRadius.circular(AppRadius.md),
                               border: Border.all(
-                                color: isSelected ? AppColors.primary : AppColors.outlineVariant.withValues(alpha: 0.8),
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.outlineVariant
+                                        .withValues(alpha: 0.8),
                                 width: isSelected ? 2 : 1,
                               ),
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.primary.withValues(alpha: 0.08),
+                                        color: AppColors.primary
+                                            .withValues(alpha: 0.08),
                                         blurRadius: 8,
                                         offset: const Offset(0, 2),
                                       ),
@@ -687,15 +753,19 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
 
                   // Active Switch
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+                      border: Border.all(
+                          color:
+                              AppColors.outlineVariant.withValues(alpha: 0.5)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.check_circle_outline_rounded, size: 20, color: AppColors.textSecondary),
+                        const Icon(Icons.check_circle_outline_rounded,
+                            size: 20, color: AppColors.textSecondary),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -728,7 +798,9 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
                   // Cancel button
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء', style: TextStyle(fontFamily: 'Cairo', fontWeight: FontWeight.w600)),
+                    child: const Text('إلغاء',
+                        style: TextStyle(
+                            fontFamily: 'Cairo', fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),

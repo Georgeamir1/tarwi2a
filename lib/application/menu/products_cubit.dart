@@ -120,4 +120,3 @@ class ProductsState extends Equatable {
   List<Object?> get props =>
       [products, allProducts, selectedCategoryId, searchQuery, status, failure];
 }
-

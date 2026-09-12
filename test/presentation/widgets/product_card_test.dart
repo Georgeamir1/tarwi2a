@@ -48,7 +48,7 @@ void main() {
       await tester.pump();
 
       expect(find.text(testProduct.nameAr), findsOneWidget);
-      expect(find.text('75 ج'), findsOneWidget);
+      expect(find.text('75 ج.م'), findsOneWidget);
     });
 
     testWidgets('renders placeholder icon when no image', (tester) async {

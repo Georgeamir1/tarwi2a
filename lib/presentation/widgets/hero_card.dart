@@ -39,8 +39,8 @@ class HeroCard extends StatelessWidget {
                 placeholder: Container(color: AppColors.grey200),
                 errorWidget: Container(
                   color: AppColors.grey200,
-                  child:
-                      const Icon(Icons.fastfood, color: AppColors.grey400, size: 48),
+                  child: const Icon(Icons.fastfood,
+                      color: AppColors.grey400, size: 48),
                 ),
               )
             else

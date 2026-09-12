@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../logger/app_logger.dart';
 import 'device_token_service.dart';
+import 'notification_navigation_resolver.dart';
 
 const _kChannelOrders = 'order_updates';
 const _kChannelPromotions = 'promotions';
@@ -29,11 +30,17 @@ class PushNotificationService {
   PushNotificationService({
     DeviceTokenService? deviceTokenService,
     NavigatorKeyProvider? routerProvider,
+    NotificationNavigationResolver? resolver,
   })  : _deviceTokenService = deviceTokenService,
-        _routerProvider = routerProvider;
+        _routerProvider = routerProvider,
+        _resolver = resolver;
 
   final DeviceTokenService? _deviceTokenService;
   final NavigatorKeyProvider? _routerProvider;
+  final NotificationNavigationResolver? _resolver;
+
+  String? _pendingRoute;
+  String? get pendingRoute => _pendingRoute;
 
   final FirebaseMessaging? _messaging =
       kIsWeb ? null : FirebaseMessaging.instance;
@@ -115,6 +122,25 @@ class PushNotificationService {
   void setCurrentUser(String? userId) {
     _currentUserId = userId;
     appLogger.d('[FCM] current user set: $userId');
+    if (userId == null) {
+      _pendingRoute = null;
+    } else {
+      flushPendingNavigation();
+    }
+  }
+
+  void flushPendingNavigation() {
+    if (_pendingRoute == null) return;
+    final router = _routerProvider?.call();
+    if (router == null || _currentUserId == null) return;
+    final route = _pendingRoute!;
+    _pendingRoute = null;
+    try {
+      router.go(route);
+      appLogger.i('[FCM] flushed deferred navigation to $route');
+    } catch (e) {
+      appLogger.e('[FCM] flush navigation failed to $route', error: e);
+    }
   }
 
   Future<bool> requestPermissionWithPriming(BuildContext context) async {
@@ -281,17 +307,33 @@ class PushNotificationService {
     }
   }
 
-  void _navigateFromData(Map<String, dynamic> data) {
-    final router = _routerProvider?.call();
-    if (router == null) return;
-    final refType = data['reference_type'] as String?;
-    final refId = data['reference_id'] as String?;
-    if (refType == 'order' && refId != null) {
-      try {
-        router.go('/orders?expand=$refId');
-      } catch (e) {
-        appLogger.e('[FCM] navigation failed', error: e);
+  Future<void> _navigateFromData(Map<String, dynamic> data) async {
+    String? targetRoute;
+    if (_resolver != null) {
+      targetRoute = await _resolver.resolveRoute(data);
+    } else {
+      final refType = data['reference_type'] as String?;
+      final refId = data['reference_id'] as String?;
+      if (refType == 'order' && refId != null && refId.trim().isNotEmpty) {
+        targetRoute = '/orders?expand=${Uri.encodeComponent(refId.trim())}';
       }
+    }
+
+    if (targetRoute == null) return;
+
+    final router = _routerProvider?.call();
+    if (router == null || _currentUserId == null) {
+      _pendingRoute = targetRoute;
+      appLogger.d(
+          '[FCM] navigation deferred (cold-start / waiting for auth): $targetRoute');
+      return;
+    }
+
+    try {
+      router.go(targetRoute);
+      appLogger.i('[FCM] navigated to $targetRoute');
+    } catch (e) {
+      appLogger.e('[FCM] navigation failed to $targetRoute', error: e);
     }
   }
 

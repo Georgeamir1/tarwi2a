@@ -8,7 +8,14 @@ void main() {
 
   group('Admin Dashboard Flow', () {
     testWidgets('admin login → view dashboard → manage orders', (tester) async {
-      // Start the app
+      const email = String.fromEnvironment('INTEGRATION_TEST_ADMIN_EMAIL');
+      const password =
+          String.fromEnvironment('INTEGRATION_TEST_ADMIN_PASSWORD');
+      if (email.isEmpty || password.isEmpty) {
+        fail(
+            'Provide INTEGRATION_TEST_ADMIN_EMAIL and INTEGRATION_TEST_ADMIN_PASSWORD before launching the test app.');
+      }
+      // Start the app only after checking explicit test configuration.
       app.main();
       await tester.pumpAndSettle();
 
@@ -17,8 +24,8 @@ void main() {
       final passwordField = find.byType(TextFormField).at(1);
 
       if (emailField.evaluate().isNotEmpty) {
-        await tester.enterText(emailField, 'admin@example.com');
-        await tester.enterText(passwordField, 'admin123');
+        await tester.enterText(emailField, email);
+        await tester.enterText(passwordField, password);
         await tester.tap(find.text('تسجيل الدخول'));
         await tester.pumpAndSettle();
       }

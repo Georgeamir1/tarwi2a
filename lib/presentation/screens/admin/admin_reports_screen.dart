@@ -5,6 +5,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../application/admin/admin_reports_cubit.dart';
 import '../../../domain/repositories/report_repository.dart';
 import '../../../core/utils/csv_exporter.dart';
+import '../../../core/utils/report_date_range.dart';
 import '../../widgets/app_top_bar.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/time_filter_chips.dart';
@@ -20,11 +21,14 @@ class AdminReportsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<AdminReportsCubit>(
-      create: (context) => sl<AdminReportsCubit>()
-        ..loadReports(
-          startDate: DateTime.now().subtract(const Duration(days: 7)),
-          endDate: DateTime.now(),
-        ),
+      create: (context) {
+        final cairoToday = ReportDateRange.nowInCairo();
+        return sl<AdminReportsCubit>()
+          ..loadReports(
+            startDate: cairoToday.subtract(const Duration(days: 7)),
+            endDate: cairoToday,
+          );
+      },
       child: const _ReportsBody(),
     );
   }
@@ -60,16 +64,32 @@ class _ReportsBody extends StatelessWidget {
               variant: TopBarVariant.withBack,
               actions: data != null
                   ? [
-                      IconButton(
-                        icon: const Icon(Icons.share_rounded),
-                        tooltip: 'تصدير CSV',
-                        onPressed: () {
-                          final csv = exportToCsv(
-                            reportsToCsvRows(data),
-                            ['date', 'revenue', 'orders'],
-                          );
-                          Share.share(csv, subject: 'تقرير المبيعات');
-                        },
+                      Builder(
+                        builder: (btnContext) => IconButton(
+                          icon: const Icon(Icons.share_rounded),
+                          tooltip: 'تصدير CSV',
+                          onPressed: () async {
+                            final csv = exportToCsv(
+                              reportsToCsvRows(data),
+                              ['date', 'revenue', 'orders'],
+                            );
+                            final renderBox =
+                                btnContext.findRenderObject() as RenderBox?;
+                            final origin = renderBox != null
+                                ? renderBox.localToGlobal(Offset.zero) &
+                                    renderBox.size
+                                : null;
+                            try {
+                              await Share.share(
+                                csv,
+                                subject: 'تقرير المبيعات',
+                                sharePositionOrigin: origin,
+                              );
+                            } catch (_) {
+                              // User cancellation or platform share failure handled gracefully
+                            }
+                          },
+                        ),
                       ),
                     ]
                   : null,
@@ -96,7 +116,8 @@ class _ReportsBody extends StatelessWidget {
                           ),
                           AppSpacing.gapH16,
                           Text(
-                            state.failure?.message ?? 'حدث خطأ في تحميل التقارير',
+                            state.failure?.message ??
+                                'حدث خطأ في تحميل التقارير',
                             style: Theme.of(context).textTheme.bodyLarge,
                             textAlign: TextAlign.center,
                           ),
@@ -122,7 +143,8 @@ class _ReportsBody extends StatelessWidget {
                     right: 0,
                     child: LinearProgressIndicator(
                       minHeight: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.primary),
                     ),
                   ),
               ],
@@ -173,23 +195,22 @@ class _ReportsContentState extends State<_ReportsContent> {
       _selectedFilter = filter;
     });
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final cairoToday = ReportDateRange.nowInCairo();
     DateTime start;
-    DateTime end = now;
+    DateTime end = cairoToday;
 
     switch (filter) {
       case TimeFilter.today:
-        start = today;
+        start = cairoToday;
         break;
       case TimeFilter.week:
-        start = today.subtract(const Duration(days: 7));
+        start = cairoToday.subtract(const Duration(days: 7));
         break;
       case TimeFilter.month:
-        start = today.subtract(const Duration(days: 30));
+        start = cairoToday.subtract(const Duration(days: 30));
         break;
       case TimeFilter.quarter:
-        start = today.subtract(const Duration(days: 90));
+        start = cairoToday.subtract(const Duration(days: 90));
         break;
       case TimeFilter.custom:
         return;
@@ -200,10 +221,11 @@ class _ReportsContentState extends State<_ReportsContent> {
 
   Future<void> _selectCustomDateRange() async {
     final state = context.read<AdminReportsCubit>().state;
+    final cairoToday = ReportDateRange.nowInCairo();
     final range = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2024),
-      lastDate: DateTime.now().add(const Duration(days: 1)),
+      lastDate: cairoToday.add(const Duration(days: 1)),
       initialDateRange: DateTimeRange(
         start: state.startDate,
         end: state.endDate,
@@ -217,7 +239,8 @@ class _ReportsContentState extends State<_ReportsContent> {
               primary: AppColors.primary,
               onPrimary: Colors.white,
               surface: isDark ? AppColors.darkSurface : AppColors.surface,
-              onSurface: isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
+              onSurface:
+                  isDark ? AppColors.darkTextPrimary : AppColors.onSurface,
             ),
           ),
           child: child!,
@@ -264,7 +287,8 @@ class _ReportsContentState extends State<_ReportsContent> {
                 Icon(
                   Icons.date_range_rounded,
                   size: 14,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.outline,
+                  color:
+                      isDark ? AppColors.darkTextSecondary : AppColors.outline,
                 ),
                 AppSpacing.gapW8,
                 Text(
@@ -478,7 +502,8 @@ class _ReportsContentState extends State<_ReportsContent> {
   Widget _buildChartSelector(ThemeData theme, bool isDark) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkBackground : AppColors.surfaceContainerLow,
+        color:
+            isDark ? AppColors.darkBackground : AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       padding: const EdgeInsets.all(2),
@@ -562,14 +587,17 @@ class _ReportsContentState extends State<_ReportsContent> {
 
   List<Widget> _buildRankedProductsList(ThemeData theme, bool isDark) {
     final maxRevenue = widget.data.topProducts.isNotEmpty
-        ? widget.data.topProducts.map((p) => p.revenue).reduce((a, b) => a > b ? a : b)
+        ? widget.data.topProducts
+            .map((p) => p.revenue)
+            .reduce((a, b) => a > b ? a : b)
         : 1.0;
 
     return widget.data.topProducts.asMap().entries.map((entry) {
       final index = entry.key;
       final product = entry.value;
       final rank = index + 1;
-      final relativeShare = maxRevenue > 0 ? (product.revenue / maxRevenue) : 0.0;
+      final relativeShare =
+          maxRevenue > 0 ? (product.revenue / maxRevenue) : 0.0;
 
       Color rankColor;
       if (rank == 1) {
@@ -618,8 +646,12 @@ class _ReportsContentState extends State<_ReportsContent> {
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                         color: rank <= 3
-                            ? (isDark ? Colors.white : AppColors.onSecondaryFixedVariant)
-                            : (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+                            ? (isDark
+                                ? Colors.white
+                                : AppColors.onSecondaryFixedVariant)
+                            : (isDark
+                                ? AppColors.darkTextSecondary
+                                : AppColors.textSecondary),
                       ),
                     ),
                   ),
@@ -674,7 +706,9 @@ class _ReportsContentState extends State<_ReportsContent> {
                 valueColor: AlwaysStoppedAnimation<Color>(
                   rank == 1
                       ? AppColors.statusReady
-                      : (rank == 2 ? AppColors.statusConfirmed : AppColors.primary),
+                      : (rank == 2
+                          ? AppColors.statusConfirmed
+                          : AppColors.primary),
                 ),
                 minHeight: 6,
               ),

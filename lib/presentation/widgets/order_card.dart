@@ -275,7 +275,9 @@ class _OrderCardState extends State<OrderCard> {
                                                 ),
                                               ),
                                               Text(
-                                                (item.productPrice * item.quantity).formatted,
+                                                (item.productPrice *
+                                                        item.quantity)
+                                                    .formatted,
                                                 style: theme.textTheme.bodySmall
                                                     ?.copyWith(
                                                   color: isDark
@@ -492,10 +494,13 @@ class _ExpandedBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final orderType = OrderType.fromString(order.orderType);
-    final isPaid = order.paymentStatus == 'confirmed' || order.status == OrderStatus.delivered;
+    final isPaid = order.paymentStatus == 'confirmed' ||
+        order.status == OrderStatus.delivered;
     final paymentStatusLabel = isPaid
         ? 'تم الدفع'
-        : (order.paymentMethod == PaymentMethod.cash ? 'الدفع عند الاستلام' : 'معلق');
+        : (order.paymentMethod == PaymentMethod.cash
+            ? 'الدفع عند الاستلام'
+            : 'معلق');
     final paymentStatusColor = isPaid ? AppColors.success : AppColors.warning;
 
     return Container(
@@ -864,4 +869,3 @@ class _CancelledBanner extends StatelessWidget {
     );
   }
 }
-

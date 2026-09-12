@@ -42,10 +42,12 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   bool _isLoadingZones = true;
 
   AddressType _selectedType = AddressType.home;
+  late final AddressCubit _addressCubit;
 
   @override
   void initState() {
     super.initState();
+    _addressCubit = sl<AddressCubit>();
     _initFields();
     _loadZones();
   }
@@ -94,10 +96,10 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
           // Pre-select zone if editing
           if (widget.addressToEdit != null &&
               widget.addressToEdit!.deliveryZoneId != null) {
-            _selectedZone = _zones.firstWhere(
+            final matching = _zones.where(
               (z) => z.id == widget.addressToEdit!.deliveryZoneId,
-              orElse: () => _zones.first,
             );
+            _selectedZone = matching.isNotEmpty ? matching.first : null;
           }
         }),
       );
@@ -106,6 +108,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
 
   @override
   void dispose() {
+    _addressCubit.close();
     _labelController.dispose();
     _addressController.dispose();
     _buildingController.dispose();
@@ -116,6 +119,7 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
   }
 
   Future<void> _onSave() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) return;
 
     final authState = context.read<AuthCubit>().state;
@@ -153,21 +157,32 @@ class _AddAddressScreenState extends State<AddAddressScreen> {
       'longitude': 31.2357,
       if (_selectedZone != null) 'delivery_zone_id': _selectedZone!.id,
       if (_selectedZone != null) 'delivery_zone_name': _selectedZone!.name,
+      if (_selectedZone != null) 'delivery_fee': _selectedZone!.fee,
     };
 
     try {
-      if (widget.addressToEdit != null) {
-        // Edit Mode
-        await sl<AddressCubit>().updateAddress(
-            widget.addressToEdit!.id, data, authState.profile.id);
-      } else {
-        // Add Mode
-        await sl<AddressCubit>().createAddress(authState.profile.id, data);
-      }
-      if (mounted) {
-        HapticFeedback.mediumImpact();
-        Navigator.of(context).pop(true);
-      }
+      final result = widget.addressToEdit != null
+          ? await _addressCubit.updateAddress(
+              widget.addressToEdit!.id, data, authState.profile.id)
+          : await _addressCubit.createAddress(authState.profile.id, data);
+
+      if (!mounted) return;
+
+      result.fold(
+        (failure) {
+          setState(() => _isSaving = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(failure.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        },
+        (_) {
+          HapticFeedback.mediumImpact();
+          Navigator.of(context).pop(true);
+        },
+      );
     } catch (_) {
       if (mounted) {
         setState(() => _isSaving = false);

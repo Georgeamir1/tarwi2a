@@ -13,7 +13,7 @@ class ReportRemoteDataSource {
         .from('orders')
         .select()
         .gte('created_at', startDate.toIso8601String())
-        .lte('created_at', endDate.toIso8601String());
+        .lt('created_at', endDate.toIso8601String());
     return (data as List).map((e) => OrderDTO.fromJson(e)).toList();
   }
 
@@ -25,7 +25,7 @@ class ReportRemoteDataSource {
         .from('orders')
         .select('*, order_items(*)')
         .gte('created_at', startDate.toIso8601String())
-        .lte('created_at', endDate.toIso8601String());
+        .lt('created_at', endDate.toIso8601String());
     return (data as List).map((e) => OrderDTO.fromJson(e)).toList();
   }
 

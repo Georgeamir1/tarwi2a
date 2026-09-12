@@ -21,6 +21,22 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ordersCubit = context.read<AdminOrdersCubit>();
+      if (ordersCubit.state.status == AdminOrdersStatus.initial) {
+        ordersCubit.loadOrders();
+      }
+      final profileCubit = context.read<AdminBusinessProfileCubit>();
+      if (profileCubit.state.status == AdminBusinessProfileStatus.initial) {
+        profileCubit.loadProfile();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;

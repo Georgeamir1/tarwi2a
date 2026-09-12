@@ -26,6 +26,7 @@ import '../presentation/screens/auth/onboarding_screen.dart';
 import '../presentation/screens/auth/login_screen.dart';
 import '../presentation/screens/auth/register_screen.dart';
 import '../presentation/screens/auth/forgot_password_screen.dart';
+import '../presentation/screens/auth/reset_password_screen.dart';
 import '../presentation/screens/auth/otp_screen.dart';
 import '../presentation/screens/home/home_screen.dart';
 import '../presentation/screens/menu/menu_screen.dart';
@@ -72,6 +73,7 @@ import '../presentation/screens/admin/admin_broadcast_screen.dart';
 import '../presentation/screens/admin/admin_broadcast_history_screen.dart';
 import '../application/admin/admin_broadcast_cubit.dart';
 import '../presentation/screens/profile/notification_settings_screen.dart';
+import 'admin_route_guard.dart';
 
 CustomTransitionPage<void> _fadeTransition(
     BuildContext context, GoRouterState state, Widget child) {
@@ -105,10 +107,10 @@ Widget _adminWrap(Widget child) {
       BlocProvider.value(value: sl<AdminOrdersCubit>()),
       BlocProvider.value(value: sl<AdminCategoriesCubit>()),
       BlocProvider.value(value: sl<AdminProductsCubit>()),
-      BlocProvider.value(value: sl<AdminCouponsCubit>()..loadCoupons()),
-      BlocProvider.value(value: sl<AdminCustomersCubit>()..loadCustomers()),
-      BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()..loadZones()),
-      BlocProvider.value(value: sl<AdminBusinessProfileCubit>()..loadProfile()),
+      BlocProvider.value(value: sl<AdminCouponsCubit>()),
+      BlocProvider.value(value: sl<AdminCustomersCubit>()),
+      BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()),
+      BlocProvider.value(value: sl<AdminBusinessProfileCubit>()),
       BlocProvider.value(value: sl<NotificationsCubit>()),
     ],
     child: RepositoryProvider<PushNotificationService>.value(
@@ -127,14 +129,33 @@ final appRouter = GoRouter(
     final isLoggedIn = authState is Authenticated;
 
     final location = state.matchedLocation;
+    final isSplash = location == '/splash';
+
+    if (isSplash) return null;
+
+    if (authState is AuthRecoveryRequired) {
+      if (location != '/reset-password') return '/reset-password';
+      return null;
+    }
+
+    if (location == '/reset-password') {
+      return '/login';
+    }
+
+    final role = authState is Authenticated ? authState.profile.role : null;
+    final adminRedirect = adminRouteRedirect(
+      path: location,
+      role: role,
+    );
+    if (adminRedirect != null) return adminRedirect;
+
     final isAuthRoute = location == '/login' ||
         location == '/register' ||
         location == '/onboarding' ||
         location == '/forgot-password' ||
+        location == '/reset-password' ||
         location.startsWith('/otp');
-    final isSplash = location == '/splash';
 
-    if (isSplash) return null;
     if (!isLoggedIn && !isAuthRoute) return '/login';
     if (isLoggedIn && isAuthRoute) {
       if (authState is Authenticated && authState.profile.role.isAdmin) {
@@ -165,6 +186,10 @@ final appRouter = GoRouter(
       path: '/forgot-password',
       pageBuilder: (c, s) =>
           _fadeTransition(c, s, const ForgotPasswordScreen()),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      pageBuilder: (c, s) => _fadeTransition(c, s, const ResetPasswordScreen()),
     ),
     GoRoute(
       path: '/otp',
@@ -384,14 +409,11 @@ final appRouter = GoRouter(
       builder: (context, state, navigationShell) {
         return MultiBlocProvider(
           providers: [
-            BlocProvider.value(value: sl<AdminOrdersCubit>()..loadOrders()),
-            BlocProvider.value(value: sl<AdminCouponsCubit>()..loadCoupons()),
-            BlocProvider.value(
-                value: sl<AdminCustomersCubit>()..loadCustomers()),
-            BlocProvider.value(
-                value: sl<AdminDeliveryZonesCubit>()..loadZones()),
-            BlocProvider.value(
-                value: sl<AdminBusinessProfileCubit>()..loadProfile()),
+            BlocProvider.value(value: sl<AdminOrdersCubit>()),
+            BlocProvider.value(value: sl<AdminCouponsCubit>()),
+            BlocProvider.value(value: sl<AdminCustomersCubit>()),
+            BlocProvider.value(value: sl<AdminDeliveryZonesCubit>()),
+            BlocProvider.value(value: sl<AdminBusinessProfileCubit>()),
           ],
           child: AdminShell(navigationShell: navigationShell),
         );
@@ -442,9 +464,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admin/orders/:id',
       pageBuilder: (c, s) {
-        final order = s.extra as Order;
+        final id = s.pathParameters['id'] ?? '';
+        final order = s.extra is Order ? s.extra as Order : null;
         return _fadeTransition(
-            c, s, _adminWrap(AdminOrderDetailScreen(order: order)));
+          c,
+          s,
+          _adminWrap(AdminOrderDetailScreen(
+            order: order,
+            orderId: id,
+          )),
+        );
       },
     ),
     GoRoute(

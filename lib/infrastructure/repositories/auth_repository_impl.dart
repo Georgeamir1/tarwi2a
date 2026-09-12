@@ -7,8 +7,12 @@ import '../datasources/remote/auth_remote_data_source.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource _remoteDataSource;
+  final LocalStorage? _localStorage;
 
-  AuthRepositoryImpl(this._remoteDataSource);
+  AuthRepositoryImpl(
+    this._remoteDataSource, {
+    LocalStorage? localStorage,
+  }) : _localStorage = localStorage;
 
   @override
   Future<Either<Failure, AuthResponse>> signUp({
@@ -63,10 +67,84 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, void>> signOut() async {
     try {
       await _remoteDataSource.signOut();
+      if (_localStorage != null) {
+        await _localStorage.removePersistedSession();
+      }
       appLogger.d('[AuthRepo] signOut ✅ — returning Right(void)');
       return right<Failure, void>(null);
     } catch (e, s) {
       appLogger.e('[AuthRepo] signOut ❌ unexpected', error: e, stackTrace: s);
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resendVerificationEmail(String email) async {
+    try {
+      await _remoteDataSource.resendVerificationEmail(email);
+      appLogger.d('[AuthRepo] resendVerificationEmail ✅');
+      return right<Failure, void>(null);
+    } on AuthException catch (e, s) {
+      appLogger.e('[AuthRepo] resendVerificationEmail ❌ AuthException',
+          error: e, stackTrace: s);
+      return left(Failure.server(message: e.message));
+    } catch (e, s) {
+      appLogger.e('[AuthRepo] resendVerificationEmail ❌ unexpected',
+          error: e, stackTrace: s);
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> resetPassword(String email) async {
+    try {
+      await _remoteDataSource.resetPassword(email);
+      appLogger.d('[AuthRepo] resetPassword ✅');
+      return right<Failure, void>(null);
+    } on AuthException catch (e, s) {
+      appLogger.e('[AuthRepo] resetPassword ❌ AuthException',
+          error: e, stackTrace: s);
+      return left(Failure.server(message: e.message));
+    } catch (e, s) {
+      appLogger.e('[AuthRepo] resetPassword ❌ unexpected',
+          error: e, stackTrace: s);
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updatePassword(String newPassword) async {
+    try {
+      await _remoteDataSource.updatePassword(newPassword);
+      appLogger.d('[AuthRepo] updatePassword ✅');
+      return right<Failure, void>(null);
+    } on AuthException catch (e, s) {
+      appLogger.e('[AuthRepo] updatePassword ❌ AuthException',
+          error: e, stackTrace: s);
+      return left(Failure.server(message: e.message));
+    } catch (e, s) {
+      appLogger.e('[AuthRepo] updatePassword ❌ unexpected',
+          error: e, stackTrace: s);
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> deleteAccount() async {
+    try {
+      await _remoteDataSource.deleteAccount();
+      if (_localStorage != null) {
+        await _localStorage.removePersistedSession();
+      }
+      appLogger.d('[AuthRepo] deleteAccount ✅');
+      return right<Failure, void>(null);
+    } on AuthException catch (e, s) {
+      appLogger.e('[AuthRepo] deleteAccount ❌ AuthException',
+          error: e, stackTrace: s);
+      return left(Failure.server(message: e.message));
+    } catch (e, s) {
+      appLogger.e('[AuthRepo] deleteAccount ❌ unexpected',
+          error: e, stackTrace: s);
       return left(Failure.unexpected(message: e.toString()));
     }
   }

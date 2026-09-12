@@ -230,7 +230,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -264,7 +265,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                             child: Container(
                               height: 44,
-                              padding: const EdgeInsets.symmetric(horizontal: 18),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 18),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.18),
                                 borderRadius:
@@ -494,17 +496,16 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           builder: (_, child) => ScaleTransition(
                             scale: _buttonScale,
                             child: Semantics(
-                              label: isLastPage ? 'ابدأ الآن' : 'الصفحة التالية',
+                              label:
+                                  isLastPage ? 'ابدأ الآن' : 'الصفحة التالية',
                               button: true,
                               child: GestureDetector(
-                                onTapDown: (_) =>
-                                    _buttonController.reverse(),
+                                onTapDown: (_) => _buttonController.reverse(),
                                 onTapUp: (_) {
                                   _buttonController.forward();
                                   _onNext();
                                 },
-                                onTapCancel: () =>
-                                    _buttonController.forward(),
+                                onTapCancel: () => _buttonController.forward(),
                                 child: Container(
                                   height: 58,
                                   decoration: BoxDecoration(
@@ -516,10 +517,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                         HSLColor.fromColor(AppColors.primary)
                                             .withLightness(
                                               (HSLColor.fromColor(
-                                                            AppColors.primary)
-                                                        .lightness -
-                                                    0.08)
-                                                .clamp(0.0, 1.0),
+                                                              AppColors.primary)
+                                                          .lightness -
+                                                      0.08)
+                                                  .clamp(0.0, 1.0),
                                             )
                                             .toColor(),
                                       ],

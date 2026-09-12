@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:tarwi2a/application/orders/customer_orders_cubit.dart';
 import 'package:tarwi2a/domain/entities/order.dart';
+import 'package:tarwi2a/domain/failures/failure.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {
@@ -63,8 +65,7 @@ void main() {
         expect(cubit.state.orders.length, 2);
       });
 
-      test('should emit loaded with empty list when no orders exist',
-          () async {
+      test('should emit loaded with empty list when no orders exist', () async {
         when(() => mockRepo.getCustomerOrders('user-123'))
             .thenAnswer((_) async => right(<Order>[]));
 
@@ -105,6 +106,7 @@ void main() {
       test('should emit placing then placed when order created successfully',
           () async {
         when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
               customerId: any(named: 'customerId'),
               customerName: any(named: 'customerName'),
               customerPhone: any(named: 'customerPhone'),
@@ -137,6 +139,7 @@ void main() {
 
       test('should emit placing then error when creation fails', () async {
         when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
               customerId: any(named: 'customerId'),
               customerName: any(named: 'customerName'),
               customerPhone: any(named: 'customerPhone'),
@@ -164,6 +167,7 @@ void main() {
 
       test('should pass all optional parameters to repository', () async {
         when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
               customerId: 'user-123',
               customerName: 'أحمد',
               customerPhone: '0111222333',
@@ -197,6 +201,7 @@ void main() {
 
         expect(cubit.state.status, CustomerOrdersStatus.placed);
         verify(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
               customerId: 'user-123',
               customerName: 'أحمد',
               customerPhone: '0111222333',
@@ -210,6 +215,201 @@ void main() {
               couponId: 'coupon-1',
               discountAmount: 25.0,
             )).called(1);
+      });
+
+      test('should return Either<Failure, Order> result on success and failure',
+          () async {
+        when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => right(testOrder));
+
+        final cubit = CustomerOrdersCubit(mockRepo);
+
+        final resultSuccess = await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(resultSuccess.isRight(), isTrue);
+        expect(resultSuccess.getOrElse(() => throw 'error'), testOrder);
+
+        when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => left(testServerFailure));
+
+        final resultFailure = await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(resultFailure.isLeft(), isTrue);
+      });
+
+      test('should reject second submission when already placing', () async {
+        final completer = Completer<Either<Failure, Order>>();
+        when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) => completer.future);
+
+        final cubit = CustomerOrdersCubit(mockRepo);
+
+        final future1 = cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(cubit.state.status, CustomerOrdersStatus.placing);
+
+        // Second call while placing
+        final result2 = await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(result2.isLeft(), isTrue);
+
+        completer.complete(right(testOrder));
+        final result1 = await future1;
+        expect(result1.isRight(), isTrue);
+
+        verify(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).called(1);
+      });
+
+      test(
+          'retains request ID after failure and clears it after confirmed success',
+          () async {
+        final cubit = CustomerOrdersCubit(mockRepo);
+        expect(cubit.activeRequestId, isNull);
+
+        // First attempt fails
+        when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => left(testServerFailure));
+
+        final result1 = await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(result1.isLeft(), isTrue);
+        final retainedRequestId = cubit.activeRequestId;
+        expect(retainedRequestId, isNotNull);
+
+        // Retry attempt reuses the retained request ID
+        when(() => mockRepo.createOrder(
+              requestId: retainedRequestId,
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => right(testOrder));
+
+        final result2 = await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(result2.isRight(), isTrue);
+        expect(cubit.activeRequestId, isNull);
+      });
+
+      test('clears active request ID when clearActiveRequestId is invoked',
+          () async {
+        final cubit = CustomerOrdersCubit(mockRepo);
+        when(() => mockRepo.createOrder(
+              requestId: any(named: 'requestId'),
+              customerId: any(named: 'customerId'),
+              customerName: any(named: 'customerName'),
+              customerPhone: any(named: 'customerPhone'),
+              customerAddress: any(named: 'customerAddress'),
+              notes: any(named: 'notes'),
+              paymentMethod: any(named: 'paymentMethod'),
+              totalAmount: any(named: 'totalAmount'),
+              items: any(named: 'items'),
+            )).thenAnswer((_) async => left(testServerFailure));
+
+        await cubit.placeOrder(
+          customerId: 'user-123',
+          customerName: 'أحمد',
+          customerPhone: '01001234567',
+          paymentMethod: 'cash',
+          totalAmount: 150.0,
+          items: [],
+        );
+
+        expect(cubit.activeRequestId, isNotNull);
+        cubit.clearActiveRequestId();
+        expect(cubit.activeRequestId, isNull);
       });
     });
   });

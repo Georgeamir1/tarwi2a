@@ -40,7 +40,8 @@ class RatingRepositoryImpl implements RatingRepository {
       final dtos = await _remoteDataSource.getProductRatings(productId);
       return right(dtos.map((dto) => dto.toDomain()).toList());
     } catch (e, st) {
-      appLogger.e('[RatingRepo] getProductRatings FAILED', error: e, stackTrace: st);
+      appLogger.e('[RatingRepo] getProductRatings FAILED',
+          error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
@@ -51,7 +52,8 @@ class RatingRepositoryImpl implements RatingRepository {
       final dto = await _remoteDataSource.getOrderRating(orderId);
       return right(dto?.toDomain());
     } catch (e, st) {
-      appLogger.e('[RatingRepo] getOrderRating FAILED', error: e, stackTrace: st);
+      appLogger.e('[RatingRepo] getOrderRating FAILED',
+          error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }

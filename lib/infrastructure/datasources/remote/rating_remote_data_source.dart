@@ -12,7 +12,8 @@ class RatingRemoteDataSource {
     required int rating,
     String? comment,
   }) async {
-    appLogger.d('[RatingRemoteDS] rateOrder — orderId: $orderId, rating: $rating');
+    appLogger
+        .d('[RatingRemoteDS] rateOrder — orderId: $orderId, rating: $rating');
     try {
       final data = {
         'order_id': orderId,
@@ -21,15 +22,14 @@ class RatingRemoteDataSource {
         'rating': rating,
         if (comment != null) 'comment': comment,
       };
-      final result = await _client
-          .from('order_ratings')
-          .insert(data)
-          .select()
-          .single();
-      appLogger.d('[RatingRemoteDS] rateOrder success. Supabase response: $result');
+      final result =
+          await _client.from('order_ratings').insert(data).select().single();
+      appLogger
+          .d('[RatingRemoteDS] rateOrder success. Supabase response: $result');
       return OrderRatingDTO.fromJson(result);
     } catch (e, st) {
-      appLogger.e('[RatingRemoteDS] rateOrder FAILED', error: e, stackTrace: st);
+      appLogger.e('[RatingRemoteDS] rateOrder FAILED',
+          error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -40,11 +40,11 @@ class RatingRemoteDataSource {
           .from('order_items')
           .select('order_id')
           .eq('product_id', productId);
-      
+
       final orderIds = (itemsData as List)
           .map((item) => item['order_id'] as String)
           .toList();
-      
+
       if (orderIds.isEmpty) return [];
 
       final ratingsData = await _client
@@ -57,7 +57,8 @@ class RatingRemoteDataSource {
           .map((e) => OrderRatingDTO.fromJson(e))
           .toList();
     } catch (e, st) {
-      appLogger.e('[RatingRemoteDS] getProductRatings FAILED', error: e, stackTrace: st);
+      appLogger.e('[RatingRemoteDS] getProductRatings FAILED',
+          error: e, stackTrace: st);
       rethrow;
     }
   }
@@ -72,7 +73,8 @@ class RatingRemoteDataSource {
       if (result == null) return null;
       return OrderRatingDTO.fromJson(result);
     } catch (e, st) {
-      appLogger.e('[RatingRemoteDS] getOrderRating FAILED', error: e, stackTrace: st);
+      appLogger.e('[RatingRemoteDS] getOrderRating FAILED',
+          error: e, stackTrace: st);
       rethrow;
     }
   }

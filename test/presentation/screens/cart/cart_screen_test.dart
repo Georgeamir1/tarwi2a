@@ -78,8 +78,8 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('السلة فارغة'), findsOneWidget);
-        expect(
-            find.text('تصفح القائمة الشهية وأضف أكلاتك المفضلة إليها الآن'), findsOneWidget);
+        expect(find.text('تصفح القائمة الشهية وأضف أكلاتك المفضلة إليها الآن'),
+            findsOneWidget);
         expect(find.byIcon(Icons.shopping_bag_outlined), findsOneWidget);
       });
 

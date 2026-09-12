@@ -8,21 +8,35 @@ import '../../../application/rating/rating_cubit.dart';
 import '../../../core/logger/app_logger.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/enums/order_status.dart';
+import '../../../domain/repositories/order_repository.dart';
 import '../../../domain/repositories/print_repository.dart';
 import '../../../core/di/injection_container.dart';
 import '../../extensions/order_status_x.dart';
 import '../../extensions/payment_method_x.dart';
 import '../../widgets/info_card.dart';
+import '../../../core/utils/contact_helper.dart';
 
 class AdminOrderDetailScreen extends StatefulWidget {
-  final Order order;
-  const AdminOrderDetailScreen({super.key, required this.order});
+  final Order? order;
+  final String? orderId;
+
+  const AdminOrderDetailScreen({
+    super.key,
+    this.order,
+    this.orderId,
+  }) : assert(order != null || orderId != null,
+            'Either order or orderId must be provided');
+
+  String get effectiveOrderId => order?.id ?? orderId!;
 
   @override
   State<AdminOrderDetailScreen> createState() => _AdminOrderDetailScreenState();
 }
 
 class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
+  Order? _order;
+  bool _isLoading = false;
+  String? _errorMessage;
   late String _currentStatus;
   late String _currentPaymentStatus;
   bool _isUpdating = false;
@@ -44,16 +58,53 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _currentStatus = widget.order.status.value;
-    _currentPaymentStatus = widget.order.paymentStatus;
-    appLogger.d(
-        '[AdminOrderDetail] initState — order: ${widget.order.id}, status: $_currentStatus, paymentStatus: $_currentPaymentStatus');
+    if (widget.order != null) {
+      _order = widget.order;
+      _currentStatus = widget.order!.status.value;
+      _currentPaymentStatus = widget.order!.paymentStatus;
+      _isLoading = false;
+      appLogger.d(
+          '[AdminOrderDetail] initState — order: ${widget.order!.id}, status: $_currentStatus, paymentStatus: $_currentPaymentStatus');
+    } else {
+      _currentStatus = 'pending';
+      _currentPaymentStatus = 'pending';
+      _isLoading = true;
+      _fetchOrder();
+    }
+  }
+
+  Future<void> _fetchOrder() async {
+    final result =
+        await sl<OrderRepository>().getOrderById(widget.effectiveOrderId);
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = failure.message;
+        });
+      },
+      (order) {
+        setState(() {
+          _isLoading = false;
+          _order = order;
+          if (order != null) {
+            _currentStatus = order.status.value;
+            _currentPaymentStatus = order.paymentStatus;
+          } else {
+            _errorMessage = 'الطلب غير موجود أو تم حذفه';
+          }
+        });
+      },
+    );
   }
 
   Future<void> _printOrder() async {
+    final orderToPrint = _order ?? widget.order;
+    if (orderToPrint == null) return;
     try {
       final repo = sl<PrintRepository>();
-      final result = await repo.printOrder(widget.order);
+      final result = await repo.printOrder(orderToPrint);
       if (!mounted) return;
       result.fold(
         (failure) => ScaffoldMessenger.of(context).showSnackBar(
@@ -85,37 +136,50 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   }
 
   Future<void> _updateStatus(String newStatus) async {
+    if (_isUpdating) return;
     appLogger.d(
         '[AdminOrderDetail] _updateStatus — from: $_currentStatus to: $newStatus');
     setState(() => _isUpdating = true);
     try {
-      await context
+      final result = await context
           .read<AdminOrdersCubit>()
-          .updateStatus(widget.order.id, newStatus);
-      setState(() {
-        _currentStatus = newStatus;
-        if (newStatus == 'delivered') {
-          _currentPaymentStatus = 'confirmed';
-        }
-      });
-      appLogger.d(
-          '[AdminOrderDetail] _updateStatus — success, new status: $newStatus');
+          .updateStatus(widget.effectiveOrderId, newStatus);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'تم تحديث الحالة إلى: ${OrderStatus.fromString(newStatus).arabicLabel}'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      result.fold(
+        (failure) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: AppColors.error,
+          ),
         ),
+        (_) {
+          setState(() {
+            _currentStatus = newStatus;
+            if (newStatus == 'delivered') {
+              _currentPaymentStatus = 'confirmed';
+            }
+          });
+          appLogger.d(
+              '[AdminOrderDetail] _updateStatus — success, new status: $newStatus');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'تم تحديث الحالة إلى: ${OrderStatus.fromString(newStatus).arabicLabel}'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
       );
     } catch (e) {
       appLogger.e('[AdminOrderDetail] _updateStatus — error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('حصل خطأ'), backgroundColor: AppColors.error),
+            content: Text('حصل خطأ أثناء تحديث الحالة'),
+            backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _isUpdating = false);
@@ -123,24 +187,37 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   }
 
   Future<void> _confirmPayment() async {
-    appLogger.d('[AdminOrderDetail] _confirmPayment — order: ${widget.order.id}');
+    if (_isUpdating) return;
+    appLogger.d(
+        '[AdminOrderDetail] _confirmPayment — order: ${widget.effectiveOrderId}');
     setState(() => _isUpdating = true);
     try {
-      await context.read<AdminOrdersCubit>().confirmPayment(widget.order.id);
-      appLogger.d('[AdminOrderDetail] _confirmPayment — success');
-      if (mounted) {
-        setState(() {
-          _currentPaymentStatus = 'confirmed';
-        });
-      }
+      final result = await context
+          .read<AdminOrdersCubit>()
+          .confirmPayment(widget.effectiveOrderId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('تم تأكيد استلام الدفع'),
-          backgroundColor: AppColors.success,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      result.fold(
+        (failure) => ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: AppColors.error,
+          ),
         ),
+        (_) {
+          appLogger.d('[AdminOrderDetail] _confirmPayment — success');
+          setState(() {
+            _currentPaymentStatus = 'confirmed';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('تم تأكيد استلام الدفع'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
       );
     } catch (e) {
       appLogger.e('[AdminOrderDetail] _confirmPayment — error: $e');
@@ -157,15 +234,62 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final order = widget.order;
+
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('تفاصيل الطلب'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_order == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('تفاصيل الطلب'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => context.pop(),
+          ),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _errorMessage ?? 'الطلب غير موجود أو تم حذفه',
+                style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/admin/orders');
+                  }
+                },
+                child: const Text('العودة لقائمة الطلبات'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final order = _order!;
     final nextStatus = _nextStatus[_currentStatus];
     final nextLabel = _nextStatusLabel[_currentStatus];
-    final isOnlinePayment =
-        order.paymentMethod.value != 'cash';
+    final isOnlinePayment = order.paymentMethod.value != 'cash';
     final isPaymentPending = _currentPaymentStatus == 'pending';
 
     return BlocProvider<RatingCubit>(
-      create: (context) => sl<RatingCubit>()..loadOrderRating(widget.order.id),
+      create: (context) => sl<RatingCubit>()..loadOrderRating(order.id),
       child: BlocBuilder<RatingCubit, RatingState>(
         builder: (context, ratingState) {
           return Scaffold(
@@ -202,6 +326,78 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                         DateFormat('dd/MM/yyyy - hh:mm a')
                             .format(order.createdAt.toLocal())),
                     if (order.notes != null) InfoRow('ملاحظات', order.notes!),
+                    AppSpacing.gapH12,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              final ok = await ContactHelper.callPhoneNumber(
+                                order.customerPhone,
+                              );
+                              if (!ok && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                        'تعذر بدء الاتصال برقم ${order.customerPhone}'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.call_rounded, size: 18),
+                            label: const Text('اتصال'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.primary),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              final ok = await ContactHelper.openWhatsApp(
+                                order.customerPhone,
+                                message:
+                                    'أهلاً ${order.customerName}، بخصوص طلبك #${order.id.length >= 8 ? order.id.substring(0, 8).toUpperCase() : order.id} من تطبيق ترويئه 🍔',
+                              );
+                              if (!ok && context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('تعذر فتح تطبيق واتساب'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.chat_bubble_rounded,
+                                size: 18, color: Colors.white),
+                            label: const Text(
+                              'واتساب',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.md),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 if (ratingState.orderRating != null) ...[
@@ -211,13 +407,15 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                     children: [
                       Row(
                         children: [
-                          ...List.generate(5, (index) => Icon(
-                            index < ratingState.orderRating!.rating
-                                ? Icons.star_rounded
-                                : Icons.star_border_rounded,
-                            color: AppColors.statusPending,
-                            size: 24,
-                          )),
+                          ...List.generate(
+                              5,
+                              (index) => Icon(
+                                    index < ratingState.orderRating!.rating
+                                        ? Icons.star_rounded
+                                        : Icons.star_border_rounded,
+                                    color: AppColors.statusPending,
+                                    size: 24,
+                                  )),
                           const SizedBox(width: 12),
                           Text(
                             '${ratingState.orderRating!.rating} / 5',
@@ -288,10 +486,7 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                         const Text(
                           'الإجمالي',
                           style: TextStyle(
-                            fontWeight: FontWeight.w700,
-
-                           fontSize: 160
-                          ),
+                              fontWeight: FontWeight.w700, fontSize: 16),
                         ),
                         Text(
                           '${order.totalAmount.toStringAsFixed(0)} جنيه',
@@ -304,97 +499,103 @@ class _AdminOrderDetailScreenState extends State<AdminOrderDetailScreen> {
                     ),
                   ],
                 ),
-          AppSpacing.gapH24,
-          if (nextStatus != null &&
-              _currentStatus != 'delivered' &&
-              _currentStatus != 'cancelled')
-            ElevatedButton(
-              onPressed: _isUpdating ? null : () => _updateStatus(nextStatus),
-              child: _isUpdating
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          color: AppColors.surface, strokeWidth: 2))
-                  : Text(nextLabel ?? ''),
+                AppSpacing.gapH24,
+                if (nextStatus != null &&
+                    _currentStatus != 'delivered' &&
+                    _currentStatus != 'cancelled')
+                  ElevatedButton(
+                    onPressed:
+                        _isUpdating ? null : () => _updateStatus(nextStatus),
+                    child: _isUpdating
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                color: AppColors.surface, strokeWidth: 2))
+                        : Text(nextLabel ?? ''),
+                  ),
+                AppSpacing.gapH12,
+                OutlinedButton.icon(
+                  onPressed: () => _printOrder(),
+                  icon: const Icon(Icons.print, size: 18),
+                  label: const Text('طباعة الطلب'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 52),
+                    shape:
+                        RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+                  ),
+                ),
+                if (isOnlinePayment && isPaymentPending) ...[
+                  AppSpacing.gapH12,
+                  FilledButton.icon(
+                    onPressed: _isUpdating ? null : _confirmPayment,
+                    icon: _isUpdating
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.check_circle_outline_rounded,
+                            size: 18),
+                    label: const Text('تأكيد استلام الدفع'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      minimumSize: const Size(double.infinity, 52),
+                      shape:
+                          RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+                    ),
+                  ),
+                ],
+                if (_currentStatus != 'delivered' &&
+                    _currentStatus != 'cancelled') ...[
+                  AppSpacing.gapH12,
+                  OutlinedButton(
+                    onPressed: _isUpdating
+                        ? null
+                        : () {
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.lg)),
+                                title: const Text('إلغاء الطلب'),
+                                content: const Text(
+                                    'هل أنت متأكد من إلغاء هذا الطلب؟'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text('رجوع'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.pop(ctx);
+                                      _updateStatus('cancelled');
+                                    },
+                                    child: const Text('إلغاء الطلب',
+                                        style:
+                                            TextStyle(color: AppColors.error)),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      minimumSize: const Size(double.infinity, 52),
+                      shape:
+                          RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+                    ),
+                    child: const Text('إلغاء الطلب'),
+                  ),
+                ],
+              ],
             ),
-          AppSpacing.gapH12,
-          OutlinedButton.icon(
-            onPressed: () => _printOrder(),
-            icon: const Icon(Icons.print, size: 18),
-            label: const Text('طباعة الطلب'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-            ),
-          ),
-          if (isOnlinePayment && isPaymentPending) ...[
-            AppSpacing.gapH12,
-            FilledButton.icon(
-              onPressed: _isUpdating ? null : _confirmPayment,
-              icon: _isUpdating
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2))
-                  : const Icon(Icons.check_circle_outline_rounded, size: 18),
-              label: const Text('تأكيد استلام الدفع'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.success,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-              ),
-            ),
-          ],
-          if (_currentStatus != 'delivered' &&
-              _currentStatus != 'cancelled') ...[
-            AppSpacing.gapH12,
-            OutlinedButton(
-              onPressed: _isUpdating
-                  ? null
-                  : () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.lg)),
-                          title: const Text('إلغاء الطلب'),
-                          content:
-                              const Text('هل أنت متأكد من إلغاء هذا الطلب؟'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text('رجوع'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _updateStatus('cancelled');
-                              },
-                              child: const Text('إلغاء الطلب',
-                                  style: TextStyle(color: AppColors.error)),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-              ),
-              child: const Text('إلغاء الطلب'),
-            ),
-          ],
-        ],
+          );
+        },
       ),
     );
-  },
-),
-);
   }
 }
 

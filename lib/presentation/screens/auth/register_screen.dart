@@ -232,6 +232,72 @@ class _RegisterScreenState extends State<RegisterScreen>
       setState(() => _isLoading = false);
       if (!context.mounted) return;
       GoRouter.of(context).go('/home');
+    } else if (state is AuthAwaitingEmailVerification) {
+      appLogger.d('[RegisterScreen] awaiting email verification');
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.mark_email_read_outlined, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text('تأكيد الحساب'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('راجع بريدك الإلكتروني لتأكيد الحساب'),
+                const SizedBox(height: 8),
+                Text(
+                  state.email,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  final resendResult = await context
+                      .read<AuthCubit>()
+                      .resendVerificationEmail(state.email);
+                  resendResult.fold(
+                    (f) => scaffoldMessenger.showSnackBar(
+                      SnackBar(
+                        content: Text(f.message),
+                        backgroundColor: AppColors.error,
+                      ),
+                    ),
+                    (_) => scaffoldMessenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('تمت إعادة إرسال بريد التأكيد بنجاح'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    ),
+                  );
+                },
+                child: const Text('إعادة إرسال'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  GoRouter.of(context).go('/login');
+                },
+                child: const Text('تسجيل الدخول'),
+              ),
+            ],
+          );
+        },
+      );
     } else if (state is AuthError) {
       appLogger.d('[RegisterScreen] auth error');
       if (!mounted) return;
@@ -437,9 +503,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           decoration: BoxDecoration(
                                             color: Colors.white
                                                 .withValues(alpha: 0.18),
-                                            borderRadius:
-                                                BorderRadius.circular(
-                                                    AppRadius.lg),
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.lg),
                                             border: Border.all(
                                               color: Colors.white
                                                   .withValues(alpha: 0.3),
@@ -467,8 +532,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       FadeTransition(
                         opacity: _headerFade,
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -477,8 +541,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                   children: [
                                     TextSpan(
                                       text: 'حساب ',
-                                      style:
-                                          AppTypography.largeTitle.copyWith(
+                                      style: AppTypography.largeTitle.copyWith(
                                         fontSize: 30,
                                         fontWeight: FontWeight.w800,
                                         color: Colors.white,
@@ -486,8 +549,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                     ),
                                     TextSpan(
                                       text: 'جديد',
-                                      style:
-                                          AppTypography.largeTitle.copyWith(
+                                      style: AppTypography.largeTitle.copyWith(
                                         fontSize: 30,
                                         fontWeight: FontWeight.w800,
                                         color: AppColors.primary,
@@ -502,10 +564,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 children: [
                                   Text(
                                     'بياناتك بتظل آمنة معانا',
-                                    style:
-                                        AppTypography.subheadline.copyWith(
-                                      color: Colors.white
-                                          .withValues(alpha: 0.7),
+                                    style: AppTypography.subheadline.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.7),
                                     ),
                                   ),
                                   const SizedBox(width: 6),
@@ -526,8 +587,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       FadeTransition(
                         opacity: _field1Fade,
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
                           child: AnimatedBuilder(
                             animation: _stepLineController,
                             builder: (context, _) {
@@ -540,34 +600,25 @@ class _RegisterScreenState extends State<RegisterScreen>
 
                       // ── Form card with top-edge glow ──────────────
                       Padding(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
                           children: [
                             // Top edge gradient glow line
                             Container(
                               height: 2,
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16),
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(1),
                                 gradient: LinearGradient(
                                   colors: [
                                     Colors.transparent,
-                                    AppColors.primary
-                                        .withValues(alpha: 0.5),
+                                    AppColors.primary.withValues(alpha: 0.5),
                                     AppColors.primary,
-                                    AppColors.primary
-                                        .withValues(alpha: 0.5),
+                                    AppColors.primary.withValues(alpha: 0.5),
                                     Colors.transparent,
                                   ],
-                                  stops: const [
-                                    0.0,
-                                    0.25,
-                                    0.5,
-                                    0.75,
-                                    1.0
-                                  ],
+                                  stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -592,8 +643,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                 boxShadow: const [AppShadows.elevated],
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.stretch,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   // Name field
                                   SlideTransition(
@@ -603,21 +653,18 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       child: _RegisterField(
                                         label: 'الاسم الكامل',
                                         hint: 'محمد أحمد',
-                                        icon:
-                                            Icons.person_outline_rounded,
+                                        icon: Icons.person_outline_rounded,
                                         controller: _nameController,
                                         focusNode: _nameFocusNode,
                                         isFocused: _nameFocused,
-                                        textInputAction:
-                                            TextInputAction.next,
+                                        textInputAction: TextInputAction.next,
                                         validator: (v) =>
                                             (v == null || v.isEmpty)
                                                 ? 'أدخل اسمك'
                                                 : null,
                                         onSubmitted: (_) =>
                                             FocusScope.of(context)
-                                                .requestFocus(
-                                                    _phoneFocusNode),
+                                                .requestFocus(_phoneFocusNode),
                                       ),
                                     ),
                                   ),
@@ -635,14 +682,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         controller: _phoneController,
                                         focusNode: _phoneFocusNode,
                                         isFocused: _phoneFocused,
-                                        keyboardType:
-                                            TextInputType.phone,
-                                        textInputAction:
-                                            TextInputAction.next,
+                                        keyboardType: TextInputType.phone,
+                                        textInputAction: TextInputAction.next,
                                         onSubmitted: (_) =>
                                             FocusScope.of(context)
-                                                .requestFocus(
-                                                    _emailFocusNode),
+                                                .requestFocus(_emailFocusNode),
                                       ),
                                     ),
                                   ),
@@ -663,8 +707,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         keyboardType:
                                             TextInputType.emailAddress,
                                         textDirection: TextDirection.ltr,
-                                        textInputAction:
-                                            TextInputAction.next,
+                                        textInputAction: TextInputAction.next,
                                         autofillHints: const [
                                           AutofillHints.email
                                         ],
@@ -678,9 +721,8 @@ class _RegisterScreenState extends State<RegisterScreen>
                                           return null;
                                         },
                                         onSubmitted: (_) =>
-                                            FocusScope.of(context)
-                                                .requestFocus(
-                                                    _passwordFocusNode),
+                                            FocusScope.of(context).requestFocus(
+                                                _passwordFocusNode),
                                       ),
                                     ),
                                   ),
@@ -697,12 +739,11 @@ class _RegisterScreenState extends State<RegisterScreen>
                                         children: [
                                           Text(
                                             'كلمة المرور',
-                                            style: AppTypography.footnote
-                                                .copyWith(
+                                            style:
+                                                AppTypography.footnote.copyWith(
                                               color: _passwordFocused
                                                   ? AppColors.primary
-                                                  : AppColors
-                                                      .textSecondary,
+                                                  : AppColors.textSecondary,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -717,39 +758,31 @@ class _RegisterScreenState extends State<RegisterScreen>
                                               border: Border.all(
                                                 color: _passwordFocused
                                                     ? AppColors.primary
-                                                    : AppColors
-                                                        .outlineVariant,
+                                                    : AppColors.outlineVariant,
                                                 width: _passwordFocused
                                                     ? 2.0
                                                     : 1.0,
                                               ),
-                                              color: AppColors
-                                                  .surfaceContainerLow,
+                                              color:
+                                                  AppColors.surfaceContainerLow,
                                               boxShadow: _passwordFocused
                                                   ? [
                                                       BoxShadow(
-                                                        color: AppColors
-                                                            .primary
+                                                        color: AppColors.primary
                                                             .withValues(
-                                                                alpha:
-                                                                    0.12),
+                                                                alpha: 0.12),
                                                         blurRadius: 12,
                                                         offset:
-                                                            const Offset(
-                                                                0, 4),
+                                                            const Offset(0, 4),
                                                       )
                                                     ]
                                                   : null,
                                             ),
                                             child: TextFormField(
-                                              controller:
-                                                  _passwordController,
-                                              focusNode:
-                                                  _passwordFocusNode,
-                                              obscureText:
-                                                  _obscurePassword,
-                                              textDirection:
-                                                  TextDirection.ltr,
+                                              controller: _passwordController,
+                                              focusNode: _passwordFocusNode,
+                                              obscureText: _obscurePassword,
+                                              textDirection: TextDirection.ltr,
                                               textInputAction:
                                                   TextInputAction.done,
                                               autofillHints: const [
@@ -758,23 +791,18 @@ class _RegisterScreenState extends State<RegisterScreen>
                                               onFieldSubmitted: (_) =>
                                                   _register(),
                                               decoration: InputDecoration(
-                                                hintText:
-                                                    '6 أحرف على الأقل',
+                                                hintText: '6 أحرف على الأقل',
                                                 filled: false,
                                                 border: InputBorder.none,
-                                                enabledBorder:
-                                                    InputBorder.none,
-                                                focusedBorder:
-                                                    InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
                                                 contentPadding:
-                                                    const EdgeInsets
-                                                        .symmetric(
+                                                    const EdgeInsets.symmetric(
                                                   horizontal: 16,
                                                   vertical: 14,
                                                 ),
                                                 prefixIcon: Icon(
-                                                  Icons
-                                                      .lock_outline_rounded,
+                                                  Icons.lock_outline_rounded,
                                                   color: _passwordFocused
                                                       ? AppColors.primary
                                                       : AppColors.outline,
@@ -787,19 +815,16 @@ class _RegisterScreenState extends State<RegisterScreen>
                                                             .visibility_off_outlined
                                                         : Icons
                                                             .visibility_outlined,
-                                                    color:
-                                                        AppColors.outline,
+                                                    color: AppColors.outline,
                                                     size: 20,
                                                   ),
-                                                  onPressed: () =>
-                                                      setState(() =>
-                                                          _obscurePassword =
-                                                              !_obscurePassword),
+                                                  onPressed: () => setState(
+                                                      () => _obscurePassword =
+                                                          !_obscurePassword),
                                                 ),
                                               ),
                                               validator: (v) {
-                                                if (v == null ||
-                                                    v.isEmpty) {
+                                                if (v == null || v.isEmpty) {
                                                   return 'أدخل كلمة المرور';
                                                 }
                                                 if (v.length < 6) {
@@ -836,40 +861,34 @@ class _RegisterScreenState extends State<RegisterScreen>
                       FadeTransition(
                         opacity: _ctaFade,
                         child: Padding(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 20),
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: ScaleTransition(
                             scale: _btnScale,
                             child: GestureDetector(
-                              onTapDown: (_) =>
-                                  _btnController.reverse(),
+                              onTapDown: (_) => _btnController.reverse(),
                               onTapUp: (_) {
                                 _btnController.forward();
                                 if (!_isLoading) _register();
                               },
-                              onTapCancel: () =>
-                                  _btnController.forward(),
+                              onTapCancel: () => _btnController.forward(),
                               child: Container(
                                 height: 58,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(
-                                      AppRadius.xl),
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.xl),
                                   gradient: _isLoading
                                       ? null
                                       : LinearGradient(
                                           colors: [
                                             AppColors.primary,
-                                            Color.lerp(
-                                                AppColors.primary,
-                                                Colors.black,
-                                                0.15)!,
+                                            Color.lerp(AppColors.primary,
+                                                Colors.black, 0.15)!,
                                           ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         ),
                                   color: _isLoading
-                                      ? AppColors.primary
-                                          .withValues(alpha: 0.6)
+                                      ? AppColors.primary.withValues(alpha: 0.6)
                                       : null,
                                   boxShadow: _isLoading
                                       ? null
@@ -878,8 +897,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                             color: AppColors.primary
                                                 .withValues(alpha: 0.4),
                                             blurRadius: 18,
-                                            offset:
-                                                const Offset(0, 8),
+                                            offset: const Offset(0, 8),
                                           ),
                                         ],
                                 ),
@@ -888,16 +906,15 @@ class _RegisterScreenState extends State<RegisterScreen>
                                       ? const SizedBox(
                                           width: 24,
                                           height: 24,
-                                          child:
-                                              CircularProgressIndicator(
+                                          child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
                                             color: Colors.white,
                                           ),
                                         )
                                       : Text(
                                           'إنشاء الحساب',
-                                          style: AppTypography.headline
-                                              .copyWith(
+                                          style:
+                                              AppTypography.headline.copyWith(
                                             color: Colors.white,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -926,8 +943,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: () {
-                                  appLogger.d(
-                                      '[RegisterScreen] go to login');
+                                  appLogger.d('[RegisterScreen] go to login');
                                   context.pop();
                                 },
                                 borderRadius:
@@ -940,8 +956,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                                     style: AppTypography.body.copyWith(
                                       color: AppColors.primary,
                                       fontWeight: FontWeight.w700,
-                                      decoration:
-                                          TextDecoration.underline,
+                                      decoration: TextDecoration.underline,
                                       decorationColor: AppColors.primary
                                           .withValues(alpha: 0.4),
                                     ),
@@ -1029,16 +1044,17 @@ class _RegisterScreenState extends State<RegisterScreen>
                       : isDone
                           ? AppColors.primary.withValues(alpha: 0.7)
                           : AppColors.textSecondary,
-                  fontWeight:
-                      isActive ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                 ),
               ),
             ],
           );
         } else {
           // Connecting line
-          final lineIndex = i ~/ 2; // line between step lineIndex and lineIndex+1
-          final isLineFilled = _isFieldDone(lineIndex) && lineIndex < _activeField;
+          final lineIndex =
+              i ~/ 2; // line between step lineIndex and lineIndex+1
+          final isLineFilled =
+              _isFieldDone(lineIndex) && lineIndex < _activeField;
 
           return Expanded(
             child: Padding(

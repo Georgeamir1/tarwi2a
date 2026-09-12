@@ -306,6 +306,7 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_url text;
   v_request_id bigint;
+  v_service_key text;
 BEGIN
   -- Resolve Edge Function URL from project ref (auto-set by Supabase)
   v_url := current_setting('app.settings.supabase_functions_url', true)
@@ -318,11 +319,17 @@ BEGIN
              '.functions.supabase.co/send-notification';
   END IF;
 
+  v_service_key := current_setting('app.settings.service_role_key', true);
+  IF v_service_key IS NULL OR v_service_key = '' THEN
+    RAISE WARNING '[invoke_send_notification] service_role_key not configured — notification push skipped for %', NEW.id;
+    RETURN NEW;
+  END IF;
+
   SELECT net.http_post(
     url := v_url,
     headers := jsonb_build_object(
       'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key', true)
+      'Authorization', 'Bearer ' || v_service_key
     ),
     body := jsonb_build_object(
       'type', 'INSERT',
@@ -336,7 +343,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 DROP TRIGGER IF EXISTS notifications_invoke_send ON notifications;
 CREATE TRIGGER notifications_invoke_send

@@ -133,4 +133,3 @@ class DashboardTopProductsChart extends StatelessWidget {
     );
   }
 }
-

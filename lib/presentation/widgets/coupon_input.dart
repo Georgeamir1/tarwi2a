@@ -41,7 +41,8 @@ class CouponInput extends StatelessWidget {
         children: [
           Icon(
             Icons.local_offer_outlined,
-            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+            color:
+                isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -50,12 +51,15 @@ class CouponInput extends StatelessWidget {
               controller: controller,
               onChanged: onChanged,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+                color:
+                    isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: 'كود الخصم',
                 hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: (isDark ? AppColors.darkTextSecondary : AppColors.textSecondary)
+                  color: (isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.textSecondary)
                       .withValues(alpha: 0.6),
                 ),
                 border: InputBorder.none,

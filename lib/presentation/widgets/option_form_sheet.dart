@@ -71,8 +71,7 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
       'name_ar': _nameArController.text.trim(),
       'price_delta': double.tryParse(_priceController.text.trim()) ?? 0.0,
       'is_required': _isRequired,
-      'max_selections':
-          int.tryParse(_maxSelectionsController.text.trim()) ?? 1,
+      'max_selections': int.tryParse(_maxSelectionsController.text.trim()) ?? 1,
     };
 
     Navigator.pop(context, data);
@@ -122,7 +121,8 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
                 const SizedBox(height: 24),
 
                 // Name fields
-                _SectionLabel(icon: Icons.text_fields_rounded, label: 'اسم الخيار'),
+                _SectionLabel(
+                    icon: Icons.text_fields_rounded, label: 'اسم الخيار'),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _nameArController,
@@ -148,16 +148,19 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
                 const SizedBox(height: 20),
 
                 // Price delta
-                _SectionLabel(icon: Icons.payments_rounded, label: 'السعر الإضافي'),
+                _SectionLabel(
+                    icon: Icons.payments_rounded, label: 'السعر الإضافي'),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _priceController,
                   decoration: const InputDecoration(
                     hintText: '0',
                     suffixText: 'ر.س',
-                    prefixIcon: Icon(Icons.add_circle_outline_rounded, size: 20),
+                    prefixIcon:
+                        Icon(Icons.add_circle_outline_rounded, size: 20),
                   ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
                   ],
@@ -165,13 +168,15 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
                 const SizedBox(height: 20),
 
                 // Max selections
-                _SectionLabel(icon: Icons.tune_rounded, label: 'الحد الأقصى للاختيارات'),
+                _SectionLabel(
+                    icon: Icons.tune_rounded, label: 'الحد الأقصى للاختيارات'),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _maxSelectionsController,
                   decoration: const InputDecoration(
                     hintText: '1',
-                    prefixIcon: Icon(Icons.format_list_numbered_rounded, size: 20),
+                    prefixIcon:
+                        Icon(Icons.format_list_numbered_rounded, size: 20),
                   ),
                   keyboardType: TextInputType.number,
                   inputFormatters: [
@@ -182,7 +187,8 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
 
                 // Required toggle
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -190,12 +196,14 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.check_circle_outline_rounded, size: 20, color: AppColors.textSecondary),
+                      const Icon(Icons.check_circle_outline_rounded,
+                          size: 20, color: AppColors.textSecondary),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'خيار إجباري',
-                          style: AppTypography.callout.copyWith(fontWeight: FontWeight.w500),
+                          style: AppTypography.callout
+                              .copyWith(fontWeight: FontWeight.w500),
                         ),
                       ),
                       Switch(
@@ -210,7 +218,8 @@ class _OptionFormSheetState extends State<OptionFormSheet> {
                 // Save button
                 ElevatedButton.icon(
                   onPressed: _save,
-                  icon: Icon(_isEditing ? Icons.save_rounded : Icons.add_rounded),
+                  icon:
+                      Icon(_isEditing ? Icons.save_rounded : Icons.add_rounded),
                   label: Text(_isEditing ? 'حفظ التعديلات' : 'إضافة الخيار'),
                 ),
                 const SizedBox(height: 8),

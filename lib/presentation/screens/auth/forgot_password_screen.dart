@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../app/theme/app_theme.dart';
-import '../../../core/logger/app_logger.dart';
+import '../../../application/auth/auth_cubit.dart';
 import '../../widgets/loading_button.dart';
 import '../../widgets/error_banner.dart';
 
@@ -35,25 +35,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       _error = null;
     });
 
-    try {
-      await Supabase.instance.client.auth.resetPasswordForEmail(
-        _emailController.text.trim(),
-      );
-      if (mounted) {
+    final result = await context.read<AuthCubit>().resetPassword(
+          _emailController.text.trim(),
+        );
+    if (!mounted) return;
+    result.fold(
+      (failure) {
+        setState(() {
+          _isLoading = false;
+          _error = failure.message;
+        });
+      },
+      (_) {
         setState(() {
           _isLoading = false;
           _sent = true;
         });
-      }
-    } catch (e) {
-      appLogger.e('[ForgotPassword] error', error: e);
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = 'حصل خطأ. تأكد من البريد الإلكتروني وحاول تاني';
-        });
-      }
-    }
+      },
+    );
   }
 
   @override

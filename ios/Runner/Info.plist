@@ -4,6 +4,10 @@
 <dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>يحتاج التطبيق للوصول إلى Face ID لتسجيل الدخول السريع والآمن للحساب</string>
+	<key>NSCameraUsageDescription</key>
+	<string>يحتاج التطبيق إلى الكاميرا لالتقاط صور المنتجات في لوحة إدارة المطعم</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>يحتاج التطبيق للوصول إلى مكتبة الصور لاختيار صور المنتجات في لوحة إدارة المطعم</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

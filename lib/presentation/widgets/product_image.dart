@@ -50,8 +50,9 @@ class ProductImage extends StatelessWidget {
       fit: fit,
       width: width,
       height: height,
-      fadeInDuration: Duration.zero,   // Instantly display when cached, no fade-in flash
-      fadeOutDuration: Duration.zero,  // Instantly swap, no fade-out flash
+      fadeInDuration:
+          Duration.zero, // Instantly display when cached, no fade-in flash
+      fadeOutDuration: Duration.zero, // Instantly swap, no fade-out flash
       placeholder: (_, __) => placeholder,
       errorWidget: (_, __, ___) => errorWidget,
     );

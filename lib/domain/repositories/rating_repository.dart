@@ -11,6 +11,7 @@ abstract class RatingRepository {
     String? comment,
   });
 
-  Future<Either<Failure, List<OrderRating>>> getProductRatings(String productId);
+  Future<Either<Failure, List<OrderRating>>> getProductRatings(
+      String productId);
   Future<Either<Failure, OrderRating?>> getOrderRating(String orderId);
 }

@@ -31,17 +31,15 @@ class CouponRemoteDataSource {
   }
 
   Future<CouponDTO?> getByCode(String code) async {
-    final data = await _client
-        .from('coupons')
-        .select()
-        .eq('code', code)
-        .maybeSingle();
+    final data =
+        await _client.from('coupons').select().eq('code', code).maybeSingle();
     if (data == null) return null;
     return CouponDTO.fromJson(data);
   }
 
   Future<void> incrementUsage(String couponId) async {
-    await _client.rpc('increment_coupon_usage', params: {'coupon_id': couponId});
+    await _client
+        .rpc('increment_coupon_usage', params: {'coupon_id': couponId});
   }
 
   Stream<List<CouponDTO>> watchCoupons() {

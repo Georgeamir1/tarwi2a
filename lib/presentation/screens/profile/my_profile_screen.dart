@@ -79,19 +79,25 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                 // Premium Greeting Header Card (No avatar circle, no mock loyalty/points)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: isDark
                           ? [AppColors.darkCard, AppColors.darkBackground]
-                          : [AppColors.primaryContainer, const Color(0xFFFFECE9)],
+                          : [
+                              AppColors.primaryContainer,
+                              const Color(0xFFFFECE9)
+                            ],
                       begin: Alignment.topRight,
                       end: Alignment.bottomLeft,
                     ),
                     borderRadius: BorderRadius.circular(AppRadius.xl),
                     border: Border.all(
-                      color: isDark ? AppColors.darkDivider : AppColors.outlineVariant,
+                      color: isDark
+                          ? AppColors.darkDivider
+                          : AppColors.outlineVariant,
                       width: 1,
                     ),
                   ),
@@ -102,7 +108,10 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                         width: 54,
                         height: 54,
                         decoration: BoxDecoration(
-                          color: (isDark ? AppColors.darkSurface : AppColors.surface).withValues(alpha: 0.6),
+                          color: (isDark
+                                  ? AppColors.darkSurface
+                                  : AppColors.surface)
+                              .withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -120,7 +129,9 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                               profile?.name ?? 'زائر',
                               style: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w800,
-                                color: isDark ? AppColors.darkTextPrimary : AppColors.onPrimaryContainer,
+                                color: isDark
+                                    ? AppColors.darkTextPrimary
+                                    : AppColors.onPrimaryContainer,
                               ),
                             ),
                             if (profile?.phone != null) ...[
@@ -132,13 +143,16 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
                                     size: 16,
                                     color: isDark
                                         ? AppColors.darkTextSecondary
-                                        : AppColors.onSecondaryContainer.withValues(alpha: 0.7),
+                                        : AppColors.onSecondaryContainer
+                                            .withValues(alpha: 0.7),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     profile!.phone!,
                                     style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: isDark ? AppColors.darkTextSecondary : AppColors.onSecondaryContainer,
+                                      color: isDark
+                                          ? AppColors.darkTextSecondary
+                                          : AppColors.onSecondaryContainer,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -404,7 +418,9 @@ class _ProfileMenuItem extends StatelessWidget {
                         title,
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.darkTextPrimary : AppColors.onBackground,
+                          color: isDark
+                              ? AppColors.darkTextPrimary
+                              : AppColors.onBackground,
                         ),
                       ),
                       if (subtitle != null) ...[

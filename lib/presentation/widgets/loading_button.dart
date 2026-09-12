@@ -75,7 +75,8 @@ class LoadingButton extends StatelessWidget {
         height: 20,
         width: 20,
         child: CircularProgressIndicator(
-          color: progressColor == Colors.white ? Colors.white : AppColors.surface,
+          color:
+              progressColor == Colors.white ? Colors.white : AppColors.surface,
           strokeWidth: 2.5,
         ),
       );

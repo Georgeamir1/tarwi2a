@@ -73,7 +73,8 @@ class CartScreen extends StatelessWidget {
                             },
                             background: Container(
                               alignment: AlignmentDirectional.centerEnd,
-                              padding: const EdgeInsetsDirectional.only(end: 24),
+                              padding:
+                                  const EdgeInsetsDirectional.only(end: 24),
                               decoration: BoxDecoration(
                                 color: AppColors.error.withValues(alpha: 0.08),
                                 borderRadius:
@@ -447,20 +448,21 @@ class _CartItemCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: item.productImageUrl != null && item.productImageUrl!.isNotEmpty
-                ? Image.network(
-                    item.productImageUrl!,
-                    width: 64,
-                    height: 64,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        _buildPlaceholderImage(),
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return _buildImagePlaceholderLoading();
-                    },
-                  )
-                : _buildPlaceholderImage(),
+            child:
+                item.productImageUrl != null && item.productImageUrl!.isNotEmpty
+                    ? Image.network(
+                        item.productImageUrl!,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _buildPlaceholderImage(),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return _buildImagePlaceholderLoading();
+                        },
+                      )
+                    : _buildPlaceholderImage(),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -494,11 +496,12 @@ class _CartItemCard extends StatelessWidget {
                         ),
                         child: Text(
                           '${option.name}${option.priceAdjustment > 0 ? ' +${option.priceAdjustment.toStringAsFixed(0)}' : ''}',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.onTertiaryContainer,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.onTertiaryContainer,
+                                  ),
                         ),
                       );
                     }).toList(),

@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-23 |
-| **Phase** | Ratings and Reviews Integration |
-| **Task** | Implemented the remote persistence and presentation of order ratings and product reviews. |
-| **Notes** | Wired `RateOrderScreen` and `ProductReviewsScreen` with a new `RatingCubit` and `RatingRepository`. Ratings are now saved in the remote Supabase database and retrieved dynamically with calculated summary averages. `flutter analyze` passes successfully with 0 issues.
+| **Last session** | 2026-09-12 |
+| **Phase** | Admin Order Contact Integration |
+| **Task** | Added direct Phone Call and WhatsApp action buttons for Admin Orders. |
+| **Notes** | Created `ContactHelper` with automatic Egyptian international mobile formatting and direct dialer / wa.me launching. Added call and WhatsApp buttons to `AdminOrdersScreen` cards and `AdminOrderDetailScreen` customer card. Fixed `fontSize: 160` typo causing layout overflow in order details. `flutter analyze` passes successfully with 0 issues.
 
 ---
 

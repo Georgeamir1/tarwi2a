@@ -109,8 +109,8 @@ class OrdersRobot {
     required AuthCubit authCubit,
     required CustomerOrdersCubit ordersCubit,
   }) async {
-    await tester.pumpWidget(_buildTestWidget(
-        authCubit: authCubit, ordersCubit: ordersCubit));
+    await tester.pumpWidget(
+        _buildTestWidget(authCubit: authCubit, ordersCubit: ordersCubit));
     await tester.pump();
   }
 
@@ -123,7 +123,7 @@ class OrdersRobot {
   }
 
   void expectOrderTotalVisible(int amount) {
-    expect(find.text('$amount جنيه'), findsWidgets);
+    expect(find.text('$amount ج.م'), findsWidgets);
   }
 
   void expectItemCountVisible() {
@@ -148,8 +148,12 @@ class OrdersRobot {
     await tester.pumpAndSettle();
   }
 
-  void expectNavigatedToDetail() {
-    expect(find.byType(Placeholder), findsOneWidget);
+  void expectOrderExpanded() {
+    expect(find.text('تفاصيل الطلب'), findsOneWidget);
+  }
+
+  void expectOrderNotExpanded() {
+    expect(find.text('تفاصيل الطلب'), findsNothing);
   }
 }
 
@@ -174,11 +178,10 @@ void main() {
     when(() => mockOrdersCubit.stream)
         .thenAnswer((_) => const Stream<CustomerOrdersState>.empty());
     when(() => mockOrdersCubit.close()).thenAnswer((_) async {});
-    when(() => mockOrdersCubit.loadOrders(any()))
-        .thenAnswer((_) async {});
+    when(() => mockOrdersCubit.loadOrders(any())).thenAnswer((_) async {});
 
-    GetIt.instance.registerLazySingleton<CustomerOrdersCubit>(
-        () => mockOrdersCubit);
+    GetIt.instance
+        .registerLazySingleton<CustomerOrdersCubit>(() => mockOrdersCubit);
   });
 
   tearDown(() {
@@ -264,8 +267,8 @@ void main() {
       });
     });
 
-    group('navigation', () {
-      testWidgets('should navigate to order detail when tapping order',
+    group('expansion', () {
+      testWidgets('should expand order detail when tapping order',
           (tester) async {
         when(() => mockOrdersCubit.state).thenReturn(
           CustomerOrdersState.initial().copyWith(
@@ -277,8 +280,53 @@ void main() {
         final robot = OrdersRobot(tester);
         await robot.pumpScreen(
             authCubit: mockAuthCubit, ordersCubit: mockOrdersCubit);
+        robot.expectOrderNotExpanded();
         await robot.tapOrder();
-        robot.expectNavigatedToDetail();
+        robot.expectOrderExpanded();
+      });
+
+      testWidgets(
+          'updates expanded order when widget.expandOrderId changes (second notification)',
+          (tester) async {
+        when(() => mockOrdersCubit.state).thenReturn(
+          CustomerOrdersState.initial().copyWith(
+            status: CustomerOrdersStatus.loaded,
+            orders: [_testOrder, _testDeliveredOrder],
+          ),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            home: MultiBlocProvider(
+              providers: [
+                BlocProvider<AuthCubit>.value(value: mockAuthCubit),
+                BlocProvider<CustomerOrdersCubit>.value(value: mockOrdersCubit),
+              ],
+              child: const OrdersScreen(expandOrderId: 'order-001'),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('مارجريتا'), findsOneWidget);
+
+        // Second notification arrives targeting order-002
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            home: MultiBlocProvider(
+              providers: [
+                BlocProvider<AuthCubit>.value(value: mockAuthCubit),
+                BlocProvider<CustomerOrdersCubit>.value(value: mockOrdersCubit),
+              ],
+              child: const OrdersScreen(expandOrderId: 'order-002'),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('بيبسي'), findsOneWidget);
       });
     });
 

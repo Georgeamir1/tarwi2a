@@ -31,4 +31,22 @@ class AppConstants {
   // Roles
   static const roleCustomer = 'customer';
   static const roleAdmin = 'admin';
+
+  // Legal & Support URLs (Configurable via --dart-define)
+  static const privacyPolicyUrl = String.fromEnvironment(
+    'PRIVACY_POLICY_URL',
+    defaultValue: 'https://tarwi2a.app/privacy-policy',
+  );
+  static const termsOfServiceUrl = String.fromEnvironment(
+    'TERMS_OF_SERVICE_URL',
+    defaultValue: 'https://tarwi2a.app/terms-of-service',
+  );
+  static const supportUrl = String.fromEnvironment(
+    'SUPPORT_URL',
+    defaultValue: 'https://tarwi2a.app/support',
+  );
+  static const accountDeletionUrl = String.fromEnvironment(
+    'ACCOUNT_DELETION_URL',
+    defaultValue: 'https://tarwi2a.app/delete-account',
+  );
 }

@@ -43,7 +43,8 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, void>> upsertCoupon(Map<String, dynamic> data, {String? id}) async {
+  Future<Either<Failure, void>> upsertCoupon(Map<String, dynamic> data,
+      {String? id}) async {
     try {
       await _remoteDataSource.upsertCoupon(data, id: id);
       return right<Failure, void>(null);
@@ -53,7 +54,8 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, void>> toggleCouponActive(String id, bool isActive) async {
+  Future<Either<Failure, void>> toggleCouponActive(
+      String id, bool isActive) async {
     try {
       await _remoteDataSource.toggleCouponActive(id, isActive);
       return right<Failure, void>(null);
@@ -73,7 +75,8 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, void>> upsertDeliveryZone(Map<String, dynamic> data, {String? id}) async {
+  Future<Either<Failure, void>> upsertDeliveryZone(Map<String, dynamic> data,
+      {String? id}) async {
     try {
       await _remoteDataSource.upsertDeliveryZone(data, id: id);
       return right<Failure, void>(null);
@@ -86,11 +89,13 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<Either<Failure, List<BusinessSetting>>> getBusinessSettings() async {
     try {
       final data = await _remoteDataSource.getBusinessSettings();
-      final settings = data.map((e) => BusinessSetting(
-        id: e['id'] as String,
-        key: e['key'] as String,
-        value: Map<String, dynamic>.from(e['value'] as Map),
-      )).toList();
+      final settings = data
+          .map((e) => BusinessSetting(
+                id: e['id'] as String,
+                key: e['key'] as String,
+                value: Map<String, dynamic>.from(e['value'] as Map),
+              ))
+          .toList();
       return right(settings);
     } catch (e) {
       return left(Failure.unexpected(message: e.toString()));
@@ -98,7 +103,8 @@ class AdminRepositoryImpl implements AdminRepository {
   }
 
   @override
-  Future<Either<Failure, void>> upsertBusinessSetting(String key, Map<String, dynamic> value) async {
+  Future<Either<Failure, void>> upsertBusinessSetting(
+      String key, Map<String, dynamic> value) async {
     try {
       await _remoteDataSource.upsertBusinessSetting(key, value);
       return right<Failure, void>(null);

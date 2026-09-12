@@ -6,18 +6,24 @@ class OrderRemoteDataSource {
   final SupabaseClient _client = Supabase.instance.client;
 
   Future<OrderDTO> createOrder({
-    required Map<String, dynamic> orderData,
-    required List<Map<String, dynamic>> itemsData,
+    Map<String, dynamic>? payload,
+    Map<String, dynamic>? orderData,
+    List<Map<String, dynamic>>? itemsData,
   }) async {
+    final effectivePayload = Map<String, dynamic>.from(payload ?? {});
+    if (effectivePayload.isEmpty) {
+      if (orderData != null) effectivePayload.addAll(orderData);
+      if (itemsData != null) effectivePayload['items'] = itemsData;
+    }
     appLogger.d(
-        '[OrderRemoteDS] createOrder — keys: ${orderData.keys.toList()}, items: ${itemsData.length}');
+        '[OrderRemoteDS] createAuthoritativeOrder — keys: ${effectivePayload.keys.toList()}');
     try {
-      final orderId = await _client.rpc('create_order_with_items', params: {
-        'p_order': orderData,
-        'p_items': itemsData,
+      final orderId = await _client.rpc('create_authoritative_order', params: {
+        'p_payload': effectivePayload,
       });
 
-      appLogger.d('[OrderRemoteDS] order created via RPC, id: $orderId');
+      appLogger.d(
+          '[OrderRemoteDS] order created via authoritative RPC, id: $orderId');
 
       final orderResult = await _client
           .from('orders')
@@ -27,7 +33,7 @@ class OrderRemoteDataSource {
 
       return OrderDTO.fromJson(orderResult);
     } catch (e, st) {
-      appLogger.e('[OrderRemoteDS] createOrder FAILED',
+      appLogger.e('[OrderRemoteDS] createAuthoritativeOrder FAILED',
           error: e, stackTrace: st);
       rethrow;
     }
@@ -50,13 +56,35 @@ class OrderRemoteDataSource {
     return (data as List).map((e) => OrderDTO.fromJson(e)).toList();
   }
 
+  Future<OrderDTO?> getOrderById(String orderId) async {
+    try {
+      final data = await _client
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('id', orderId)
+          .maybeSingle();
+      if (data == null) return null;
+      return OrderDTO.fromJson(data);
+    } catch (e, st) {
+      appLogger.e('[OrderRemoteDS] getOrderById failed',
+          error: e, stackTrace: st);
+      rethrow;
+    }
+  }
+
   Future<void> updateStatus(String orderId, String status) async {
     final updates = <String, dynamic>{'status': status};
     if (status == 'delivered') {
       updates['payment_status'] = 'confirmed';
     }
-    final response = await _client.from('orders').update(updates).eq('id', orderId).select().single();
-    appLogger.d('[OrderRemoteDS] updateStatus success. Supabase response: $response');
+    final response = await _client
+        .from('orders')
+        .update(updates)
+        .eq('id', orderId)
+        .select()
+        .single();
+    appLogger.d(
+        '[OrderRemoteDS] updateStatus success. Supabase response: $response');
   }
 
   Future<void> updatePaymentStatus(String orderId, String paymentStatus,
@@ -65,8 +93,14 @@ class OrderRemoteDataSource {
     if (paymentProofUrl != null) {
       updates['payment_proof_url'] = paymentProofUrl;
     }
-    final response = await _client.from('orders').update(updates).eq('id', orderId).select().single();
-    appLogger.d('[OrderRemoteDS] updatePaymentStatus success. Supabase response: $response');
+    final response = await _client
+        .from('orders')
+        .update(updates)
+        .eq('id', orderId)
+        .select()
+        .single();
+    appLogger.d(
+        '[OrderRemoteDS] updatePaymentStatus success. Supabase response: $response');
   }
 
   Stream<List<Map<String, dynamic>>> watchOrders() {

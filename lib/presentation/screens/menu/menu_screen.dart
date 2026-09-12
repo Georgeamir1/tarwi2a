@@ -279,7 +279,8 @@ class _CategoryTabs extends StatelessWidget {
               prev.selectedCategoryId != next.selectedCategoryId,
           builder: (context, prodState) {
             final allTabs = [
-              const _TabOption(label: '\u0627\u0644\u0643\u0644', categoryId: null), // الكل
+              const _TabOption(
+                  label: '\u0627\u0644\u0643\u0644', categoryId: null), // الكل
               ...catState.categories
                   .map((c) => _TabOption(label: c.nameAr, categoryId: c.id)),
             ];
@@ -389,18 +390,23 @@ class _ProductList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.primary),
+                const Icon(Icons.error_outline,
+                    size: 48, color: AppColors.primary),
                 const SizedBox(height: 16),
                 const Text(
                   '\u062d\u0635\u0644 \u062e\u0637\u0623', // حصل خطأ
                   style: TextStyle(
-                      fontFamily: 'Cairo', fontSize: 18, color: AppColors.textPrimary),
+                      fontFamily: 'Cairo',
+                      fontSize: 18,
+                      color: AppColors.textPrimary),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   state.failure?.message ?? '',
                   style: const TextStyle(
-                      fontFamily: 'Cairo', fontSize: 14, color: AppColors.textMuted),
+                      fontFamily: 'Cairo',
+                      fontSize: 14,
+                      color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -412,12 +418,15 @@ class _ProductList extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.restaurant_menu_outlined, size: 64, color: AppColors.outlineVariant),
+                Icon(Icons.restaurant_menu_outlined,
+                    size: 64, color: AppColors.outlineVariant),
                 SizedBox(height: 16),
                 Text(
                   '\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a', // لا توجد منتجات
                   style: TextStyle(
-                      fontFamily: 'Cairo', fontSize: 18, color: AppColors.textSecondary),
+                      fontFamily: 'Cairo',
+                      fontSize: 18,
+                      color: AppColors.textSecondary),
                 ),
               ],
             ),

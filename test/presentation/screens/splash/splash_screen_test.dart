@@ -78,7 +78,8 @@ void main() {
         final imageFinder = find.byType(Image);
         expect(imageFinder, findsOneWidget);
         final image = tester.widget<Image>(imageFinder);
-        expect((image.image as AssetImage).assetName, 'assets/images/splash_logo-removebg-preview.png');
+        expect((image.image as AssetImage).assetName,
+            'assets/images/splash_logo-removebg-preview.png');
 
         // Should NOT find app name, tagline, or loader texts
         expect(find.text(AppConstants.appName), findsNothing);
@@ -91,7 +92,8 @@ void main() {
     });
 
     group('authenticated state', () {
-      testWidgets('renders logo correctly when user is authenticated as customer',
+      testWidgets(
+          'renders logo correctly when user is authenticated as customer',
           (tester) async {
         when(() => mockCubit.state)
             .thenReturn(AuthState.authenticated(testUserProfile));
@@ -103,7 +105,8 @@ void main() {
         final imageFinder = find.byType(Image);
         expect(imageFinder, findsOneWidget);
         final image = tester.widget<Image>(imageFinder);
-        expect((image.image as AssetImage).assetName, 'assets/images/splash_logo-removebg-preview.png');
+        expect((image.image as AssetImage).assetName,
+            'assets/images/splash_logo-removebg-preview.png');
 
         // Should NOT show old widgets
         expect(find.text(AppConstants.appName), findsNothing);

@@ -17,6 +17,11 @@ migrate_working_dir/
 *.jpeg
 *.png
 *.zip
+!assets/**/*.png
+!assets/**/*.jpg
+!assets/**/*.jpeg
+!android/app/src/main/res/**/*.png
+!ios/Runner/Assets.xcassets/**/*.png
 
 # Node_modules
 node_modules/
@@ -76,3 +81,14 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .vercel
+
+# Android signing credentials and service accounts
+key.properties
+*.keystore
+*.jks
+*.p12
+*service-account*.json
+*play-store*.json
+release-config.json
+store-site-config.json
+/symbols/

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:dartz/dartz.dart';
 import '../../../domain/entities/address.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/address_repository.dart';
@@ -11,75 +12,105 @@ class AddressCubit extends Cubit<AddressState> {
   AddressCubit(this._addressRepository) : super(AddressState.initial());
 
   Future<void> loadAddresses(String userId) async {
+    if (isClosed) return;
     emit(state.copyWith(status: AddressStatus.loading));
     final result = await _addressRepository.getAddresses(userId);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AddressStatus.error,
-        failure: failure,
-      )),
-      (addresses) => emit(state.copyWith(
-        status: AddressStatus.loaded,
-        addresses: addresses,
-      )),
-    );
+    if (!isClosed) {
+      result.fold(
+        (failure) => emit(state.copyWith(
+          status: AddressStatus.error,
+          failure: failure,
+        )),
+        (addresses) => emit(state.copyWith(
+          status: AddressStatus.loaded,
+          addresses: addresses,
+        )),
+      );
+    }
   }
 
-  Future<void> createAddress(String userId, Map<String, dynamic> data) async {
-    emit(state.copyWith(status: AddressStatus.saving));
-    data['user_id'] = userId;
-    final result = await _addressRepository.createAddress(data);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AddressStatus.error,
-        failure: failure,
-      )),
+  Future<Either<Failure, void>> createAddress(
+      String userId, Map<String, dynamic> data) async {
+    if (!isClosed) emit(state.copyWith(status: AddressStatus.saving));
+    final payload = Map<String, dynamic>.from(data);
+    payload['user_id'] = userId;
+    final result = await _addressRepository.createAddress(payload);
+    return result.fold(
+      (failure) {
+        if (!isClosed) {
+          emit(state.copyWith(
+            status: AddressStatus.error,
+            failure: failure,
+          ));
+        }
+        return left(failure);
+      },
       (_) async {
         appLogger.d('[AddressCubit] address created, reloading');
-        await loadAddresses(userId);
+        if (!isClosed) {
+          await loadAddresses(userId);
+        }
+        return right(null);
       },
     );
   }
 
-  Future<void> updateAddress(String id, Map<String, dynamic> data, String userId) async {
-    emit(state.copyWith(status: AddressStatus.saving));
+  Future<Either<Failure, void>> updateAddress(
+      String id, Map<String, dynamic> data, String userId) async {
+    if (!isClosed) emit(state.copyWith(status: AddressStatus.saving));
     final result = await _addressRepository.updateAddress(id, data);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AddressStatus.error,
-        failure: failure,
-      )),
+    return result.fold(
+      (failure) {
+        if (!isClosed) {
+          emit(state.copyWith(
+            status: AddressStatus.error,
+            failure: failure,
+          ));
+        }
+        return left(failure);
+      },
       (_) async {
         appLogger.d('[AddressCubit] address updated, reloading');
-        await loadAddresses(userId);
+        if (!isClosed) {
+          await loadAddresses(userId);
+        }
+        return right(null);
       },
     );
   }
 
   Future<void> deleteAddress(String id, String userId) async {
-    emit(state.copyWith(status: AddressStatus.saving));
+    if (!isClosed) emit(state.copyWith(status: AddressStatus.saving));
     final result = await _addressRepository.deleteAddress(id);
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: AddressStatus.error,
-        failure: failure,
-      )),
-      (_) async {
-        appLogger.d('[AddressCubit] address deleted, reloading');
-        await loadAddresses(userId);
-      },
-    );
+    if (!isClosed) {
+      result.fold(
+        (failure) => emit(state.copyWith(
+          status: AddressStatus.error,
+          failure: failure,
+        )),
+        (_) async {
+          appLogger.d('[AddressCubit] address deleted, reloading');
+          if (!isClosed) {
+            await loadAddresses(userId);
+          }
+        },
+      );
+    }
   }
 
   Future<void> setDefault(String id, String userId) async {
     final result = await _addressRepository.setDefault(id, userId);
-    result.fold(
-      (failure) => emit(state.copyWith(failure: failure)),
-      (_) async {
-        appLogger.d('[AddressCubit] default set, reloading');
-        await loadAddresses(userId);
-      },
-    );
+    if (!isClosed) {
+      result.fold(
+        (failure) => emit(state.copyWith(failure: failure)),
+        (_) async {
+          appLogger.d('[AddressCubit] default set, reloading');
+          if (!isClosed) {
+            await loadAddresses(userId);
+          }
+        },
+      );
+    }
   }
 }
 
@@ -106,7 +137,7 @@ class AddressState extends Equatable {
     return AddressState(
       addresses: addresses ?? this.addresses,
       status: status ?? this.status,
-      failure: failure,
+      failure: failure ?? this.failure,
     );
   }
 

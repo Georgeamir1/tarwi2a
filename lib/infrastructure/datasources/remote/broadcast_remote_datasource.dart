@@ -25,7 +25,8 @@ class BroadcastRemoteDataSource {
         'bodyAr': broadcast.bodyAr,
         'type': broadcast.type.value,
         'target': targetMap,
-        if (broadcast.referenceType != null) 'referenceType': broadcast.referenceType,
+        if (broadcast.referenceType != null)
+          'referenceType': broadcast.referenceType,
         if (broadcast.referenceId != null) 'referenceId': broadcast.referenceId,
         'senderId': senderId,
       };
@@ -51,7 +52,8 @@ class BroadcastRemoteDataSource {
       }
       return result;
     } catch (e) {
-      appLogger.e('[BroadcastDataSource] sendBroadcast edge function failed', error: e);
+      appLogger.e('[BroadcastDataSource] sendBroadcast edge function failed',
+          error: e);
       rethrow;
     }
   }

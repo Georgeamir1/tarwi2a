@@ -4,12 +4,36 @@ import '../../app/theme/app_theme.dart';
 /// Predefined product tags for restaurant items.
 class ProductTags {
   static const List<ProductTag> all = [
-    ProductTag(id: 'new', label: 'جديد', icon: Icons.fiber_new_rounded, color: Color(0xFF3B82F6)),
-    ProductTag(id: 'popular', label: 'الأكثر طلباً', icon: Icons.local_fire_department_rounded, color: Color(0xFFEF4444)),
-    ProductTag(id: 'spicy', label: 'حار', icon: Icons.whatshot_rounded, color: Color(0xFFF97316)),
-    ProductTag(id: 'vegetarian', label: 'نباتي', icon: Icons.eco_rounded, color: Color(0xFF22C55E)),
-    ProductTag(id: 'gluten_free', label: 'خالي من الجلوتين', icon: Icons.grain_rounded, color: Color(0xFF8B5CF6)),
-    ProductTag(id: 'chef_pick', label: 'اختيار الشيف', icon: Icons.star_rounded, color: Color(0xFFC68B59)),
+    ProductTag(
+        id: 'new',
+        label: 'جديد',
+        icon: Icons.fiber_new_rounded,
+        color: Color(0xFF3B82F6)),
+    ProductTag(
+        id: 'popular',
+        label: 'الأكثر طلباً',
+        icon: Icons.local_fire_department_rounded,
+        color: Color(0xFFEF4444)),
+    ProductTag(
+        id: 'spicy',
+        label: 'حار',
+        icon: Icons.whatshot_rounded,
+        color: Color(0xFFF97316)),
+    ProductTag(
+        id: 'vegetarian',
+        label: 'نباتي',
+        icon: Icons.eco_rounded,
+        color: Color(0xFF22C55E)),
+    ProductTag(
+        id: 'gluten_free',
+        label: 'خالي من الجلوتين',
+        icon: Icons.grain_rounded,
+        color: Color(0xFF8B5CF6)),
+    ProductTag(
+        id: 'chef_pick',
+        label: 'اختيار الشيف',
+        icon: Icons.star_rounded,
+        color: Color(0xFFC68B59)),
   ];
 }
 
@@ -45,11 +69,13 @@ class TagSelector extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.label_rounded, size: 18, color: AppColors.textSecondary),
+            const Icon(Icons.label_rounded,
+                size: 18, color: AppColors.textSecondary),
             const SizedBox(width: 6),
             Text(
               'شارات المنتج',
-              style: AppTypography.callout.copyWith(fontWeight: FontWeight.w600),
+              style:
+                  AppTypography.callout.copyWith(fontWeight: FontWeight.w600),
             ),
           ],
         ),

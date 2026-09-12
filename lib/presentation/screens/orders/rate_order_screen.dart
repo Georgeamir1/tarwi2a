@@ -83,7 +83,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
           if (state.status == RatingStatus.loading) {
             return const Scaffold(
               backgroundColor: AppColors.background,
-              appBar: AppTopBar(title: 'قيم طلبك', variant: TopBarVariant.withBack),
+              appBar:
+                  AppTopBar(title: 'قيم طلبك', variant: TopBarVariant.withBack),
               body: Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
               ),
@@ -92,7 +93,7 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
 
           final existingRating = state.orderRating;
           final isRated = existingRating != null;
-          
+
           if (isRated && _rating == 0) {
             _rating = existingRating.rating;
             _commentController.text = existingRating.comment ?? '';
@@ -101,7 +102,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
           final isSaving = state.status == RatingStatus.saving;
           return Scaffold(
             backgroundColor: AppColors.background,
-            appBar: const AppTopBar(title: 'قيم طلبك', variant: TopBarVariant.withBack),
+            appBar: const AppTopBar(
+                title: 'قيم طلبك', variant: TopBarVariant.withBack),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSpacing.lg),
               child: Column(
@@ -135,7 +137,9 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                     child: Text(
                       _getFeedbackText(_rating),
                       style: theme.textTheme.titleSmall?.copyWith(
-                        color: _rating > 0 ? AppColors.tertiary : AppColors.textMuted,
+                        color: _rating > 0
+                            ? AppColors.tertiary
+                            : AppColors.textMuted,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -154,13 +158,20 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                           return Transform.scale(
                             scale: scale,
                             child: GestureDetector(
-                              onTap: (isSaving || isRated) ? null : () => setState(() => _rating = starVal),
+                              onTap: (isSaving || isRated)
+                                  ? null
+                                  : () => setState(() => _rating = starVal),
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 6),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 6),
                                 child: Icon(
-                                  isSelected ? Icons.star_rounded : Icons.star_border_rounded,
+                                  isSelected
+                                      ? Icons.star_rounded
+                                      : Icons.star_border_rounded,
                                   size: 48,
-                                  color: isSelected ? AppColors.tertiary : AppColors.outlineVariant,
+                                  color: isSelected
+                                      ? AppColors.tertiary
+                                      : AppColors.outlineVariant,
                                 ),
                               ),
                             ),
@@ -180,7 +191,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                   ),
                   const SizedBox(height: 32),
                   AppButton(
-                    label: isRated ? 'تم تقييم هذا الطلب مسبقاً' : 'إرسال التقييم',
+                    label:
+                        isRated ? 'تم تقييم هذا الطلب مسبقاً' : 'إرسال التقييم',
                     isLoading: isSaving,
                     onPressed: _rating > 0 && !isSaving && !isRated
                         ? () {
@@ -198,7 +210,8 @@ class _RateOrderScreenState extends State<RateOrderScreen> {
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('يجب تسجيل الدخول لتقييم الطلب'),
+                                  content:
+                                      Text('يجب تسجيل الدخول لتقييم الطلب'),
                                   backgroundColor: AppColors.error,
                                 ),
                               );

@@ -5,16 +5,23 @@ DECLARE
   v_request_id bigint;
   v_service_key text;
 BEGIN
+  -- Read non-secret functions url from app_config or app.settings
   SELECT value INTO v_url FROM app_config WHERE key = 'supabase_functions_url';
-  SELECT value INTO v_service_key FROM app_config WHERE key = 'service_role_key';
+  IF v_url IS NULL OR v_url = '' THEN
+    v_url := current_setting('app.settings.supabase_functions_url', true);
+  END IF;
+
+  -- Privileged credentials must never reside in app_config table.
+  -- Supabase Vault or GUC setting (app.settings.service_role_key) should be used.
+  v_service_key := current_setting('app.settings.service_role_key', true);
 
   IF v_url IS NULL OR v_url = '' THEN
-    RAISE WARNING '[invoke_send_notification] supabase_functions_url not found in app_config — notification push skipped for %', NEW.id;
+    RAISE WARNING '[invoke_send_notification] functions url not configured — notification push skipped for %', NEW.id;
     RETURN NEW;
   END IF;
 
   IF v_service_key IS NULL OR v_service_key = '' THEN
-    RAISE WARNING '[invoke_send_notification] service_role_key not found in app_config — notification push skipped for %', NEW.id;
+    RAISE WARNING '[invoke_send_notification] service_role_key not configured — notification push skipped for %', NEW.id;
     RETURN NEW;
   END IF;
 
@@ -38,4 +45,4 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;

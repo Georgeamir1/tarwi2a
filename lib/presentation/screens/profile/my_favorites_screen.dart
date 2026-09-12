@@ -7,8 +7,10 @@ class MyFavoritesScreen extends StatelessWidget {
   const MyFavoritesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {return Scaffold(
-      appBar: const AppTopBar(title: 'المفضلة', variant: TopBarVariant.withBack),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar:
+          const AppTopBar(title: 'المفضلة', variant: TopBarVariant.withBack),
       body: Center(
         child: EmptyState(
           icon: Icons.favorite_outline,

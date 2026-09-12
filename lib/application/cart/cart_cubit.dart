@@ -6,6 +6,8 @@ import '../../../domain/entities/selected_option.dart';
 import '../../../infrastructure/datasources/local/cart_local_data_source.dart';
 import '../../../infrastructure/dtos/cart_item_dto.dart';
 
+const Object _notProvided = Object();
+
 class CartCubit extends Cubit<CartState> {
   final CartLocalDataSource _localDataSource;
 
@@ -19,11 +21,12 @@ class CartCubit extends Cubit<CartState> {
 
   void addItem(Product product,
       {List<SelectedOption> selectedOptions = const []}) {
+    final optionSnapshot = List<SelectedOption>.unmodifiable(selectedOptions);
     final items = List<CartItem>.from(state.items);
     final index = items.indexWhere(
       (item) =>
           item.productId == product.id &&
-          _optionsEqual(item.selectedOptions, selectedOptions),
+          _optionsEqual(item.selectedOptions, optionSnapshot),
     );
     if (index >= 0) {
       items[index] = items[index].copyWith(quantity: items[index].quantity + 1);
@@ -34,7 +37,7 @@ class CartCubit extends Cubit<CartState> {
         productPrice: product.price,
         productImageUrl: product.imageUrl,
         quantity: 1,
-        selectedOptions: selectedOptions,
+        selectedOptions: optionSnapshot,
       ));
     }
     emit(CartState(items: items));
@@ -43,14 +46,20 @@ class CartCubit extends Cubit<CartState> {
 
   void addItems(List<CartItem> newItems) {
     final items = List<CartItem>.from(state.items);
-    for (final newItem in newItems) {
+    for (final item in newItems) {
+      final newItem = item.copyWith(
+        selectedOptions: List<SelectedOption>.unmodifiable(
+          item.selectedOptions,
+        ),
+      );
       final index = items.indexWhere(
         (item) =>
             item.productId == newItem.productId &&
             _optionsEqual(item.selectedOptions, newItem.selectedOptions),
       );
       if (index >= 0) {
-        items[index] = items[index].copyWith(quantity: items[index].quantity + newItem.quantity);
+        items[index] = items[index]
+            .copyWith(quantity: items[index].quantity + newItem.quantity);
       } else {
         items.add(newItem);
       }
@@ -163,18 +172,24 @@ class CartState extends Equatable {
 
   CartState copyWith({
     List<CartItem>? items,
-    String? appliedCouponId,
+    Object? appliedCouponId = _notProvided,
     double? discountAmount,
-    String? deliveryZoneId,
-    String? deliveryZoneName,
+    Object? deliveryZoneId = _notProvided,
+    Object? deliveryZoneName = _notProvided,
     double? deliveryFee,
   }) {
     return CartState(
       items: items ?? this.items,
-      appliedCouponId: appliedCouponId ?? this.appliedCouponId,
+      appliedCouponId: identical(appliedCouponId, _notProvided)
+          ? this.appliedCouponId
+          : appliedCouponId as String?,
       discountAmount: discountAmount ?? this.discountAmount,
-      deliveryZoneId: deliveryZoneId ?? this.deliveryZoneId,
-      deliveryZoneName: deliveryZoneName ?? this.deliveryZoneName,
+      deliveryZoneId: identical(deliveryZoneId, _notProvided)
+          ? this.deliveryZoneId
+          : deliveryZoneId as String?,
+      deliveryZoneName: identical(deliveryZoneName, _notProvided)
+          ? this.deliveryZoneName
+          : deliveryZoneName as String?,
       deliveryFee: deliveryFee ?? this.deliveryFee,
     );
   }

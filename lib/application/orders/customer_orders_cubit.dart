@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:uuid/uuid.dart';
 import '../../../core/logger/app_logger.dart';
+import 'package:dartz/dartz.dart' hide Order;
 import '../../../domain/entities/order.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/order_repository.dart';
@@ -11,6 +14,16 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
   StreamSubscription<List<Map<String, dynamic>>>? _ordersSubscription;
   String? _watchedCustomerId;
   final Map<String, String> _lastSeenStatus = {};
+  String? _activeRequestId;
+  String? _activeRequestFingerprint;
+  bool _isPlacing = false;
+
+  String? get activeRequestId => _activeRequestId;
+
+  void clearActiveRequestId() {
+    _activeRequestId = null;
+    _activeRequestFingerprint = null;
+  }
 
   CustomerOrdersCubit(this._orderRepository)
       : super(CustomerOrdersState.initial());
@@ -89,7 +102,8 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
     );
   }
 
-  Future<void> placeOrder({
+  Future<Either<Failure, Order>> placeOrder({
+    String? requestId,
     required String customerId,
     required String customerName,
     required String customerPhone,
@@ -102,37 +116,85 @@ class CustomerOrdersCubit extends Cubit<CustomerOrdersState> {
     String? orderType,
     String? addressId,
     String? couponId,
+    String? couponCode,
     double? discountAmount,
     double? deliveryFee,
     String? deliveryZoneId,
     String? deliveryZoneName,
   }) async {
-    emit(state.copyWith(status: CustomerOrdersStatus.placing));
-    final result = await _orderRepository.createOrder(
-      customerId: customerId,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      customerAddress: customerAddress,
-      notes: notes,
-      paymentMethod: paymentMethod,
-      totalAmount: totalAmount,
-      items: items,
-      scheduledFor: scheduledFor,
-      orderType: orderType,
-      addressId: addressId,
-      couponId: couponId,
-      discountAmount: discountAmount,
-      deliveryFee: deliveryFee,
-      deliveryZoneId: deliveryZoneId,
-      deliveryZoneName: deliveryZoneName,
-    );
-    result.fold(
-      (failure) => emit(state.copyWith(
-        status: CustomerOrdersStatus.error,
-        failure: failure,
-      )),
-      (_) => emit(state.copyWith(status: CustomerOrdersStatus.placed)),
-    );
+    if (isClosed || _isPlacing) {
+      return left(const Failure.unexpected(message: 'الطلب قيد التنفيذ'));
+    }
+
+    // Refresh/realtime can change the visible status while submission is still
+    // pending. Keep the request lock independent of that presentation state.
+    _isPlacing = true;
+    final fingerprint = jsonEncode([
+      customerId,
+      customerName.trim(),
+      customerPhone.trim(),
+      paymentMethod,
+      items,
+      orderType,
+      addressId,
+      couponId,
+      couponCode,
+      notes?.trim(),
+      scheduledFor?.toIso8601String(),
+    ]);
+    if (_activeRequestFingerprint != fingerprint) {
+      _activeRequestId = null;
+      _activeRequestFingerprint = fingerprint;
+    }
+    final effectiveRequestId =
+        requestId ?? _activeRequestId ?? const Uuid().v4();
+    _activeRequestId = effectiveRequestId;
+
+    if (!isClosed) emit(state.copyWith(status: CustomerOrdersStatus.placing));
+    try {
+      final result = await _orderRepository.createOrder(
+        requestId: effectiveRequestId,
+        customerId: customerId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        customerAddress: customerAddress,
+        notes: notes,
+        paymentMethod: paymentMethod,
+        totalAmount: totalAmount,
+        items: items,
+        scheduledFor: scheduledFor,
+        orderType: orderType,
+        addressId: addressId,
+        couponId: couponId,
+        couponCode: couponCode,
+        discountAmount: discountAmount,
+        deliveryFee: deliveryFee,
+        deliveryZoneId: deliveryZoneId,
+        deliveryZoneName: deliveryZoneName,
+      );
+      return result.fold(
+        (failure) {
+          if (!isClosed) {
+            emit(state.copyWith(
+              status: CustomerOrdersStatus.error,
+              failure: failure,
+            ));
+          }
+          // Retain _activeRequestId on failure for idempotent retry
+          return left(failure);
+        },
+        (order) {
+          // Clear active request ID on success
+          clearActiveRequestId();
+          if (!isClosed) {
+            emit(state.copyWith(status: CustomerOrdersStatus.placed));
+          }
+          return right(order);
+        },
+      );
+    } finally {
+      _isPlacing = false;
+    }
   }
 
   @override

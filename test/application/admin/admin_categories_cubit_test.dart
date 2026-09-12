@@ -117,7 +117,8 @@ void main() {
         expect(cubit.state.categories, [testCategory]);
       });
 
-      test('emits error when toggleActive fails and reload also fails', () async {
+      test('emits error when toggleActive fails and reload also fails',
+          () async {
         when(() => mockRepo.toggleActive(any(), any()))
             .thenAnswer((_) async => left(testServerFailure));
         when(() => mockRepo.getAllAdmin())

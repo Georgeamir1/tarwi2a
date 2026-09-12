@@ -22,12 +22,14 @@ class AddressRepositoryImpl implements AddressRepository {
   }
 
   @override
-  Future<Either<Failure, Address>> createAddress(Map<String, dynamic> data) async {
+  Future<Either<Failure, Address>> createAddress(
+      Map<String, dynamic> data) async {
     try {
       final dto = await _remoteDataSource.createAddress(data);
       return right(dto.toDomain());
     } catch (e, s) {
-      appLogger.e('[AddressRepo] createAddress failed', error: e, stackTrace: s);
+      appLogger.e('[AddressRepo] createAddress failed',
+          error: e, stackTrace: s);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
@@ -39,7 +41,8 @@ class AddressRepositoryImpl implements AddressRepository {
       final dto = await _remoteDataSource.updateAddress(id, data);
       return right(dto.toDomain());
     } catch (e, s) {
-      appLogger.e('[AddressRepo] updateAddress failed', error: e, stackTrace: s);
+      appLogger.e('[AddressRepo] updateAddress failed',
+          error: e, stackTrace: s);
       return left(Failure.unexpected(message: e.toString()));
     }
   }
@@ -50,7 +53,8 @@ class AddressRepositoryImpl implements AddressRepository {
       await _remoteDataSource.deleteAddress(id);
       return right<Failure, void>(null);
     } catch (e, s) {
-      appLogger.e('[AddressRepo] deleteAddress failed', error: e, stackTrace: s);
+      appLogger.e('[AddressRepo] deleteAddress failed',
+          error: e, stackTrace: s);
       return left(Failure.unexpected(message: e.toString()));
     }
   }

@@ -11,8 +11,6 @@ import 'package:tarwi2a/application/admin/admin_product_options_cubit.dart';
 import 'package:tarwi2a/domain/entities/product.dart';
 import '../../../helpers/test_helpers.dart';
 
-class MockAdminProductOptionsCubit extends Mock implements AdminProductOptionsCubit {}
-
 const _editTestProduct = Product(
   id: 'prod-edit',
   categoryId: 'cat-1',
@@ -28,15 +26,8 @@ const _editTestProduct = Product(
 Widget _buildCreateForm({
   required AdminProductsCubit productsCubit,
   required AdminCategoriesCubit categoriesCubit,
-  AdminProductOptionsCubit? optionsCubit,
+  required AdminProductOptionsCubit optionsCubit,
 }) {
-  final fallbackOptionsCubit = optionsCubit ?? MockAdminProductOptionsCubit();
-  if (optionsCubit == null) {
-    when(() => fallbackOptionsCubit.stream)
-        .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
-    when(() => fallbackOptionsCubit.state)
-        .thenReturn(const AdminProductOptionsState());
-  }
   return MaterialApp.router(
     routerConfig: GoRouter(
       initialLocation: '/new',
@@ -51,7 +42,7 @@ Widget _buildCreateForm({
       providers: [
         BlocProvider<AdminProductsCubit>.value(value: productsCubit),
         BlocProvider<AdminCategoriesCubit>.value(value: categoriesCubit),
-        BlocProvider<AdminProductOptionsCubit>.value(value: fallbackOptionsCubit),
+        BlocProvider<AdminProductOptionsCubit>.value(value: optionsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -61,25 +52,16 @@ Widget _buildCreateForm({
 Widget _buildEditForm({
   required AdminProductsCubit productsCubit,
   required AdminCategoriesCubit categoriesCubit,
-  AdminProductOptionsCubit? optionsCubit,
+  required AdminProductOptionsCubit optionsCubit,
 }) {
-  final fallbackOptionsCubit = optionsCubit ?? MockAdminProductOptionsCubit();
-  if (optionsCubit == null) {
-    when(() => fallbackOptionsCubit.stream)
-        .thenAnswer((_) => const Stream<AdminProductOptionsState>.empty());
-    when(() => fallbackOptionsCubit.state)
-        .thenReturn(const AdminProductOptionsState(
-          status: AdminProductOptionsStatus.loaded,
-          options: [],
-        ));
-  }
   return MaterialApp.router(
     routerConfig: GoRouter(
       initialLocation: '/edit',
       routes: [
         GoRoute(
           path: '/edit',
-          builder: (_, __) => const AdminProductFormScreen(product: _editTestProduct),
+          builder: (_, __) =>
+              const AdminProductFormScreen(product: _editTestProduct),
         ),
       ],
     ),
@@ -87,7 +69,7 @@ Widget _buildEditForm({
       providers: [
         BlocProvider<AdminProductsCubit>.value(value: productsCubit),
         BlocProvider<AdminCategoriesCubit>.value(value: categoriesCubit),
-        BlocProvider<AdminProductOptionsCubit>.value(value: fallbackOptionsCubit),
+        BlocProvider<AdminProductOptionsCubit>.value(value: optionsCubit),
       ],
       child: child ?? const SizedBox.shrink(),
     ),
@@ -130,6 +112,12 @@ void main() {
         options: [],
       ),
     );
+    when(() => mockOptionsCubit.loadByProductId(any()))
+        .thenAnswer((_) async {});
+    when(() => mockOptionsCubit.upsert(any(), id: any(named: 'id')))
+        .thenAnswer((_) async {});
+    when(() => mockOptionsCubit.delete(any())).thenAnswer((_) async {});
+    when(() => mockOptionsCubit.close()).thenAnswer((_) async {});
   });
 
   Future<void> pumpForm(
@@ -154,6 +142,7 @@ void main() {
         form: _buildCreateForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
@@ -166,10 +155,11 @@ void main() {
         form: _buildCreateForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
-      expect(find.text('اضغط لإضافة صورة'), findsOneWidget);
+      expect(find.text('اضغط لإضافة صورة الصنف'), findsOneWidget);
       expect(find.text('اسم الصنف'), findsOneWidget);
       expect(find.text('الفئة والسعر'), findsOneWidget);
       expect(find.byType(TextFormField), findsNWidgets(8));
@@ -181,6 +171,7 @@ void main() {
         form: _buildCreateForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
@@ -188,8 +179,8 @@ void main() {
       await tester.pump();
       await tester.pump();
 
+      expect(find.text('اسم الصنف بالعربي مطلوب'), findsOneWidget);
       expect(find.text('مطلوب'), findsOneWidget);
-      expect(find.text('أدخل السعر'), findsOneWidget);
     });
 
     testWidgets('available toggle switch works', (tester) async {
@@ -198,6 +189,7 @@ void main() {
         form: _buildCreateForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
@@ -226,6 +218,7 @@ void main() {
         form: _buildEditForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
@@ -241,6 +234,7 @@ void main() {
         form: _buildEditForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 
@@ -257,6 +251,7 @@ void main() {
         form: _buildEditForm(
           productsCubit: mockProductsCubit,
           categoriesCubit: mockCategoriesCubit,
+          optionsCubit: mockOptionsCubit,
         ),
       );
 

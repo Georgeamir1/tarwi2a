@@ -22,8 +22,7 @@ class SearchBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor =
-        isDark ? AppColors.darkCard : AppColors.surfaceContainerLow;
+    final bgColor = isDark ? AppColors.darkCard : AppColors.surfaceContainerLow;
     final textColor =
         isDark ? AppColors.darkTextSecondary : AppColors.onSurfaceVariant;
     return Container(

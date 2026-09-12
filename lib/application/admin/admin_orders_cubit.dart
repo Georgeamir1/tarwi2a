@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dartz/dartz.dart' hide Order;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../core/logger/app_logger.dart';
@@ -13,8 +14,10 @@ class AdminOrdersCubit extends Cubit<AdminOrdersState> {
   AdminOrdersCubit(this._orderRepository) : super(AdminOrdersState.initial());
 
   Future<void> loadOrders() async {
+    if (isClosed) return;
     emit(state.copyWith(status: AdminOrdersStatus.loading));
     final result = await _orderRepository.getAllAdmin();
+    if (isClosed) return;
     result.fold(
       (failure) => emit(state.copyWith(
         status: AdminOrdersStatus.error,
@@ -63,15 +66,51 @@ class AdminOrdersCubit extends Cubit<AdminOrdersState> {
     }
   }
 
-  Future<void> updateStatus(String orderId, String status) async {
-    await _orderRepository.updateStatus(orderId, status);
-    loadOrders();
+  Future<Either<Failure, void>> updateStatus(
+    String orderId,
+    String status,
+  ) async {
+    final result = await _orderRepository.updateStatus(orderId, status);
+    if (isClosed) return result;
+    return result.fold(
+      (failure) async {
+        if (!isClosed) {
+          emit(state.copyWith(
+            status: AdminOrdersStatus.error,
+            failure: failure,
+          ));
+        }
+        return left<Failure, void>(failure);
+      },
+      (_) async {
+        await loadOrders();
+        return right<Failure, void>(null);
+      },
+    );
   }
 
-  Future<void> confirmPayment(String orderId) async {
+  Future<Either<Failure, void>> confirmPayment(String orderId) async {
     appLogger.d('[AdminOrdersCubit] confirming payment for order $orderId');
-    await _orderRepository.updatePaymentStatus(orderId, 'confirmed');
-    loadOrders();
+    final result = await _orderRepository.updatePaymentStatus(
+      orderId,
+      'confirmed',
+    );
+    if (isClosed) return result;
+    return result.fold(
+      (failure) async {
+        if (!isClosed) {
+          emit(state.copyWith(
+            status: AdminOrdersStatus.error,
+            failure: failure,
+          ));
+        }
+        return left<Failure, void>(failure);
+      },
+      (_) async {
+        await loadOrders();
+        return right<Failure, void>(null);
+      },
+    );
   }
 
   @override

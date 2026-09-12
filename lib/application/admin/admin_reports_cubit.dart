@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../core/logger/app_logger.dart';
+import '../../../core/utils/report_date_range.dart';
 import '../../../domain/repositories/report_repository.dart';
 import '../../../domain/failures/failure.dart';
 
@@ -43,9 +44,13 @@ class AdminReportsCubit extends Cubit<AdminReportsState>
     required DateTime endDate,
   }) async {
     emit(state.copyWith(status: AdminReportsStatus.loading));
-    final result = await _repository.getReports(
+    final range = ReportDateRange.fromCalendarDates(
       startDate: startDate,
       endDate: endDate,
+    );
+    final result = await _repository.getReports(
+      startDate: range.startInclusiveUtc,
+      endDate: range.endExclusiveUtc,
     );
     result.fold(
       (failure) => emit(state.copyWith(
@@ -75,9 +80,13 @@ class AdminReportsCubit extends Cubit<AdminReportsState>
   Future<void> _loadReportsSilently(
       DateTime startDate, DateTime endDate) async {
     if (_isPaused) return;
-    final result = await _repository.getReports(
+    final range = ReportDateRange.fromCalendarDates(
       startDate: startDate,
       endDate: endDate,
+    );
+    final result = await _repository.getReports(
+      startDate: range.startInclusiveUtc,
+      endDate: range.endExclusiveUtc,
     );
     result.fold(
       (_) {},
@@ -119,11 +128,11 @@ class AdminReportsState extends Equatable {
     required this.endDate,
   });
 
-  factory AdminReportsState.initial() {
-    final now = DateTime.now();
+  factory AdminReportsState.initial({DateTime? now}) {
+    final cairoToday = ReportDateRange.nowInCairo(now: now);
     return AdminReportsState(
-      startDate: now.subtract(const Duration(days: 7)),
-      endDate: now,
+      startDate: cairoToday.subtract(const Duration(days: 7)),
+      endDate: cairoToday,
     );
   }
 

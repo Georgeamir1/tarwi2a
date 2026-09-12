@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart' hide Order;
+import 'package:uuid/uuid.dart';
 import '../../../domain/entities/order.dart';
 import '../../../domain/failures/failure.dart';
 import '../../../domain/repositories/order_repository.dart';
@@ -12,6 +13,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<Either<Failure, Order>> createOrder({
+    String? requestId,
     required String customerId,
     required String customerName,
     required String customerPhone,
@@ -24,36 +26,38 @@ class OrderRepositoryImpl implements OrderRepository {
     String? orderType,
     String? addressId,
     String? couponId,
+    String? couponCode,
     double? discountAmount,
     double? deliveryFee,
     String? deliveryZoneId,
     String? deliveryZoneName,
   }) async {
     try {
-      final orderData = {
-        'customer_id': customerId,
-        'customer_name': customerName,
-        'customer_phone': customerPhone,
-        'customer_address': customerAddress,
-        'notes': notes,
+      final effectiveRequestId =
+          (requestId != null && requestId.trim().isNotEmpty)
+              ? requestId.trim()
+              : const Uuid().v4();
+
+      final payload = <String, dynamic>{
+        'request_id': effectiveRequestId,
+        'order_type': orderType ?? 'delivery',
         'payment_method': paymentMethod,
-        'total_amount': totalAmount,
-        'status': 'pending',
-        if (scheduledFor != null)
-          'scheduled_for': scheduledFor.toIso8601String(),
-        if (orderType != null) 'order_type': orderType,
+        'items': items,
         if (addressId != null) 'address_id': addressId,
         if (couponId != null) 'coupon_id': couponId,
-        if (discountAmount != null) 'discount_amount': discountAmount,
-        if (deliveryFee != null) 'delivery_fee': deliveryFee,
-        if (deliveryZoneId != null) 'delivery_zone_id': deliveryZoneId,
-        if (deliveryZoneName != null) 'delivery_zone_name': deliveryZoneName,
+        if (couponCode != null) 'coupon_code': couponCode,
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+        if (scheduledFor != null)
+          'scheduled_for': scheduledFor.toIso8601String(),
+        if (customerName.trim().isNotEmpty)
+          'customer_name': customerName.trim(),
+        if (customerPhone.trim().isNotEmpty)
+          'customer_phone': customerPhone.trim(),
       };
-      appLogger.d('[OrderRepo] createOrder — calling datasource...');
-      final dto = await _remoteDataSource.createOrder(
-        orderData: orderData,
-        itemsData: items,
-      );
+
+      appLogger.d(
+          '[OrderRepo] createAuthoritativeOrder — calling datasource with request_id: $effectiveRequestId');
+      final dto = await _remoteDataSource.createOrder(payload: payload);
       appLogger.d('[OrderRepo] createOrder — success, id: ${dto.id}');
       return right(dto.toDomain());
     } catch (e, st) {
@@ -84,6 +88,17 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<Either<Failure, Order?>> getOrderById(String orderId) async {
+    try {
+      final dto = await _remoteDataSource.getOrderById(orderId);
+      return right(dto?.toDomain());
+    } catch (e, st) {
+      appLogger.e('[OrderRepo] getOrderById FAILED', error: e, stackTrace: st);
+      return left(Failure.unexpected(message: e.toString()));
+    }
+  }
+
+  @override
   Future<Either<Failure, void>> updateStatus(
       String orderId, String status) async {
     try {
@@ -109,7 +124,8 @@ class OrderRepositoryImpl implements OrderRepository {
       );
       return right<Failure, void>(null);
     } catch (e, st) {
-      appLogger.e('[OrderRepo] updatePaymentStatus FAILED', error: e, stackTrace: st);
+      appLogger.e('[OrderRepo] updatePaymentStatus FAILED',
+          error: e, stackTrace: st);
       return left(Failure.unexpected(message: e.toString()));
     }
   }

@@ -36,8 +36,9 @@ class KpiCard extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color:
-                        isDark ? AppColors.darkTextSecondary : AppColors.onSurfaceVariant,
+                    color: isDark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.onSurfaceVariant,
                   ),
                 ),
                 Container(

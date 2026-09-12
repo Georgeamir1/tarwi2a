@@ -69,8 +69,8 @@ class CartAddButton extends StatelessWidget {
                 child: SizedBox(
                   width: buttonSize,
                   height: buttonSize,
-                  child: const Icon(Icons.remove,
-                      color: Colors.white, size: 18),
+                  child:
+                      const Icon(Icons.remove, color: Colors.white, size: 18),
                 ),
               ),
               Container(
@@ -96,8 +96,7 @@ class CartAddButton extends StatelessWidget {
                 child: SizedBox(
                   width: buttonSize,
                   height: buttonSize,
-                  child: const Icon(Icons.add,
-                      color: Colors.white, size: 18),
+                  child: const Icon(Icons.add, color: Colors.white, size: 18),
                 ),
               ),
             ],
@@ -107,8 +106,7 @@ class CartAddButton extends StatelessWidget {
     );
   }
 
-  bool _optionsMatch(
-      List<SelectedOption> a, List<SelectedOption> b) {
+  bool _optionsMatch(List<SelectedOption> a, List<SelectedOption> b) {
     if (a.length != b.length) return false;
     final aIds = a.map((e) => e.optionId).toList()..sort();
     final bIds = b.map((e) => e.optionId).toList()..sort();

@@ -29,8 +29,8 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
   }
 
   Future<void> _loadOrders() async {
-    final result = await sl<CustomerRepository>()
-        .getCustomerOrders(widget.customer.id);
+    final result =
+        await sl<CustomerRepository>().getCustomerOrders(widget.customer.id);
     result.fold(
       (_) {
         if (mounted) setState(() => _loadingOrders = false);
@@ -63,8 +63,7 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
             AppSpacing.gapH16,
             _buildStatsCard(c),
             AppSpacing.gapH16,
-            Text('سجل الطلبات',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('سجل الطلبات', style: Theme.of(context).textTheme.titleMedium),
             AppSpacing.gapH8,
             _buildOrdersList(),
           ],
@@ -103,8 +102,8 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.phone, size: 16,
-                            color: AppColors.onSurfaceVariant),
+                        const Icon(Icons.phone,
+                            size: 16, color: AppColors.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Text(c.phone!,
                             style: const TextStyle(
@@ -134,9 +133,14 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _statColumn('إجمالي الطلبات', '${c.totalOrders}', Icons.receipt_long),
-            _statColumn('إجمالي الإنفاق', '${c.totalSpent.toStringAsFixed(2)} ج.م', Icons.attach_money),
-            _statColumn('آخر طلب', c.lastOrderAt != null ? _formatDate(c.lastOrderAt!) : '-', Icons.schedule),
+            _statColumn(
+                'إجمالي الطلبات', '${c.totalOrders}', Icons.receipt_long),
+            _statColumn('إجمالي الإنفاق',
+                '${c.totalSpent.toStringAsFixed(2)} ج.م', Icons.attach_money),
+            _statColumn(
+                'آخر طلب',
+                c.lastOrderAt != null ? _formatDate(c.lastOrderAt!) : '-',
+                Icons.schedule),
           ],
         ),
       ),
@@ -149,8 +153,7 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
         Icon(icon, color: AppColors.primary, size: 24),
         const SizedBox(height: 8),
         Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 15)),
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
         const SizedBox(height: 2),
         Text(label,
             style: const TextStyle(
@@ -192,8 +195,7 @@ class _AdminCustomerDetailScreenState extends State<AdminCustomerDetailScreen> {
                 style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(
               order.status.arabicLabel,
-              style: TextStyle(
-                  fontSize: 12, color: order.status.color),
+              style: TextStyle(fontSize: 12, color: order.status.color),
             ),
             trailing: Column(
               mainAxisAlignment: MainAxisAlignment.center,

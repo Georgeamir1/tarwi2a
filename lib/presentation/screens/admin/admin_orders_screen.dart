@@ -9,6 +9,7 @@ import '../../../domain/enums/order_status.dart';
 import '../../extensions/order_status_x.dart';
 import '../../extensions/payment_method_x.dart';
 import '../../../domain/enums/payment_method.dart';
+import '../../../core/utils/contact_helper.dart';
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -31,6 +32,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     ('delivered', 'تم التوصيل'),
     ('cancelled', 'ملغية'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final cubit = context.read<AdminOrdersCubit>();
+      if (cubit.state.status == AdminOrdersStatus.initial) {
+        cubit.loadOrders();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -100,7 +113,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                           color: AppColors.textSecondary, size: 20),
                       suffixIcon: _searchQuery.isNotEmpty
                           ? IconButton(
-                              icon: const Icon(Icons.cancel_rounded, size: 20, color: AppColors.textMuted),
+                              icon: const Icon(Icons.cancel_rounded,
+                                  size: 20, color: AppColors.textMuted),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() => _searchQuery = '');
@@ -114,13 +128,15 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         borderSide: BorderSide(
-                          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                          color:
+                              AppColors.outlineVariant.withValues(alpha: 0.5),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         borderSide: BorderSide(
-                          color: AppColors.outlineVariant.withValues(alpha: 0.5),
+                          color:
+                              AppColors.outlineVariant.withValues(alpha: 0.5),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -145,8 +161,10 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                     itemBuilder: (context, index) {
                       final (value, label) = _statuses[index];
                       final isSelected = _filterStatus == value;
-                      final filterColor = isSelected ? _getStatusFilterColor(value) : AppColors.outline;
-                      
+                      final filterColor = isSelected
+                          ? _getStatusFilterColor(value)
+                          : AppColors.outline;
+
                       return GestureDetector(
                         onTap: () {
                           setState(() => _filterStatus = value);
@@ -169,7 +187,8 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: filterColor.withValues(alpha: 0.05),
+                                      color:
+                                          filterColor.withValues(alpha: 0.05),
                                       blurRadius: 4,
                                       offset: const Offset(0, 2),
                                     )
@@ -329,8 +348,7 @@ class _AdminOrderCardState extends State<_AdminOrderCard>
       return 'اليوم، ${DateFormat('hh:mm a').format(dateTime)}';
     } else if (difference.inDays == 1 ||
         (difference.inHours < 48 &&
-            dateTime.day ==
-                now.subtract(const Duration(days: 1)).day)) {
+            dateTime.day == now.subtract(const Duration(days: 1)).day)) {
       return 'أمس، ${DateFormat('hh:mm a').format(dateTime)}';
     } else {
       return DateFormat('dd/MM - hh:mm a').format(dateTime);
@@ -434,8 +452,8 @@ class _AdminOrderCardState extends State<_AdminOrderCard>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _statusColor.withValues(alpha: 0.1),
                       borderRadius: AppRadius.xlAll,
@@ -459,43 +477,156 @@ class _AdminOrderCardState extends State<_AdminOrderCard>
                 ],
               ),
               AppSpacing.gapH8,
-              Row(
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.phone_enabled_rounded,
-                            size: 12, color: AppColors.primary),
-                        const SizedBox(width: 4),
-                        Text(
-                          widget.order.customerPhone,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.phone_enabled_rounded,
+                                size: 12, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.order.customerPhone,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            final ok = await ContactHelper.callPhoneNumber(
+                              widget.order.customerPhone,
+                            );
+                            if (!ok && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      'تعذر بدء الاتصال برقم ${widget.order.customerPhone}'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              border: Border.all(
+                                color:
+                                    AppColors.primary.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.call_rounded,
+                                    size: 12, color: AppColors.primary),
+                                SizedBox(width: 3),
+                                Text(
+                                  'اتصال',
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () async {
+                            final ok = await ContactHelper.openWhatsApp(
+                              widget.order.customerPhone,
+                              message:
+                                  'أهلاً ${widget.order.customerName}، بخصوص طلبك #${widget.order.id.length >= 8 ? widget.order.id.substring(0, 8).toUpperCase() : widget.order.id} من ترويئه 🍔',
+                            );
+                            if (!ok && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('تعذر فتح تطبيق واتساب'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF25D366)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              border: Border.all(
+                                color: const Color(0xFF25D366)
+                                    .withValues(alpha: 0.35),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.chat_bubble_rounded,
+                                    size: 12, color: Color(0xFF25D366)),
+                                SizedBox(width: 3),
+                                Text(
+                                  'واتساب',
+                                  style: TextStyle(
+                                    color: Color(0xFF25D366),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  const Icon(Icons.access_time_rounded,
-                      size: 14, color: AppColors.textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatRelativeTime(widget.order.createdAt.toLocal()),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.access_time_rounded,
+                          size: 13, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatRelativeTime(widget.order.createdAt.toLocal()),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -533,8 +664,8 @@ class _AdminOrderCardState extends State<_AdminOrderCard>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: _getPaymentColor(widget.order.paymentMethod)
                           .withValues(alpha: 0.1),

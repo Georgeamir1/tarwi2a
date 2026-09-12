@@ -31,7 +31,8 @@ class MyAddressesScreen extends StatelessWidget {
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
                 HapticFeedback.lightImpact();
-                final result = await context.push<bool>('/profile/addresses/add');
+                final result =
+                    await context.push<bool>('/profile/addresses/add');
                 if (result == true && userId.isNotEmpty) {
                   if (context.mounted) {
                     context.read<AddressCubit>().loadAddresses(userId);
@@ -66,7 +67,8 @@ class MyAddressesScreen extends StatelessWidget {
               actionLabel: 'إضافة عنوان جديد',
               onAction: () async {
                 HapticFeedback.lightImpact();
-                final result = await context.push<bool>('/profile/addresses/add');
+                final result =
+                    await context.push<bool>('/profile/addresses/add');
                 if (result == true && userId.isNotEmpty) {
                   if (context.mounted) {
                     context.read<AddressCubit>().loadAddresses(userId);
@@ -117,11 +119,13 @@ class MyAddressesScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error.withValues(alpha: 0.8)),
+              Icon(Icons.error_outline,
+                  size: 48, color: AppColors.error.withValues(alpha: 0.8)),
               const SizedBox(height: 16),
               Text(
                 'حصل خطأ: ${state.failure?.message ?? ''}',
-                style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: AppColors.textPrimary, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
@@ -232,13 +236,15 @@ class _AddressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Map address label to icon
     IconData typeIcon = Icons.location_on_rounded;
     final labelLower = address.label.trim().toLowerCase();
     if (labelLower == 'البيت' || labelLower == 'home') {
       typeIcon = Icons.home_rounded;
-    } else if (labelLower == 'العمل' || labelLower == 'الشغل' || labelLower == 'work') {
+    } else if (labelLower == 'العمل' ||
+        labelLower == 'الشغل' ||
+        labelLower == 'work') {
       typeIcon = Icons.work_rounded;
     }
 
@@ -299,7 +305,9 @@ class _AddressCard extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
           side: BorderSide(
-            color: address.isDefault ? AppColors.primary : AppColors.outlineVariant,
+            color: address.isDefault
+                ? AppColors.primary
+                : AppColors.outlineVariant,
             width: address.isDefault ? 2 : 1,
           ),
         ),
@@ -325,7 +333,9 @@ class _AddressCard extends StatelessWidget {
                       ),
                       child: Icon(
                         typeIcon,
-                        color: address.isDefault ? AppColors.primary : AppColors.textSecondary,
+                        color: address.isDefault
+                            ? AppColors.primary
+                            : AppColors.textSecondary,
                         size: 24,
                       ),
                     ),
@@ -347,10 +357,12 @@ class _AddressCard extends StatelessWidget {
                               ),
                               if (address.isDefault)
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: AppColors.successContainer,
-                                    borderRadius: BorderRadius.circular(AppRadius.full),
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.full),
                                   ),
                                   child: Text(
                                     'افتراضي',
@@ -378,18 +390,27 @@ class _AddressCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (address.building != null || address.floor != null || address.apartment != null) ...[
+                if (address.building != null ||
+                    address.floor != null ||
+                    address.apartment != null) ...[
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      if (address.building != null && address.building!.isNotEmpty)
-                        _DetailChip(icon: Icons.business, label: 'مبنى ${address.building}'),
+                      if (address.building != null &&
+                          address.building!.isNotEmpty)
+                        _DetailChip(
+                            icon: Icons.business,
+                            label: 'مبنى ${address.building}'),
                       if (address.floor != null && address.floor!.isNotEmpty)
-                        _DetailChip(icon: Icons.layers, label: 'دور ${address.floor}'),
-                      if (address.apartment != null && address.apartment!.isNotEmpty)
-                        _DetailChip(icon: Icons.door_front_door, label: 'شقة ${address.apartment}'),
+                        _DetailChip(
+                            icon: Icons.layers, label: 'دور ${address.floor}'),
+                      if (address.apartment != null &&
+                          address.apartment!.isNotEmpty)
+                        _DetailChip(
+                            icon: Icons.door_front_door,
+                            label: 'شقة ${address.apartment}'),
                     ],
                   ),
                 ],
@@ -405,7 +426,8 @@ class _AddressCard extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.note_outlined, size: 16, color: AppColors.textSecondary),
+                        const Icon(Icons.note_outlined,
+                            size: 16, color: AppColors.textSecondary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -424,7 +446,8 @@ class _AddressCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.delivery_dining_outlined, size: 16, color: AppColors.tertiary),
+                      const Icon(Icons.delivery_dining_outlined,
+                          size: 16, color: AppColors.tertiary),
                       const SizedBox(width: 6),
                       Text(
                         'توصيل لـ ${address.deliveryZoneName}',
@@ -501,7 +524,8 @@ class _DetailChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
+        border:
+            Border.all(color: AppColors.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -511,9 +535,9 @@ class _DetailChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),

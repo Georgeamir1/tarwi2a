@@ -41,7 +41,11 @@ class AuthCubit extends Cubit<AuthState> {
     _authSubscription = _authRepository.authStateChanges.listen((event) {
       appLogger.d(
           '[AuthCubit] authStateChanges event — ${event.event.name}, session: ${event.session != null}');
-      if (event.event == supabase.AuthChangeEvent.signedIn &&
+      if (event.event == supabase.AuthChangeEvent.passwordRecovery) {
+        appLogger.d(
+            '[AuthCubit] passwordRecovery detected — ➜ AuthRecoveryRequired');
+        emit(const AuthState.recoveryRequired());
+      } else if (event.event == supabase.AuthChangeEvent.signedIn &&
           event.session != null) {
         appLogger.d(
             '[AuthCubit] signedIn detected — fetching profile for user: ${event.session!.user.id}');
@@ -100,18 +104,41 @@ class AuthCubit extends Cubit<AuthState> {
       name: name,
       role: role,
     );
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         appLogger.e(
             '[AuthCubit] signUp ❌ — ${failure.map(server: (f) => f.message, network: (f) => f.message, validation: (f) => f.message, unexpected: (f) => f.message)}');
         appLogger.d('[AuthCubit] ➜ AuthError');
         emit(AuthState.error(failure));
       },
-      (_) {
-        appLogger.d(
-            '[AuthCubit] signUp ✅ — waiting for authStateChanges stream to fire');
+      (authResponse) async {
+        if (authResponse.session == null) {
+          appLogger.d('[AuthCubit] signUp ✅ — awaiting email verification');
+          emit(AuthState.awaitingEmailVerification(email));
+        } else {
+          appLogger
+              .d('[AuthCubit] signUp ✅ — session present, fetching profile');
+          if (state is! Authenticated) {
+            await _fetchProfile(authResponse.user!.id);
+          }
+        }
       },
     );
+  }
+
+  Future<Either<Failure, void>> resendVerificationEmail(String email) async {
+    appLogger.d('[AuthCubit] resendVerificationEmail called — email: $email');
+    return _authRepository.resendVerificationEmail(email);
+  }
+
+  Future<Either<Failure, void>> resetPassword(String email) async {
+    appLogger.d('[AuthCubit] resetPassword called — email: $email');
+    return _authRepository.resetPassword(email);
+  }
+
+  Future<Either<Failure, void>> updatePassword(String newPassword) async {
+    appLogger.d('[AuthCubit] updatePassword called');
+    return _authRepository.updatePassword(newPassword);
   }
 
   Future<void> signIn({
@@ -153,6 +180,23 @@ class AuthCubit extends Cubit<AuthState> {
       },
     );
     return result;
+  }
+
+  Future<Either<Failure, void>> deleteAccount() async {
+    appLogger.d('[AuthCubit] deleteAccount called');
+    final result = await _authRepository.deleteAccount();
+    return result.fold(
+      (failure) {
+        appLogger.e(
+            '[AuthCubit] deleteAccount ❌ — ${failure.map(server: (f) => f.message, network: (f) => f.message, validation: (f) => f.message, unexpected: (f) => f.message)}');
+        return left(failure);
+      },
+      (_) {
+        appLogger.d('[AuthCubit] deleteAccount ✅ — emitting unauthenticated');
+        emit(const AuthState.unauthenticated());
+        return right(null);
+      },
+    );
   }
 
   @override

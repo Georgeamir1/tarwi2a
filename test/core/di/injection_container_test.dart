@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tarwi2a/core/di/injection_container.dart';
 import 'package:tarwi2a/domain/repositories/auth_repository.dart';
 import 'package:tarwi2a/domain/repositories/profile_repository.dart';
@@ -49,6 +50,8 @@ import 'package:tarwi2a/core/services/thermal_printer_service.dart';
 void main() {
   group('Dependency Injection', () {
     setUpAll(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues({});
       await initDependencies();
     });
 

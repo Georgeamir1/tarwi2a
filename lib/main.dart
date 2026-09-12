@@ -3,11 +3,15 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'core/constants/app_constants.dart';
 import 'core/di/injection_container.dart';
 import 'core/services/push_notification_service.dart';
+import 'core/utils/report_date_range.dart';
+import 'infrastructure/datasources/local/secure_auth_local_storage.dart';
 import 'app/theme/app_theme.dart';
 import 'router/app_router.dart';
 import 'application/auth/auth_cubit.dart';
@@ -52,6 +56,7 @@ class DebugBlocObserver extends BlocObserver {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  ReportDateRange.ensureInitialized();
 
   // Initialize Sentry (crash reporting)
   // Set SENTRY_DSN environment variable or use --dart-define
@@ -73,11 +78,31 @@ void main() async {
     await Firebase.initializeApp();
   }
 
+  final sharedPrefs = await SharedPreferences.getInstance();
+  const secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
+  final persistSessionKey =
+      'sb-${Uri.parse(AppConstants.supabaseUrl).host.split('.').first}-auth-token';
+
+  final authLocalStorage = SecureAuthLocalStorage(
+    secureStorage: secureStorage,
+    prefs: sharedPrefs,
+    persistSessionKey: persistSessionKey,
+  );
+  await authLocalStorage.initialize();
+
   await Supabase.initialize(
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: authLocalStorage,
+    ),
   );
-  await initDependencies();
+  await initDependencies(
+    sharedPreferences: sharedPrefs,
+    authLocalStorage: authLocalStorage,
+  );
 
   final pushService = sl<PushNotificationService>();
   if (!kIsWeb) {

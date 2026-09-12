@@ -32,6 +32,17 @@ class _OrdersScreenState extends State<OrdersScreen> {
     _load();
   }
 
+  @override
+  void didUpdateWidget(OrdersScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.expandOrderId != oldWidget.expandOrderId &&
+        widget.expandOrderId != null) {
+      setState(() {
+        _expandedOrderId = widget.expandOrderId;
+      });
+    }
+  }
+
   void _load() {
     final authState = context.read<AuthCubit>().state;
     final customerId = authState is Authenticated ? authState.profile.id : '';

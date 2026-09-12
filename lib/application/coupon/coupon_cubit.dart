@@ -35,7 +35,8 @@ class CouponState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [appliedCoupon, discountAmount, status, errorMessage];
+  List<Object?> get props =>
+      [appliedCoupon, discountAmount, status, errorMessage];
 }
 
 class CouponCubit extends Cubit<CouponState> {
@@ -44,7 +45,8 @@ class CouponCubit extends Cubit<CouponState> {
   CouponCubit(this._repository) : super(const CouponState());
 
   Future<void> validateAndApply(String code, double orderTotal) async {
-    appLogger.i('[CouponCubit] validateAndApply: code=$code, total=$orderTotal');
+    appLogger
+        .i('[CouponCubit] validateAndApply: code=$code, total=$orderTotal');
     emit(state.copyWith(status: CouponStatus.validating));
 
     final result = await _repository.getByCode(code);
@@ -75,7 +77,8 @@ class CouponCubit extends Cubit<CouponState> {
         }
 
         final discount = _calculateDiscount(coupon, orderTotal);
-        appLogger.i('[CouponCubit] applied: ${coupon.code}, discount=$discount');
+        appLogger
+            .i('[CouponCubit] applied: ${coupon.code}, discount=$discount');
         emit(state.copyWith(
           appliedCoupon: coupon,
           discountAmount: discount,

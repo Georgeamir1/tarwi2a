@@ -18,8 +18,7 @@ void main() {
 
   setUp(() {
     mockRepo = MockCouponRepository();
-    when(() => mockRepo.watchCoupons())
-        .thenAnswer((_) => const Stream.empty());
+    when(() => mockRepo.watchCoupons()).thenAnswer((_) => const Stream.empty());
   });
 
   group('AdminCouponsCubit', () {

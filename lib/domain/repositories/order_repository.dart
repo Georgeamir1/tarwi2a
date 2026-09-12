@@ -4,6 +4,7 @@ import '../failures/failure.dart';
 
 abstract class OrderRepository {
   Future<Either<Failure, Order>> createOrder({
+    String? requestId,
     required String customerId,
     required String customerName,
     required String customerPhone,
@@ -16,6 +17,7 @@ abstract class OrderRepository {
     String? orderType,
     String? addressId,
     String? couponId,
+    String? couponCode,
     double? discountAmount,
     double? deliveryFee,
     String? deliveryZoneId,
@@ -24,6 +26,7 @@ abstract class OrderRepository {
 
   Future<Either<Failure, List<Order>>> getCustomerOrders(String customerId);
   Future<Either<Failure, List<Order>>> getAllAdmin();
+  Future<Either<Failure, Order?>> getOrderById(String orderId);
   Future<Either<Failure, void>> updateStatus(String orderId, String status);
   Future<Either<Failure, void>> updatePaymentStatus(
     String orderId,

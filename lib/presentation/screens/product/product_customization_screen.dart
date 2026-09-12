@@ -12,7 +12,8 @@ class ProductCustomizationScreen extends StatefulWidget {
       _ProductCustomizationScreenState();
 }
 
-class _ProductCustomizationScreenState extends State<ProductCustomizationScreen> {
+class _ProductCustomizationScreenState
+    extends State<ProductCustomizationScreen> {
   int _quantity = 1;
   String _selectedSize = 'وسط';
   final _notesController = TextEditingController();
@@ -30,7 +31,8 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(title: 'تخصيص الطلب', variant: TopBarVariant.withBack),
+      appBar: const AppTopBar(
+          title: 'تخصيص الطلب', variant: TopBarVariant.withBack),
       body: Column(
         children: [
           Expanded(
@@ -58,7 +60,9 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                         selectedColor: AppColors.primary,
                         backgroundColor: AppColors.surface,
                         labelStyle: theme.textTheme.bodyMedium?.copyWith(
-                          color: selected ? AppColors.onPrimary : AppColors.textPrimary,
+                          color: selected
+                              ? AppColors.onPrimary
+                              : AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),
                       );
@@ -82,7 +86,8 @@ class _ProductCustomizationScreenState extends State<ProductCustomizationScreen>
                           ),
                         ),
                         value: _extras[extra],
-                        onChanged: (v) => setState(() => _extras[extra] = v ?? false),
+                        onChanged: (v) =>
+                            setState(() => _extras[extra] = v ?? false),
                         activeColor: AppColors.primary,
                         checkColor: AppColors.onPrimary,
                         controlAffinity: ListTileControlAffinity.leading,

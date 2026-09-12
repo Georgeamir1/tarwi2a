@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show LocalStorage;
 import '../../router/app_router.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/profile_repository.dart';
@@ -80,13 +81,21 @@ import '../../core/services/thermal_printer_service.dart';
 import '../../core/services/device_token_service.dart';
 import '../../core/services/push_notification_service.dart';
 import '../../core/services/biometric_service.dart';
+import '../../core/services/notification_navigation_resolver.dart';
 
 final sl = GetIt.instance;
 
-Future<void> initDependencies() async {
+Future<void> initDependencies({
+  SharedPreferences? sharedPreferences,
+  LocalStorage? authLocalStorage,
+}) async {
   // SharedPreferences & Biometric Service
-  final sharedPrefs = await SharedPreferences.getInstance();
+  final sharedPrefs =
+      sharedPreferences ?? await SharedPreferences.getInstance();
   sl.registerLazySingleton<SharedPreferences>(() => sharedPrefs);
+  if (authLocalStorage != null) {
+    sl.registerLazySingleton<LocalStorage>(() => authLocalStorage);
+  }
   sl.registerLazySingleton<BiometricService>(() => BiometricService(sl()));
 
   // Data Sources (lazy singletons - stateless)
@@ -126,7 +135,11 @@ Future<void> initDependencies() async {
       () => RatingRemoteDataSource());
 
   // Repositories (lazy singletons)
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(
+        sl(),
+        localStorage:
+            sl.isRegistered<LocalStorage>() ? sl<LocalStorage>() : null,
+      ));
   sl.registerLazySingleton<ProfileRepository>(
       () => ProfileRepositoryImpl(sl()));
   sl.registerLazySingleton<CategoryRepository>(
@@ -156,13 +169,18 @@ Future<void> initDependencies() async {
       () => DeviceTokenRepositoryImpl(sl()));
   sl.registerLazySingleton<BroadcastRepository>(
       () => BroadcastRepositoryImpl(sl()));
-  sl.registerLazySingleton<RatingRepository>(
-      () => RatingRepositoryImpl(sl()));
+  sl.registerLazySingleton<RatingRepository>(() => RatingRepositoryImpl(sl()));
   sl.registerLazySingleton<DeviceTokenService>(() => DeviceTokenService(sl()));
+  sl.registerLazySingleton<NotificationNavigationResolver>(
+      () => NotificationNavigationResolver(
+            authRepository: sl<AuthRepository>(),
+            profileRepository: sl<ProfileRepository>(),
+          ));
   sl.registerLazySingleton<PushNotificationService>(
       () => PushNotificationService(
             deviceTokenService: sl<DeviceTokenService>(),
             routerProvider: () => appRouter,
+            resolver: sl<NotificationNavigationResolver>(),
           ));
 
   // Cubits (factory - new instance per scope)
@@ -193,7 +211,6 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<NotificationsCubit>(() => NotificationsCubit(sl()));
   sl.registerFactory<NotificationPreferencesCubit>(
       () => NotificationPreferencesCubit(sl()));
-  sl.registerFactory<AdminBroadcastCubit>(
-      () => AdminBroadcastCubit(sl()));
+  sl.registerFactory<AdminBroadcastCubit>(() => AdminBroadcastCubit(sl()));
   sl.registerFactory<RatingCubit>(() => RatingCubit(sl()));
 }

@@ -44,6 +44,10 @@ import 'package:tarwi2a/domain/repositories/product_option_repository.dart';
 import 'package:tarwi2a/domain/repositories/print_repository.dart';
 import 'package:tarwi2a/domain/repositories/address_repository.dart';
 import 'package:tarwi2a/domain/entities/address.dart';
+import 'package:tarwi2a/application/rating/rating_cubit.dart';
+import 'package:tarwi2a/application/coupon/coupon_cubit.dart';
+import 'package:tarwi2a/application/notifications/notifications_cubit.dart';
+import 'package:tarwi2a/application/admin/admin_product_options_cubit.dart';
 
 // --- Mock Supabase types ---
 
@@ -101,6 +105,15 @@ class MockAdminOrdersCubit extends Mock implements AdminOrdersCubit {}
 class MockAdminCategoriesCubit extends Mock implements AdminCategoriesCubit {}
 
 class MockAdminProductsCubit extends Mock implements AdminProductsCubit {}
+
+class MockRatingCubit extends Mock implements RatingCubit {}
+
+class MockCouponCubit extends Mock implements CouponCubit {}
+
+class MockNotificationsCubit extends Mock implements NotificationsCubit {}
+
+class MockAdminProductOptionsCubit extends Mock
+    implements AdminProductOptionsCubit {}
 
 class MockCouponRepository extends Mock implements CouponRepository {}
 

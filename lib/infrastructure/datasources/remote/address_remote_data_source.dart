@@ -19,14 +19,19 @@ class AddressRemoteDataSource {
 
   Future<AddressDTO> createAddress(Map<String, dynamic> data) async {
     appLogger.d('[AddressDS] createAddress');
-    final result = await _client.from('addresses').insert(data).select().single();
+    final result =
+        await _client.from('addresses').insert(data).select().single();
     return AddressDTO.fromJson(result);
   }
 
   Future<AddressDTO> updateAddress(String id, Map<String, dynamic> data) async {
     appLogger.d('[AddressDS] updateAddress: $id');
-    final result =
-        await _client.from('addresses').update(data).eq('id', id).select().single();
+    final result = await _client
+        .from('addresses')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
     return AddressDTO.fromJson(result);
   }
 
@@ -42,9 +47,6 @@ class AddressRemoteDataSource {
         .update({'is_default': false})
         .eq('user_id', userId)
         .neq('id', id);
-    await _client
-        .from('addresses')
-        .update({'is_default': true})
-        .eq('id', id);
+    await _client.from('addresses').update({'is_default': true}).eq('id', id);
   }
 }

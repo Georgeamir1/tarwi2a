@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -61,23 +62,70 @@ void main() {
             .thenAnswer((_) async => right([testAddress]));
 
         cubit = AddressCubit(mockRepo);
-        await cubit.createAddress('user-123', {'label': 'العمل'});
+        final result =
+            await cubit.createAddress('user-123', {'label': 'العمل'});
         await Future.delayed(const Duration(milliseconds: 50));
 
+        expect(result, right<Failure, void>(null));
         expect(cubit.state.status, AddressStatus.loaded);
         verify(() => mockRepo.createAddress(any())).called(1);
         verify(() => mockRepo.getAddresses('user-123')).called(1);
       });
 
-      test('emits saving then error on failure', () async {
+      test('does not mutate input data map when adding user_id', () async {
+        when(() => mockRepo.createAddress(any()))
+            .thenAnswer((_) async => right(testAddress));
+        when(() => mockRepo.getAddresses('user-123'))
+            .thenAnswer((_) async => right([testAddress]));
+
+        cubit = AddressCubit(mockRepo);
+        final inputData = {'label': 'العمل', 'address': 'شارع 1'};
+        await cubit.createAddress('user-123', inputData);
+
+        expect(inputData.containsKey('user_id'), isFalse);
+      });
+
+      test('emits saving then error on failure and does not reload', () async {
         when(() => mockRepo.createAddress(any()))
             .thenAnswer((_) async => left(testServerFailure));
 
         cubit = AddressCubit(mockRepo);
-        await cubit.createAddress('user-123', {'label': 'العمل'});
+        final result =
+            await cubit.createAddress('user-123', {'label': 'العمل'});
 
+        expect(result, left<Failure, void>(testServerFailure));
         expect(cubit.state.status, AddressStatus.error);
         expect(cubit.state.failure, testServerFailure);
+        verifyNever(() => mockRepo.getAddresses(any()));
+      });
+
+      test('returns write success when reload fails', () async {
+        when(() => mockRepo.createAddress(any()))
+            .thenAnswer((_) async => right(testAddress));
+        when(() => mockRepo.getAddresses('user-123'))
+            .thenAnswer((_) async => left(testNetworkFailure));
+
+        cubit = AddressCubit(mockRepo);
+        final result =
+            await cubit.createAddress('user-123', {'label': 'العمل'});
+
+        expect(result, right<Failure, void>(null));
+        expect(cubit.state.status, AddressStatus.error);
+        expect(cubit.state.failure, testNetworkFailure);
+      });
+
+      test('does not throw when closed while create is pending', () async {
+        final completer = Completer<Either<Failure, Address>>();
+        when(() => mockRepo.createAddress(any()))
+            .thenAnswer((_) => completer.future);
+
+        cubit = AddressCubit(mockRepo);
+        final future = cubit.createAddress('user-123', {'label': 'العمل'});
+        await cubit.close();
+        completer.complete(right(testAddress));
+
+        final result = await future;
+        expect(result, right<Failure, void>(null));
       });
     });
 
@@ -89,20 +137,58 @@ void main() {
             .thenAnswer((_) async => right([testAddress]));
 
         cubit = AddressCubit(mockRepo);
-        await cubit.updateAddress('addr-1', {'label': 'منزل جديد'}, 'user-123');
+        final result = await cubit.updateAddress(
+            'addr-1', {'label': 'منزل جديد'}, 'user-123');
         await Future.delayed(const Duration(milliseconds: 50));
 
+        expect(result, right<Failure, void>(null));
         expect(cubit.state.status, AddressStatus.loaded);
+        verify(() => mockRepo.updateAddress('addr-1', any())).called(1);
+        verify(() => mockRepo.getAddresses('user-123')).called(1);
       });
 
-      test('emits saving then error on failure', () async {
+      test('emits saving then error on failure and does not reload', () async {
         when(() => mockRepo.updateAddress(any(), any()))
             .thenAnswer((_) async => left(testServerFailure));
 
         cubit = AddressCubit(mockRepo);
-        await cubit.updateAddress('addr-1', {'label': 'جديد'}, 'user-123');
+        final result =
+            await cubit.updateAddress('addr-1', {'label': 'جديد'}, 'user-123');
 
+        expect(result, left<Failure, void>(testServerFailure));
         expect(cubit.state.status, AddressStatus.error);
+        expect(cubit.state.failure, testServerFailure);
+        verifyNever(() => mockRepo.getAddresses(any()));
+      });
+
+      test('returns write success when reload fails', () async {
+        when(() => mockRepo.updateAddress(any(), any()))
+            .thenAnswer((_) async => right(testAddress));
+        when(() => mockRepo.getAddresses('user-123'))
+            .thenAnswer((_) async => left(testNetworkFailure));
+
+        cubit = AddressCubit(mockRepo);
+        final result =
+            await cubit.updateAddress('addr-1', {'label': 'جديد'}, 'user-123');
+
+        expect(result, right<Failure, void>(null));
+        expect(cubit.state.status, AddressStatus.error);
+        expect(cubit.state.failure, testNetworkFailure);
+      });
+
+      test('does not throw when closed while update is pending', () async {
+        final completer = Completer<Either<Failure, Address>>();
+        when(() => mockRepo.updateAddress(any(), any()))
+            .thenAnswer((_) => completer.future);
+
+        cubit = AddressCubit(mockRepo);
+        final future =
+            cubit.updateAddress('addr-1', {'label': 'جديد'}, 'user-123');
+        await cubit.close();
+        completer.complete(right(testAddress));
+
+        final result = await future;
+        expect(result, right<Failure, void>(null));
       });
     });
 

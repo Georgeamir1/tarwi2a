@@ -1,5 +1,4 @@
-import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
@@ -7,25 +6,39 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../domain/entities/order.dart';
 import '../../../core/logger/app_logger.dart';
 
+typedef PdfLayoutHandler = Future<bool> Function(
+  Uint8List Function(PdfPageFormat) onLayout, {
+  PdfPageFormat format,
+  String name,
+});
+
 class ThermalPrinterService {
   static const _paperSize = PdfPageFormat.roll80;
 
+  final PdfLayoutHandler _layoutPdf;
+
+  ThermalPrinterService({PdfLayoutHandler? layoutPdf})
+      : _layoutPdf = layoutPdf ??
+            ((onLayout,
+                    {PdfPageFormat format = PdfPageFormat.roll80,
+                    String name = 'Document'}) =>
+                Printing.layoutPdf(
+                  onLayout: (format) async => onLayout(format),
+                  format: format,
+                  name: name,
+                ));
+
   Future<bool> printOrder(Order order) async {
     try {
-      final pdf = await _generateReceipt(order);
-      final printer = await Printing.pickPrinter(
-        context: _rootContext!,
-        title: 'اختر الطابعة',
-      );
-      if (printer == null) return false;
-      await Printing.directPrintPdf(
-        printer: printer,
-        onLayout: (_) async => pdf,
+      final receiptBytes = await generateReceipt(order);
+      final printed = await _layoutPdf(
+        (_) => receiptBytes,
         format: _paperSize,
-        usePrinterSettings: true,
+        name: 'Order_${order.id}',
       );
-      appLogger.d('[ThermalPrinterService] printOrder success: ${order.id}');
-      return true;
+      appLogger.d(
+          '[ThermalPrinterService] printOrder result: $printed for ${order.id}');
+      return printed;
     } catch (e) {
       appLogger.e('[ThermalPrinterService] printOrder error', error: e);
       if (e.toString().contains('User cancelled')) return false;
@@ -33,16 +46,23 @@ class ThermalPrinterService {
     }
   }
 
-  static BuildContext? _rootContext;
-
-  static void init(BuildContext context) {
-    _rootContext = context;
-  }
-
-  Future<Uint8List> _generateReceipt(Order order) async {
+  Future<Uint8List> generateReceipt(Order order) async {
     final pdf = pw.Document();
-    final arabicFont = await PdfGoogleFonts.cairoRegular();
-    final arabicBold = await PdfGoogleFonts.cairoBold();
+
+    pw.Font arabicFont;
+    pw.Font arabicBold;
+
+    try {
+      final regularData =
+          await rootBundle.load('assets/fonts/Cairo-Regular.ttf');
+      final boldData = await rootBundle.load('assets/fonts/Cairo-Bold.ttf');
+      arabicFont = pw.Font.ttf(regularData);
+      arabicBold = pw.Font.ttf(boldData);
+    } catch (_) {
+      // Fallback to Google Fonts if asset loading fails
+      arabicFont = await PdfGoogleFonts.cairoRegular();
+      arabicBold = await PdfGoogleFonts.cairoBold();
+    }
 
     pdf.addPage(
       pw.Page(
@@ -61,7 +81,7 @@ class ThermalPrinterService {
               pw.Text(
                 DateFormat('yyyy/MM/dd - hh:mm a')
                     .format(order.createdAt.toLocal()),
-                style: const pw.TextStyle(fontSize: 10),
+                style: pw.TextStyle(font: arabicFont, fontSize: 10),
               ),
               pw.Divider(thickness: 1),
               pw.SizedBox(height: 4),
@@ -112,6 +132,7 @@ class ThermalPrinterService {
                         pw.Text(
                           '${item.subtotal.toStringAsFixed(0)} ج',
                           style: pw.TextStyle(font: arabicFont, fontSize: 11),
+                          textDirection: pw.TextDirection.rtl,
                         ),
                       ],
                     ),

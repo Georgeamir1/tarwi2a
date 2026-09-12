@@ -12,10 +12,12 @@ class AdminBusinessProfileScreen extends StatefulWidget {
   const AdminBusinessProfileScreen({super.key});
 
   @override
-  State<AdminBusinessProfileScreen> createState() => _AdminBusinessProfileScreenState();
+  State<AdminBusinessProfileScreen> createState() =>
+      _AdminBusinessProfileScreenState();
 }
 
-class _AdminBusinessProfileScreenState extends State<AdminBusinessProfileScreen> {
+class _AdminBusinessProfileScreenState
+    extends State<AdminBusinessProfileScreen> {
   @override
   void initState() {
     super.initState();
@@ -116,8 +118,7 @@ class _ProfileFormState extends State<_ProfileForm> {
     _prepTimeController =
         TextEditingController(text: p?.defaultPrepTime.toString() ?? '30');
     _busyMessageController = TextEditingController(text: p?.busyMessage ?? '');
-    _whatsappController =
-        TextEditingController(text: p?.whatsappNumber ?? '');
+    _whatsappController = TextEditingController(text: p?.whatsappNumber ?? '');
     _vodafoneCashController =
         TextEditingController(text: p?.vodafoneCashNumber ?? '');
     _instapayController = TextEditingController(text: p?.instapayHandle ?? '');

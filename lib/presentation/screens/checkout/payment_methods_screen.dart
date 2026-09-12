@@ -18,43 +18,44 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const AppTopBar(title: 'وسيلة الدفع', variant: TopBarVariant.withBack),
+      appBar: const AppTopBar(
+          title: 'وسيلة الدفع', variant: TopBarVariant.withBack),
       body: Column(
         children: [
           Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                children: [
-                  RadioGroup<String>(
-                    groupValue: _selected,
-                    onChanged: (v) {
-                      if (v != null) setState(() => _selected = v);
-                    },
-                    child: const Column(
-                      children: [
-                        _PaymentOption(
-                          icon: Icons.money_outlined,
-                          title: 'كاش عند الاستلام',
-                          subtitle: 'ادفع لما تستلم الطلب',
-                          value: 'cash',
-                        ),
-                        SizedBox(height: 12),
-                        _PaymentOption(
-                          icon: Icons.account_balance_wallet_outlined,
-                          title: 'المحفظة الإلكترونية',
-                          subtitle: 'ادفع من رصيد محفظتك',
-                          value: 'wallet',
-                        ),
-                        SizedBox(height: 12),
-                        _PaymentOption(
-                          icon: Icons.qr_code_outlined,
-                          title: 'انستا باي',
-                          subtitle: 'ادفع عن طريق InstaPay',
-                          value: 'instapay',
-                        ),
-                      ],
-                    ),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              children: [
+                RadioGroup<String>(
+                  groupValue: _selected,
+                  onChanged: (v) {
+                    if (v != null) setState(() => _selected = v);
+                  },
+                  child: const Column(
+                    children: [
+                      _PaymentOption(
+                        icon: Icons.money_outlined,
+                        title: 'كاش عند الاستلام',
+                        subtitle: 'ادفع لما تستلم الطلب',
+                        value: 'cash',
+                      ),
+                      SizedBox(height: 12),
+                      _PaymentOption(
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: 'المحفظة الإلكترونية',
+                        subtitle: 'ادفع من رصيد محفظتك',
+                        value: 'wallet',
+                      ),
+                      SizedBox(height: 12),
+                      _PaymentOption(
+                        icon: Icons.qr_code_outlined,
+                        title: 'انستا باي',
+                        subtitle: 'ادفع عن طريق InstaPay',
+                        value: 'instapay',
+                      ),
+                    ],
                   ),
+                ),
               ],
             ),
           ),

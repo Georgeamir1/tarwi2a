@@ -17,7 +17,7 @@ class NotificationTile extends StatelessWidget {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
     if (diff.inSeconds < 60) return 'الآن';
-    
+
     if (diff.inMinutes < 60) {
       final m = diff.inMinutes;
       if (m == 1) return 'منذ دقيقة';
@@ -25,7 +25,7 @@ class NotificationTile extends StatelessWidget {
       if (m >= 3 && m <= 10) return 'منذ $m دقائق';
       return 'منذ $m دقيقة';
     }
-    
+
     if (diff.inHours < 24) {
       final h = diff.inHours;
       if (h == 1) return 'منذ ساعة';
@@ -33,21 +33,21 @@ class NotificationTile extends StatelessWidget {
       if (h >= 3 && h <= 10) return 'منذ $h ساعات';
       return 'منذ $h ساعة';
     }
-    
+
     if (diff.inDays < 7) {
       final d = diff.inDays;
       if (d == 1) return 'منذ يوم';
       if (d == 2) return 'منذ يومين';
       return 'منذ $d أيام';
     }
-    
+
     if (diff.inDays < 30) {
       final w = (diff.inDays / 7).floor();
       if (w == 1) return 'منذ أسبوع';
       if (w == 2) return 'منذ أسبوعين';
       return 'منذ $w أسابيع';
     }
-    
+
     return '${dateTime.year}/${dateTime.month.toString().padLeft(2, '0')}/${dateTime.day.toString().padLeft(2, '0')}';
   }
 

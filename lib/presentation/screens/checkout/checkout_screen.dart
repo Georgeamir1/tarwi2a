@@ -12,7 +12,8 @@ import '../../../domain/enums/payment_method.dart';
 import '../../../domain/entities/address.dart';
 import '../../../domain/entities/business_profile.dart';
 import '../../../domain/repositories/business_profile_repository.dart';
-import '../../../domain/repositories/coupon_repository.dart';
+import '../../../domain/repositories/address_repository.dart';
+import '../../../domain/repositories/delivery_zone_repository.dart';
 import '../../../application/cart/cart_cubit.dart';
 import '../../../application/auth/auth_cubit.dart';
 import '../../../application/orders/customer_orders_cubit.dart';
@@ -24,7 +25,9 @@ import '../../widgets/app_top_bar.dart';
 import '../../widgets/coupon_input.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  final DateTime Function()? nowProvider;
+
+  const CheckoutScreen({super.key, this.nowProvider});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
@@ -59,6 +62,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             '[CheckoutScreen] pre-filling from profile: ${authState.profile.name}');
         _nameController.text = authState.profile.name;
         _phoneController.text = authState.profile.phone ?? '';
+        _loadDefaultAddress(authState.profile.id);
       }
       _loadBusinessProfile();
     });
@@ -67,7 +71,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _loadBusinessProfile() async {
     final result = await sl<BusinessProfileRepository>().get();
     result.fold(
-      (failure) => appLogger.e('[CheckoutScreen] failed to load business profile',
+      (failure) => appLogger.e(
+          '[CheckoutScreen] failed to load business profile',
           error: failure),
       (profile) {
         if (mounted) setState(() => _businessProfile = profile);
@@ -118,7 +123,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   Future<void> _openWhatsAppProof() async {
     final p = _businessProfile;
     if (p?.whatsappNumber == null) return;
-    final amount = context.read<CartCubit>().state.finalTotal.toStringAsFixed(0);
+    final amount =
+        context.read<CartCubit>().state.finalTotal.toStringAsFixed(0);
     final message =
         'مرحباً، أنا ${_nameController.text.trim().isEmpty ? "عميل" : _nameController.text.trim()}'
         ' - ${_phoneController.text.trim()}.'
@@ -136,7 +142,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  DateTime get _currentTime => (widget.nowProvider ?? DateTime.now)();
+
+  void _onOrderTypeChanged(OrderType newType) {
+    if (_orderType == newType) return;
+    setState(() {
+      _orderType = newType;
+      context.read<CustomerOrdersCubit>().clearActiveRequestId();
+      if (newType != OrderType.delivery) {
+        context.read<CartCubit>().clearDeliveryZone();
+      } else {
+        final authState = context.read<AuthCubit>().state;
+        if (authState is Authenticated) {
+          _loadDefaultAddress(authState.profile.id);
+        }
+      }
+    });
+  }
+
   Future<void> _placeOrder() async {
+    if (_isLoading) return;
+
     if (_orderType == OrderType.delivery && _selectedAddress == null) {
       setState(() {
         _addressValidationError = 'من فضلك اختر أو أضف عنواناً للتوصيل أولاً';
@@ -145,8 +171,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
+    if (_scheduleOrder) {
+      if (_scheduledDateTime == null ||
+          !_scheduledDateTime!.isAfter(_currentTime)) {
+        HapticFeedback.heavyImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('من فضلك حدد وقتاً مستقبلياً للطلب المجدول'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+    }
+
     if (!_formKey.currentState!.validate()) {
       appLogger.i('[CheckoutScreen] _placeOrder — form validation failed');
+      return;
+    }
+
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! Authenticated) {
+      appLogger.w('[CheckoutScreen] _placeOrder — user not authenticated');
       return;
     }
 
@@ -154,11 +200,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final authState = context.read<AuthCubit>().state;
-      if (authState is! Authenticated) {
-        appLogger.w('[CheckoutScreen] _placeOrder — user not authenticated');
-        return;
-      }
       final profile = authState.profile;
       final cartState = context.read<CartCubit>().state;
 
@@ -168,22 +209,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final items = cartState.items
           .map((item) => {
                 'product_id': item.productId,
-                'product_name': item.productNameAr,
-                'product_price': item.productPrice,
                 'quantity': item.quantity,
-                'subtotal': item.subtotal,
-                'selected_options': item.selectedOptions
-                    .map((e) => {
-                          'option_id': e.optionId,
-                          'option_name': e.name,
-                          'price_adjustment': e.priceAdjustment,
-                        })
-                    .toList(),
+                'selected_option_ids':
+                    item.selectedOptions.map((e) => e.optionId).toList(),
               })
           .toList();
 
       final ordersCubit = sl<CustomerOrdersCubit>();
-      await ordersCubit.placeOrder(
+      final result = await ordersCubit.placeOrder(
         customerId: profile.id,
         customerName: _nameController.text.trim(),
         customerPhone: _phoneController.text.trim(),
@@ -192,7 +225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 ? null
                 : _addressController.text.trim()
             : null,
-        addressId: _selectedAddressId,
+        addressId: _orderType == OrderType.delivery ? _selectedAddressId : null,
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -203,41 +236,42 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         orderType: _orderType.value,
         couponId: cartState.appliedCouponId,
         discountAmount: cartState.discountAmount,
-        deliveryFee: cartState.deliveryFee > 0 ? cartState.deliveryFee : null,
-        deliveryZoneId: cartState.deliveryZoneId,
-        deliveryZoneName: cartState.deliveryZoneName,
+        deliveryFee:
+            _orderType == OrderType.delivery && cartState.deliveryFee > 0
+                ? cartState.deliveryFee
+                : null,
+        deliveryZoneId:
+            _orderType == OrderType.delivery ? cartState.deliveryZoneId : null,
+        deliveryZoneName: _orderType == OrderType.delivery
+            ? cartState.deliveryZoneName
+            : null,
       );
 
-      final orderState = ordersCubit.state;
-      if (orderState.status == CustomerOrdersStatus.error) {
-        final errorMsg = orderState.failure?.message ?? 'حصل خطأ غير متوقع';
-        appLogger.e('[CheckoutScreen] _placeOrder — order FAILED: $errorMsg');
-        if (!mounted) return;
-        HapticFeedback.heavyImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل إنشاء الطلب: $errorMsg'),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-        return;
-      }
-
-      if (cartState.appliedCouponId != null) {
-        await sl<CouponRepository>().incrementUsage(cartState.appliedCouponId!);
-      }
-
-      await sl<CustomerOrdersCubit>().loadOrders(profile.id);
-
-      if (!mounted) return;
-      context.read<CartCubit>().clearCart();
-      HapticFeedback.mediumImpact();
-      appLogger.i(
-          '[CheckoutScreen] _placeOrder — order created successfully, cart cleared');
-
-      if (!mounted) return;
-      _showSuccessDialog();
+      result.fold(
+        (failure) {
+          final errorMsg = failure.message;
+          appLogger.e('[CheckoutScreen] _placeOrder — order FAILED: $errorMsg');
+          if (!mounted) return;
+          HapticFeedback.heavyImpact();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('فشل إنشاء الطلب: $errorMsg'),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        },
+        (order) {
+          if (!mounted) return;
+          context.read<CustomerOrdersCubit>().clearActiveRequestId();
+          context.read<CartCubit>().clearCart();
+          HapticFeedback.mediumImpact();
+          appLogger.i(
+              '[CheckoutScreen] _placeOrder — order created successfully, cart cleared');
+          sl<CustomerOrdersCubit>().loadOrders(profile.id);
+          _showSuccessDialog();
+        },
+      );
     } catch (e, st) {
       appLogger.e('[CheckoutScreen] _placeOrder — unexpected error',
           error: e, stackTrace: st);
@@ -388,29 +422,65 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _loadDefaultAddress(String userId) async {
+    final result = await sl<AddressRepository>().getAddresses(userId);
+    result.fold(
+      (failure) => appLogger.w('[CheckoutScreen] failed to load addresses',
+          error: failure),
+      (addresses) {
+        if (addresses.isEmpty || !mounted) return;
+        final defaultAddress = addresses.firstWhere(
+          (a) => a.isDefault,
+          orElse: () => addresses.first,
+        );
+        _applyAddress(defaultAddress);
+      },
+    );
+  }
+
+  Future<void> _applyAddress(Address address) async {
+    double fee = address.deliveryFee ?? 0;
+    String? zoneName = address.deliveryZoneName;
+
+    if (fee <= 0 && address.deliveryZoneId != null) {
+      final zonesResult = await sl<DeliveryZoneRepository>().getAll();
+      zonesResult.fold((_) => null, (zones) {
+        final matching = zones.where((z) => z.id == address.deliveryZoneId);
+        if (matching.isNotEmpty) {
+          fee = matching.first.fee;
+          zoneName ??= matching.first.name;
+        }
+      });
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _selectedAddress = address;
+      _selectedAddressId = address.id;
+      _addressController.text = address.address;
+      _addressValidationError = null;
+    });
+
+    final cartCubit = context.read<CartCubit>();
+    if (address.deliveryZoneId != null && (zoneName != null || fee > 0)) {
+      cartCubit.setDeliveryZone(
+        deliveryZoneId: address.deliveryZoneId!,
+        deliveryZoneName: zoneName ?? 'منطقة التوصيل',
+        deliveryFee: fee,
+      );
+    } else {
+      cartCubit.clearDeliveryZone();
+    }
+
+    appLogger.i(
+        '[CheckoutScreen] address applied — zone: $zoneName, fee: $fee');
+  }
+
   Future<void> _pickAddress() async {
     final result = await context.push<Address>('/profile/addresses');
     if (result != null && mounted) {
-      setState(() {
-        _selectedAddress = result;
-        _selectedAddressId = result.id;
-        _addressController.text = result.address;
-        _addressValidationError = null;
-      });
-
-      final cartCubit = context.read<CartCubit>();
-      if (result.deliveryZoneId != null && result.deliveryZoneName != null) {
-        cartCubit.setDeliveryZone(
-          deliveryZoneId: result.deliveryZoneId!,
-          deliveryZoneName: result.deliveryZoneName!,
-          deliveryFee: result.deliveryFee ?? 0,
-        );
-      } else {
-        cartCubit.clearDeliveryZone();
-      }
-
-      appLogger.i(
-          '[CheckoutScreen] address selected — zone: ${result.deliveryZoneName ?? "none"}, fee: ${result.deliveryFee ?? 0}');
+      await _applyAddress(result);
     }
   }
 
@@ -625,7 +695,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: _OrderTypeChip(
                               type: OrderType.delivery,
                               selected: _orderType,
-                              onSelect: (v) => setState(() => _orderType = v),
+                              onSelect: _onOrderTypeChanged,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -633,7 +703,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: _OrderTypeChip(
                               type: OrderType.pickup,
                               selected: _orderType,
-                              onSelect: (v) => setState(() => _orderType = v),
+                              onSelect: _onOrderTypeChanged,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -641,7 +711,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             child: _OrderTypeChip(
                               type: OrderType.dineIn,
                               selected: _orderType,
-                              onSelect: (v) => setState(() => _orderType = v),
+                              onSelect: _onOrderTypeChanged,
                             ),
                           ),
                         ],
@@ -885,9 +955,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               methodLabel: _paymentMethod.arabicLabel,
                               account: _paymentAccount,
                               onCopy: _copyAccount,
-                              onWhatsApp: _businessProfile?.whatsappNumber != null
-                                  ? _openWhatsAppProof
-                                  : null,
+                              onWhatsApp:
+                                  _businessProfile?.whatsappNumber != null
+                                      ? _openWhatsAppProof
+                                      : null,
                             ),
                           ],
                         ],
@@ -1110,19 +1181,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'الإجمالي',
+                              Text(
+                                (cartState.deliveryFee > 0 ||
+                                        cartState.discountAmount > 0)
+                                    ? 'مجموع المنتجات'
+                                    : 'الإجمالي',
                                 style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: AppColors.textPrimary,
+                                  fontWeight: (cartState.deliveryFee > 0 ||
+                                          cartState.discountAmount > 0)
+                                      ? FontWeight.w600
+                                      : FontWeight.w700,
+                                  fontSize: (cartState.deliveryFee > 0 ||
+                                          cartState.discountAmount > 0)
+                                      ? 14
+                                      : 16,
+                                  color: (cartState.deliveryFee > 0 ||
+                                          cartState.discountAmount > 0)
+                                      ? AppColors.textSecondary
+                                      : AppColors.textPrimary,
                                 ),
                               ),
                               Text(
                                 cartState.total.formatted,
-                                style: theme.textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.primary,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: (cartState.deliveryFee > 0 ||
+                                          cartState.discountAmount > 0)
+                                      ? FontWeight.w700
+                                      : FontWeight.w900,
+                                  color: (cartState.deliveryFee > 0 ||
+                                          cartState.discountAmount > 0)
+                                      ? AppColors.textPrimary
+                                      : AppColors.primary,
                                 ),
                               ),
                             ],
@@ -1177,12 +1266,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           ],
                           if (cartState.deliveryFee > 0 ||
                               cartState.discountAmount > 0) ...[
-                            const SizedBox(height: 4),
+                            const Divider(
+                                height: 20, color: AppColors.outlineVariant),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 const Text(
-                                  'المبلغ النهائي',
+                                  'الإجمالي النهائي',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 16,

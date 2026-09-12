@@ -1,0 +1,9 @@
+{
+  "SUPABASE_URL": "https://REPLACE_PROJECT.supabase.co",
+  "SUPABASE_ANON_KEY": "REPLACE_WITH_PUBLIC_CLIENT_KEY",
+  "PRIVACY_POLICY_URL": "https://REPLACE_DOMAIN/privacy-policy/",
+  "TERMS_OF_SERVICE_URL": "https://REPLACE_DOMAIN/terms-of-service/",
+  "SUPPORT_URL": "https://REPLACE_DOMAIN/support/",
+  "ACCOUNT_DELETION_URL": "https://REPLACE_DOMAIN/delete-account/",
+  "SENTRY_DSN": ""
+}

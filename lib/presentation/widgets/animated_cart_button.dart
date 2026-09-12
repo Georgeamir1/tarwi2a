@@ -61,7 +61,8 @@ class AnimatedCartButton extends StatelessWidget {
   Widget _buildAddButton(BuildContext context) {
     final h = compact ? 34.0 : 48.0;
     return Semantics(
-      label: '\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0633\u0644\u0629', // إضافة للسلة
+      label:
+          '\u0625\u0636\u0627\u0641\u0629 \u0644\u0644\u0633\u0644\u0629', // إضافة للسلة
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -130,7 +131,8 @@ class AnimatedCartButton extends StatelessWidget {
         children: [
           // Plus button
           Semantics(
-            label: '\u0632\u064a\u0627\u062f\u0629 \u0627\u0644\u0643\u0645\u064a\u0629',
+            label:
+                '\u0632\u064a\u0627\u062f\u0629 \u0627\u0644\u0643\u0645\u064a\u0629',
             button: true,
             child: GestureDetector(
               onTap: () {
@@ -160,7 +162,8 @@ class AnimatedCartButton extends StatelessWidget {
             child: Center(
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 150),
-                transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
+                transitionBuilder: (child, anim) =>
+                    ScaleTransition(scale: anim, child: child),
                 child: Text(
                   '$quantity',
                   key: ValueKey('qty_$quantity'),
@@ -177,7 +180,8 @@ class AnimatedCartButton extends StatelessWidget {
 
           // Minus button
           Semantics(
-            label: '\u062a\u0642\u0644\u064a\u0644 \u0627\u0644\u0643\u0645\u064a\u0629',
+            label:
+                '\u062a\u0642\u0644\u064a\u0644 \u0627\u0644\u0643\u0645\u064a\u0629',
             button: true,
             child: GestureDetector(
               onTap: () {

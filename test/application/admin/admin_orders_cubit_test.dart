@@ -91,6 +91,109 @@ void main() {
         verify(() => mockRepo.getAllAdmin()).called(1);
         expect(cubit.state.status, AdminOrdersStatus.loaded);
       });
+
+      test('should return write success when refresh fails', () async {
+        var reads = 0;
+        when(() => mockRepo.getAllAdmin()).thenAnswer((_) async {
+          reads++;
+          return reads == 1 ? right([testOrder]) : left(testNetworkFailure);
+        });
+        when(() => mockRepo.updateStatus('order-1', 'preparing'))
+            .thenAnswer((_) async => right<Failure, void>(null));
+
+        final cubit = AdminOrdersCubit(mockRepo);
+        addTearDown(cubit.close);
+        await cubit.loadOrders();
+
+        final result = await cubit.updateStatus('order-1', 'preparing');
+
+        expect(result.isRight(), isTrue);
+        expect(cubit.state.orders, [testOrder]);
+        expect(cubit.state.status, AdminOrdersStatus.error);
+        expect(cubit.state.failure, testNetworkFailure);
+        verify(() => mockRepo.updateStatus('order-1', 'preparing')).called(1);
+        verify(() => mockRepo.getAllAdmin()).called(2);
+      });
+
+      test('should not emit after close while update is pending', () async {
+        final updateCompleter = Completer<Either<Failure, void>>();
+        when(() => mockRepo.updateStatus('order-1', 'preparing'))
+            .thenAnswer((_) => updateCompleter.future);
+
+        final cubit = AdminOrdersCubit(mockRepo);
+        addTearDown(cubit.close);
+        final future = cubit.updateStatus('order-1', 'preparing');
+        await cubit.close();
+        updateCompleter.complete(right<Failure, void>(null));
+
+        final result = await future;
+
+        expect(result.isRight(), isTrue);
+      });
+
+      test('should preserve orders and expose failure when update is rejected',
+          () async {
+        when(() => mockRepo.getAllAdmin())
+            .thenAnswer((_) async => right([testOrder]));
+        when(() => mockRepo.updateStatus('order-1', 'preparing'))
+            .thenAnswer((_) async => left(testServerFailure));
+
+        final cubit = AdminOrdersCubit(mockRepo);
+        addTearDown(cubit.close);
+        await cubit.loadOrders();
+        clearInteractions(mockRepo);
+
+        await cubit.updateStatus('order-1', 'preparing');
+
+        expect(cubit.state.orders, [testOrder]);
+        expect(cubit.state.failure, testServerFailure);
+        verifyNever(() => mockRepo.getAllAdmin());
+      });
+    });
+
+    group('confirmPayment', () {
+      test('should preserve orders and expose failure when payment is rejected',
+          () async {
+        when(() => mockRepo.getAllAdmin())
+            .thenAnswer((_) async => right([testOrder]));
+        when(() => mockRepo.updatePaymentStatus('order-1', 'confirmed'))
+            .thenAnswer((_) async => left(testServerFailure));
+
+        final cubit = AdminOrdersCubit(mockRepo);
+        addTearDown(cubit.close);
+        await cubit.loadOrders();
+        clearInteractions(mockRepo);
+
+        await cubit.confirmPayment('order-1');
+
+        expect(cubit.state.orders, [testOrder]);
+        expect(cubit.state.failure, testServerFailure);
+        verifyNever(() => mockRepo.getAllAdmin());
+      });
+
+      test('should return payment success when refresh fails', () async {
+        var reads = 0;
+        when(() => mockRepo.getAllAdmin()).thenAnswer((_) async {
+          reads++;
+          return reads == 1 ? right([testOrder]) : left(testNetworkFailure);
+        });
+        when(() => mockRepo.updatePaymentStatus('order-1', 'confirmed'))
+            .thenAnswer((_) async => right<Failure, void>(null));
+
+        final cubit = AdminOrdersCubit(mockRepo);
+        addTearDown(cubit.close);
+        await cubit.loadOrders();
+
+        final result = await cubit.confirmPayment('order-1');
+
+        expect(result.isRight(), isTrue);
+        expect(cubit.state.orders, [testOrder]);
+        expect(cubit.state.status, AdminOrdersStatus.error);
+        expect(cubit.state.failure, testNetworkFailure);
+        verify(() => mockRepo.updatePaymentStatus('order-1', 'confirmed'))
+            .called(1);
+        verify(() => mockRepo.getAllAdmin()).called(2);
+      });
     });
 
     group('realtime', () {
