@@ -494,6 +494,22 @@ jobs:
           fi
           echo "Flutter application launched successfully inside iOS Simulator."
 
+      - name: Diagnose app after launch
+        if: inputs.mode != 'app'
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          sleep 20
+          echo "=== processes in simulator ==="
+          xcrun simctl spawn "$UDID" launchctl list 2>&1 | grep -i -E "tarwi|runner" || echo "(no tarwi/Runner process: app is NOT running)"
+          echo "=== app log (last 2m) ==="
+          xcrun simctl spawn "$UDID" log show --last 2m --style compact --predicate 'process == "Runner" OR eventMessage CONTAINS[c] "tarwi" OR eventMessage CONTAINS[c] "flutter"' 2>&1 | tail -n 80 || true
+          echo "=== crash reports ==="
+          ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
+          for f in $(ls -t ~/Library/Logs/DiagnosticReports/Runner* 2>/dev/null | head -1); do echo "--- $f"; head -c 4000 "$f"; done
+
       - name: Install prebuilt app
         timeout-minutes: 15
         if: inputs.mode == 'app'
