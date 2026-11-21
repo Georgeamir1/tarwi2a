@@ -30,6 +30,8 @@ const AGENT_PREFIX = '/agent-device';
 const TARGET_HOST = config.host;
 const PORT = config.gatePort;
 const COOKIE = 'flutter_remote_k';
+// serve-sim >= 0.1.49 rejects proxied requests unless they carry this bearer token.
+const SERVE_SIM_AUTH_TOKEN = (process.env.SERVE_SIM_AUTH_TOKEN || '').trim();
 
 if (!TOKEN) {
   console.error('FLUTTER_REMOTE_GATE_TOKEN is required — refusing to proxy an unauthenticated simulator');
@@ -302,6 +304,7 @@ const server = http.createServer((req, res) => {
   const upstreamHeaders = { ...req.headers };
   upstreamHeaders['x-forwarded-proto'] = 'https';
   upstreamHeaders['x-forwarded-host'] = req.headers.host;
+  if (SERVE_SIM_AUTH_TOKEN && !agent) upstreamHeaders['authorization'] = `Bearer ${SERVE_SIM_AUTH_TOKEN}`;
   delete upstreamHeaders['connection'];
   delete upstreamHeaders['transfer-encoding'];
   delete upstreamHeaders['te'];
@@ -411,6 +414,9 @@ server.on('upgrade', (req, socket, head) => {
       connection: 'Upgrade',
       'x-forwarded-proto': 'https',
       'x-forwarded-host': req.headers.host,
+      ...(SERVE_SIM_AUTH_TOKEN && !isAgent && !isSignal
+        ? { authorization: `Bearer ${SERVE_SIM_AUTH_TOKEN}` }
+        : {}),
     })
       .map(([k, v]) => (Array.isArray(v) ? v.map((x) => `${k}: ${x}`).join('\r\n') : `${k}: ${v}`))
       .join('\r\n');

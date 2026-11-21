@@ -131,7 +131,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_npx
-          key: flutter-remote-serve-sim-${{ runner.os }}-0.1.48
+          key: flutter-remote-serve-sim-${{ runner.os }}-0.1.49
           restore-keys: flutter-remote-serve-sim-${{ runner.os }}-
 
       - name: Fingerprint Flutter build inputs
@@ -198,6 +198,12 @@ jobs:
             echo "Normalizing codec 'auto' to 'mjpeg' for stable WebRTC pipeline"
             CODEC="mjpeg"
           fi
+          # serve-sim >= 0.1.49 refuses requests that look proxied (Host / x-forwarded-*,
+          # cf-*) unless they carry a bearer token. The gate adds it to upstream requests.
+          SERVE_SIM_AUTH_TOKEN="$(openssl rand -hex 24)"
+          echo "::add-mask::$SERVE_SIM_AUTH_TOKEN"
+          echo "SERVE_SIM_AUTH_TOKEN=$SERVE_SIM_AUTH_TOKEN" >> "$GITHUB_ENV"
+          export SERVE_SIM_AUTH_TOKEN
           ARGS=(
             --detach
             --quiet
@@ -205,10 +211,11 @@ jobs:
             --panes none
             --port "$PREVIEW_PORT"
             --codec "$CODEC"
+            --auth-token "$SERVE_SIM_AUTH_TOKEN"
           )
 
-          echo "Starting serve-sim with codec=$CODEC args: ${ARGS[*]}"
-          SERVE_SIM_OUT=$(npx --yes serve-sim@0.1.48 "${ARGS[@]}" "${{ steps.sim.outputs.udid }}" || true)
+          echo "Starting serve-sim with codec=$CODEC (auth token set)"
+          SERVE_SIM_OUT=$(npx --yes serve-sim@0.1.49 "${ARGS[@]}" "${{ steps.sim.outputs.udid }}" || true)
           echo "serve-sim raw output: $SERVE_SIM_OUT"
 
           for i in {1..30}; do
