@@ -494,25 +494,6 @@ jobs:
           fi
           echo "Flutter application launched successfully inside iOS Simulator."
 
-      - name: Diagnose app after launch
-        if: inputs.mode != 'app'
-        continue-on-error: true
-        timeout-minutes: 3
-        env:
-          UDID: ${{ steps.sim.outputs.udid }}
-        run: |
-          sleep 5
-          xcrun simctl terminate "$UDID" com.tarwi2a.app 2>/dev/null || true
-          echo "=== relaunch with console (stdout/stderr of the app) ==="
-          (xcrun simctl launch --console "$UDID" com.tarwi2a.app > /tmp/launch-console.log 2>&1 &)
-          sleep 15
-          head -c 12000 /tmp/launch-console.log || true
-          pkill -f "simctl launch --console" || true
-          echo "=== crash reports for Runner ==="
-          find ~/Library/Logs/DiagnosticReports -maxdepth 2 -name 'Runner*' -newermt '-10 minutes' 2>/dev/null | head -3 | while read -r f; do echo "--- $f"; head -c 6000 "$f"; done
-          echo "=== host log: Runner terminating/abort ==="
-          log show --last 3m --style compact --predicate 'process == "Runner" AND (eventMessage CONTAINS[c] "terminat" OR eventMessage CONTAINS[c] "exception" OR eventMessage CONTAINS[c] "abort" OR eventMessage CONTAINS[c] "fatal")' 2>&1 | tail -n 40 || true
-
       - name: Install prebuilt app
         timeout-minutes: 15
         if: inputs.mode == 'app'
