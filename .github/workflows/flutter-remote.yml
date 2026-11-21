@@ -131,7 +131,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.npm/_npx
-          key: flutter-remote-serve-sim-${{ runner.os }}-latest
+          key: flutter-remote-serve-sim-${{ runner.os }}-0.1.48
           restore-keys: flutter-remote-serve-sim-${{ runner.os }}-
 
       - name: Fingerprint Flutter build inputs
@@ -208,7 +208,7 @@ jobs:
           )
 
           echo "Starting serve-sim with codec=$CODEC args: ${ARGS[*]}"
-          SERVE_SIM_OUT=$(npx --yes serve-sim "${ARGS[@]}" "${{ steps.sim.outputs.udid }}" || true)
+          SERVE_SIM_OUT=$(npx --yes serve-sim@0.1.48 "${ARGS[@]}" "${{ steps.sim.outputs.udid }}" || true)
           echo "serve-sim raw output: $SERVE_SIM_OUT"
 
           for i in {1..30}; do
