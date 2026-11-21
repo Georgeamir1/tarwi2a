@@ -525,7 +525,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: debug-shots
-          path: /tmp/dbg/*.png
+          path: |
+            /tmp/dbg/*.png
+            /tmp/dbg/app.out
+            /tmp/dbg/app.err
           if-no-files-found: warn
           retention-days: 1
 
