@@ -69,25 +69,45 @@ void main() async {
     );
   }
 
+  debugPrint('[boot] start');
   if (!kIsWeb) {
-    await Firebase.initializeApp();
+    await _bootStep('Firebase.initializeApp', () => Firebase.initializeApp());
   }
 
+  debugPrint('[boot] Supabase.initialize...');
   await Supabase.initialize(
     url: AppConstants.supabaseUrl,
     anonKey: AppConstants.supabaseAnonKey,
   );
+  debugPrint('[boot] Supabase.initialize ok');
   await initDependencies();
+  debugPrint('[boot] initDependencies ok');
 
   final pushService = sl<PushNotificationService>();
   if (!kIsWeb) {
-    await pushService.init();
-    await pushService.handleInitialMessageIfAny();
+    await _bootStep('pushService.init', () => pushService.init());
+    await _bootStep(
+      'pushService.handleInitialMessageIfAny',
+      () => pushService.handleInitialMessageIfAny(),
+    );
   }
 
   Bloc.observer = DebugBlocObserver();
 
+  debugPrint('[boot] runApp');
   runApp(const TarwikaApp());
+}
+
+/// Runs a non-critical startup step with a timeout so a hung platform call
+/// (e.g. push registration on a simulator) can never leave a blank screen.
+Future<void> _bootStep(String name, Future<void> Function() step) async {
+  debugPrint('[boot] $name...');
+  try {
+    await step().timeout(const Duration(seconds: 10));
+    debugPrint('[boot] $name ok');
+  } catch (e) {
+    debugPrint('[boot] $name skipped: $e');
+  }
 }
 
 class TarwikaApp extends StatefulWidget {

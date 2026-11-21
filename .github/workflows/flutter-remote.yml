@@ -515,6 +515,8 @@ jobs:
           xcrun simctl io "$UDID" screenshot /tmp/dbg/shot-2.png 2>&1 || true
           echo "=== app stdout (later) ==="; tail -c 3000 /tmp/dbg/app.out 2>/dev/null || true
           echo "=== app stderr (later) ==="; tail -c 3000 /tmp/dbg/app.err 2>/dev/null || true
+          echo "=== os_log of Runner (boot markers) ==="
+          xcrun simctl spawn "$UDID" log show --last 2m --info --debug --style compact --predicate 'process == "Runner" AND (eventMessage CONTAINS "[boot]" OR eventMessage CONTAINS "flutter" OR eventMessage CONTAINS "Dart" OR eventMessage CONTAINS "exception")' 2>&1 | tail -n 60 || true
           ls -la /tmp/dbg
 
       - name: Upload debug screenshots
