@@ -494,6 +494,33 @@ jobs:
           fi
           echo "Flutter application launched successfully inside iOS Simulator."
 
+      - name: Debug screenshots
+        if: inputs.mode != 'app'
+        continue-on-error: true
+        timeout-minutes: 3
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          mkdir -p /tmp/dbg
+          sleep 25
+          xcrun simctl io "$UDID" screenshot /tmp/dbg/shot-1.png 2>&1 || true
+          echo "serve-sim local stream bytes in 8s:"
+          curl -s -m 8 -o /tmp/dbg/local.mjpeg "http://127.0.0.1:${PREVIEW_PORT}/helper/${UDID}/stream.mjpeg?raw=1" || true
+          wc -c < /tmp/dbg/local.mjpeg || echo 0
+          sleep 15
+          xcrun simctl io "$UDID" screenshot /tmp/dbg/shot-2.png 2>&1 || true
+          ls -la /tmp/dbg
+
+      - name: Upload debug screenshots
+        if: inputs.mode != 'app'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-shots
+          path: /tmp/dbg/*.png
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Install prebuilt app
         timeout-minutes: 15
         if: inputs.mode == 'app'
