@@ -575,18 +575,18 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_osm_plugin
-      sha256: f926a711cc193fed5c9aacde79603d81cd54c93ea19d35e553b5cec062b6bb46
+      sha256: "4a8aec745225bc864f55daffaf0edabc3daf4be4a54d6698141235ba64a3e5f9"
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.3"
+    version: "1.4.6"
   flutter_osm_web:
     dependency: transitive
     description:
       name: flutter_osm_web
-      sha256: "570e714db452f43480fc81f48592139a48865c75a3092a19e4c536416b154bf5"
+      sha256: "4b457aed05915a4af820b74e8bd387a8d1b562b538b4cac14f8fadee9fffa80e"
       url: "https://pub.dev"
     source: hosted
-    version: "1.4.2"
+    version: "1.4.4"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -1211,10 +1211,10 @@ packages:
     dependency: transitive
     description:
       name: permission_handler
-      sha256: bc917da36261b00137bbc8896bf1482169cd76f866282368948f032c8c1caae1
+      sha256: fe54465bcc62a4564c6e4db337bbaded6c0c0fa6e10487414436d163114784f6
       url: "https://pub.dev"
     source: hosted
-    version: "12.0.1"
+    version: "12.0.3"
   permission_handler_android:
     dependency: transitive
     description:
@@ -1854,4 +1854,4 @@ packages:
     version: "2.1.0"
 sdks:
   dart: ">=3.11.0 <4.0.0"
-  flutter: ">=3.38.4"
+  flutter: ">=3.41.0"
