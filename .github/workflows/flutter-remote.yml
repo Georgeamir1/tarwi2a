@@ -501,14 +501,17 @@ jobs:
         env:
           UDID: ${{ steps.sim.outputs.udid }}
         run: |
-          sleep 20
-          echo "=== processes in simulator ==="
-          xcrun simctl spawn "$UDID" launchctl list 2>&1 | grep -i -E "tarwi|runner" || echo "(no tarwi/Runner process: app is NOT running)"
-          echo "=== app log (last 2m) ==="
-          xcrun simctl spawn "$UDID" log show --last 2m --style compact --predicate 'process == "Runner" OR eventMessage CONTAINS[c] "tarwi" OR eventMessage CONTAINS[c] "flutter"' 2>&1 | tail -n 80 || true
-          echo "=== crash reports ==="
-          ls -t ~/Library/Logs/DiagnosticReports 2>/dev/null | head -5 || true
-          for f in $(ls -t ~/Library/Logs/DiagnosticReports/Runner* 2>/dev/null | head -1); do echo "--- $f"; head -c 4000 "$f"; done
+          sleep 5
+          xcrun simctl terminate "$UDID" com.tarwi2a.app 2>/dev/null || true
+          echo "=== relaunch with console (stdout/stderr of the app) ==="
+          (xcrun simctl launch --console "$UDID" com.tarwi2a.app > /tmp/launch-console.log 2>&1 &)
+          sleep 15
+          head -c 12000 /tmp/launch-console.log || true
+          pkill -f "simctl launch --console" || true
+          echo "=== crash reports for Runner ==="
+          find ~/Library/Logs/DiagnosticReports -maxdepth 2 -name 'Runner*' -newermt '-10 minutes' 2>/dev/null | head -3 | while read -r f; do echo "--- $f"; head -c 6000 "$f"; done
+          echo "=== host log: Runner terminating/abort ==="
+          log show --last 3m --style compact --predicate 'process == "Runner" AND (eventMessage CONTAINS[c] "terminat" OR eventMessage CONTAINS[c] "exception" OR eventMessage CONTAINS[c] "abort" OR eventMessage CONTAINS[c] "fatal")' 2>&1 | tail -n 40 || true
 
       - name: Install prebuilt app
         timeout-minutes: 15
