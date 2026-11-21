@@ -1,0 +1,45 @@
+
+========================================
+  PERFORMANCE REPORT — tarwi2a.com
+========================================
+
+LOAD TIME:        820ms
+LCP:              1676ms  (target: < 2500ms)
+CLS:              0  (target: < 0.1)
+
+PAINT TIMINGS:
+  first-paint: 300ms
+  first-contentful-paint: 300ms
+
+DOM STATS:
+  Total elements:    1540
+  Max DOM depth:     9
+  Inline styles:     194
+  Scripts:           2
+  Stylesheets:       1
+
+IMAGES (36 total):
+  Broken:            0
+
+RESOURCES (27 total):
+  Transfer size:     1045.4KB
+  img          onboarding_food.jpg                       124.2KB  35ms
+  img          onboarding_delivery.jpg                   119.5KB  45ms
+  img          onboarding_payment.jpg                     92.9KB  47ms
+  css          Cairo-ExtraBold.ttf                        89.9KB  150ms
+  css          Cairo-SemiBold.ttf                         89.9KB  135ms
+  css          Cairo-Medium.ttf                           89.8KB  139ms
+  css          Cairo-Bold.ttf                             89.8KB  133ms
+  css          Cairo-Regular.ttf                          89.6KB  144ms
+  img          red%20no%20background.png                  68.6KB  20ms
+  img          splash_logo-removebg-preview.png           47.5KB  17ms
+
+CONSOLE (0 messages):
+
+JS ERRORS (0):
+
+ACCESSIBILITY (0 issues):
+
+========================================
+  OVERALL SCORE: 80/100
+========================================

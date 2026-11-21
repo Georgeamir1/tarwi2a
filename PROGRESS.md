@@ -20,10 +20,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Last session** | 2026-06-23 |
-| **Phase** | Ratings and Reviews Integration |
-| **Task** | Implemented the remote persistence and presentation of order ratings and product reviews. |
-| **Notes** | Wired `RateOrderScreen` and `ProductReviewsScreen` with a new `RatingCubit` and `RatingRepository`. Ratings are now saved in the remote Supabase database and retrieved dynamically with calculated summary averages. `flutter analyze` passes successfully with 0 issues.
+| **Last session** | 2026-09-05 — Luna planning and first bounded execution |
+| **Phase** | Store release remediation — isolated worktree |
+| **Task** | Previous test-harness repairs and Luna L01 cart fixes are verified in D:/desktop/tarwi2a-agy-store-release (uncommitted). L01 passed 28 independent tests. L02 implementation exists but its review-test follow-up was interrupted after the user's time/cost concern; final verification pending. |
+| **Notes** | Follow docs/plans/store-release-luna-execution-plan.md and docs/tasks/store-release-luna-task.md. Baseline tests passed; two asset warnings and seven existing test-format differences remain. Original workspace production files are unchanged. Supabase access/rotation, legal retention decisions, signing and native Apple verification remain external gates. |
 
 ---
 
@@ -760,3 +760,35 @@ alter publication supabase_realtime add table business_profiles;
 - [✓] 29.10 Update `lib/presentation/screens/orders/rate_order_screen.dart` to use cubit
 - [✓] 29.11 Update `lib/presentation/screens/product/product_reviews_screen.dart` to show dynamic reviews
 - [✓] 29.12 Run `flutter analyze` — must pass 0 errors
+
+---
+
+## 🔷 Phase 30: Google Play + Apple App Store Readiness Review
+**Scope:** Review only; no application, schema, dependency, credential, or publishing changes
+
+- [✓] 30.1 Preserve the source baseline in an isolated checkout and resolve the locked dependencies
+- [✓] 30.2 Review customer/admin behavior, security boundaries, Supabase artifacts, native configuration, and store requirements
+- [✓] 30.3 Run strict analysis, non-writing formatting, the existing test suite with coverage, and focused regression probes
+- [✓] 30.4 Attempt a clean Android release AAB build and record the failure evidence
+- [✓] 30.5 Publish the prioritized P0–P3 review and ordered remediation backlog in Arabic and English under `docs/`
+- [ ] 30.6 Run live Supabase anonymous/customer A/customer B/admin tests after authorized access and the correct endpoint are available
+- [ ] 30.7 Run Android minimum/current/16 KB device verification after a reproducible release artifact exists
+- [ ] 30.8 Run an Xcode 26+ archive and iPhone/iPad verification when Mac and Apple devices are available
+
+---
+
+## 🔷 Phase 31: Store Release Remediation
+**Scope:** تنفيذ دوري التقني طبقًا لخطة مستقلة، مع بوابات مالك واضحة للأسرار والحسابات والأجهزة والاعتماد القانوني
+
+- [✓] 31.1 Create `docs/specs/prd-store-release-remediation.md`
+- [✓] 31.2 Create the phase-by-phase implementation plan with mandatory Skills in `docs/plans/store-release-remediation-implementation-plan.md`
+- [✓] 31.3 Create the granular execution checklist in `docs/tasks/store-release-remediation-task.md`
+- [~] 31.4 Execute Phase 0 — harness repaired and tests passed in isolated worktree; full baseline gates still pending. Luna L01 is a separately bounded local cart repair.
+- [ ] 31.5 Execute Phase 1 — security containment and server-authoritative data contracts
+- [ ] 31.6 Execute Phase 2 — cart, checkout, coupon, and order correctness
+- [ ] 31.7 Execute Phase 3 — authentication, addresses, biometrics, and notifications
+- [ ] 31.8 Execute Phase 4 — admin mutations, reports, exports, printing, and ratings data
+- [ ] 31.9 Execute Phase 5 — privacy, deletion, and user-generated-content safeguards
+- [ ] 31.10 Execute Phase 6 — reproducible Android release and device verification
+- [ ] 31.11 Execute Phase 7 — iOS source preparation and Mac/device verification
+- [ ] 31.12 Execute Phase 8 — CI, full regression, performance/accessibility checks, and store handoff

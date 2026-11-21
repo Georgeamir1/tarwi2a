@@ -5,6 +5,20 @@
 
 ---
 
+## 🚀 الخطة النشطة حاليًا — تجهيز النشر للمتجرين
+
+نتائج المراجعة تحولت إلى حزمة تنفيذ منفصلة، وهي المرجع قبل بدء أي إصلاح خاص بالنشر:
+
+1. [متطلبات الإصلاح](<D:/desktop/claude resturant/docs/specs/prd-store-release-remediation.md>)
+2. [خطة التنفيذ ودليل الـSkills لكل مرحلة](<D:/desktop/claude resturant/docs/plans/store-release-remediation-implementation-plan.md>)
+3. [قائمة المهام التنفيذية](<D:/desktop/claude resturant/docs/tasks/store-release-remediation-task.md>)
+4. [وصفات التنفيذ المحددة لـLuna](<D:/desktop/claude resturant/docs/plans/store-release-luna-execution-plan.md>) — المرجع الأحدث لتسليم المهام الصغيرة وحدود الملفات وشروط التوقف.
+5. [متابعة دفعات Luna](<D:/desktop/claude resturant/docs/tasks/store-release-luna-task.md>)
+
+الـSkills المذكورة داخل كل مرحلة إلزامية وتُحمّل قبل تعديل ملفات تلك المرحلة. يستمر تطبيق قواعد المعمارية والتصميم الأساسية الموجودة في هذا الملف أيضًا.
+
+---
+
 ## 🧠 Session Continuity
 
 **لما تفتح سيشن جديدة، أول حاجة تعملها:**
